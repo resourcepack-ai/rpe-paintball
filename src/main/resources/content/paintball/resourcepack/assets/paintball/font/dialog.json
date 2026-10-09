@@ -1,0 +1,22 @@
+{
+ "providers": [
+  {
+   "type": "bitmap",
+   "file": "minecraft:font/dialog_paintball_scoreboard_background.png",
+   "ascent": 7,
+   "height": 143,
+   "chars": [
+    ""
+   ]
+  },
+  {
+   "type": "bitmap",
+   "file": "minecraft:font/dialog_paintball_scoreboard_tile_r0c1.png",
+   "ascent": 7,
+   "height": 143,
+   "chars": [
+    ""
+   ]
+  }
+ ]
+}

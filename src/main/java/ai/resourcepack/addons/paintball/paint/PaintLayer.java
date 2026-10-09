@@ -1,0 +1,268 @@
+package ai.resourcepack.addons.paintball.paint;
+
+import ai.resourcepack.addons.paintball.Content;
+import ai.resourcepack.addons.paintball.Team;
+import org.bukkit.FluidCollisionMode;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.entity.ItemDisplay;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.BoundingBox;
+import org.bukkit.util.RayTraceResult;
+import org.bukkit.util.Transformation;
+import org.bukkit.util.Vector;
+import org.joml.Quaternionf;
+import org.joml.Vector3f;
+
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
+
+/**
+ * The paint on the map: a flat splat model on an item display, laid on the
+ * exact face a ball hit, turned and sized at random. Not persistent, so a crash
+ * leaves nothing saved with the chunk, and the map's blocks are never touched.
+ * There is a cap; the oldest splat goes first.
+ *
+ * <p><b>A splat never hangs off the surface it is on.</b> A splat is a flat
+ * square, so one laid near the edge of a wall used to stick out past the edge
+ * into the air, and two on either side of a corner crossed each other there.
+ * So each one measures the flat stretch of surface around where it landed
+ * (the faces in line with it that are exposed on the same side) and is moved
+ * in from the edges, then made smaller, until its paint fits inside it.
+ */
+public final class PaintLayer {
+    private static final BlockFace[] SIDES = {BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.EAST, BlockFace.WEST};
+    /** How far from its centre a splat's paint reaches, as a fraction of its size (measured off the textures). */
+    private static final double PAINT_RADIUS = 0.47;
+    /** How many blocks either way a surface is followed. A splat is at most a couple of blocks across. */
+    private static final int REACH = 3;
+    /** Smaller than this, a splat is a speck: it is not worth an entity. */
+    private static final double SMALLEST = 0.12;
+
+    private final Content content;
+    private final int maxDecals;
+    private final ArrayDeque<ItemDisplay> decals = new ArrayDeque<>();
+    private int layer;
+
+    public PaintLayer(Content content, int maxDecals) {
+        this.content = content;
+        this.maxDecals = maxDecals;
+    }
+
+    /** A ball of {@code team}'s paint hit {@code side} of {@code block} at {@code at}. */
+    public void splat(Team team, Block block, BlockFace side, Location at, double size) {
+        if (paintable(block)) decal(team, block, at, side, size);
+    }
+
+    /** A grenade went off: splats on the faces it can see around it. */
+    public void burst(Team team, Location center, double radius) {
+        World w = center.getWorld();
+        int r = (int) Math.ceil(radius);
+        Vector c = center.toVector();
+        List<Object[]> seen = new ArrayList<>();
+        for (int x = -r; x <= r; x++) {
+            for (int y = -r; y <= r; y++) {
+                for (int z = -r; z <= r; z++) {
+                    Block b = w.getBlockAt(center.getBlockX() + x, center.getBlockY() + y, center.getBlockZ() + z);
+                    if (!paintable(b)) continue;
+                    for (BlockFace side : SIDES) {
+                        if (!b.getRelative(side).isPassable()) continue;
+                        Vector mid = faceCenter(b, side);
+                        double d = mid.distance(c);
+                        if (d > radius) continue;
+                        Vector dir = mid.clone().subtract(c);
+                        RayTraceResult wall = w.rayTraceBlocks(center, dir.normalize(), Math.max(0.01, d - 0.05),
+                                FluidCollisionMode.NEVER, true);
+                        if (wall == null) seen.add(new Object[]{b, side, mid});
+                    }
+                }
+            }
+        }
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        for (int i = 0; i < Math.min(14, seen.size()); i++) {
+            Object[] pick = seen.get(rnd.nextInt(seen.size()));
+            BlockFace side = (BlockFace) pick[1];
+            Vector mid = ((Vector) pick[2]).clone().add(tangentJitter(side, 0.35));
+            decal(team, (Block) pick[0], mid.toLocation(w), side, 1.3 + rnd.nextDouble() * 1.1);
+        }
+    }
+
+    /** Takes every splat down. */
+    public void clear() {
+        for (ItemDisplay d : decals) if (d.isValid()) d.remove();
+        decals.clear();
+    }
+
+    private void decal(Team team, Block block, Location at, BlockFace side, double size) {
+        Location fitted = at.clone();
+        double s = fit(block, side, fitted, size);
+        if (s < SMALLEST) return;
+
+        World w = at.getWorld();
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        Vector n = side.getDirection();
+        // Each splat sits a hair further out than the last, cycling, so overlapping
+        // ones layer instead of flickering into each other.
+        double lift = 0.004 + (layer++ % 12) * 0.0012;
+        Location spot = fitted.add(n.clone().multiply(lift));
+        ItemStack item = content.item("splat_" + team.id() + "_" + (1 + rnd.nextInt(3)));
+        Quaternionf q = new Quaternionf().rotationTo(0, 0, 1, (float) n.getX(), (float) n.getY(), (float) n.getZ())
+                .rotateZ((float) (rnd.nextDouble() * Math.PI * 2));
+        float scale = (float) s;
+        ItemDisplay d = w.spawn(spot, ItemDisplay.class, e -> {
+            e.setPersistent(false);
+            e.setItemStack(item);
+            e.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+            e.setTransformation(new Transformation(new Vector3f(), q, new Vector3f(scale, scale, scale), new Quaternionf()));
+            e.setViewRange(0.8f);
+            e.addScoreboardTag("paintball");
+        });
+        decals.addLast(d);
+        while (decals.size() > maxDecals) {
+            ItemDisplay old = decals.pollFirst();
+            if (old != null && old.isValid()) old.remove();
+        }
+    }
+
+    // ---- fitting a splat to its surface ------------------------------------------------
+
+    /**
+     * Moves {@code at} (in place) and returns the size the splat may be so its
+     * paint stays on the flat surface around it.
+     */
+    private static double fit(Block block, BlockFace side, Location at, double size) {
+        Axis[] axes = Axis.of(side);
+        double radius = size * PAINT_RADIUS;
+        double[] lo = new double[2];
+        double[] hi = new double[2];
+        for (int i = 0; i < 2; i++) {
+            double[] range = extent(block, side, axes[i]);
+            lo[i] = range[0];
+            hi[i] = range[1];
+            radius = Math.min(radius, (hi[i] - lo[i]) / 2);
+        }
+        double[] wanted = {axes[0].get(at), axes[1].get(at)};
+        // The scans above follow the two lines through the block that was hit;
+        // the corners between them (an L-shaped edge, a hole) are checked here,
+        // and the splat shrinks until everything under it is surface.
+        for (int tries = 0; tries < 8; tries++) {
+            for (int i = 0; i < 2; i++) {
+                axes[i].set(at, Math.max(lo[i] + radius, Math.min(hi[i] - radius, wanted[i])));
+            }
+            if (!full(block) || covered(block, side, axes, at, radius)) break;
+            radius *= 0.8;
+        }
+        return radius / PAINT_RADIUS;
+    }
+
+    /** Whether every block under the square {@code radius} round {@code at} is flat, open surface. */
+    private static boolean covered(Block block, BlockFace side, Axis[] axes, Location at, double radius) {
+        int u0 = (int) Math.floor(axes[0].get(at) - radius);
+        int u1 = (int) Math.floor(axes[0].get(at) + radius - 1e-6);
+        int v0 = (int) Math.floor(axes[1].get(at) - radius);
+        int v1 = (int) Math.floor(axes[1].get(at) + radius - 1e-6);
+        int bu = axes[0].coord(block);
+        int bv = axes[1].coord(block);
+        for (int u = u0; u <= u1; u++) {
+            for (int v = v0; v <= v1; v++) {
+                if (u == bu && v == bv) continue;
+                Block b = axes[1].step(axes[0].step(block, u - bu), v - bv);
+                if (!full(b) || !paintable(b) || !b.getRelative(side).isPassable()) return false;
+            }
+        }
+        return true;
+    }
+
+    /**
+     * The stretch of flat, exposed surface through {@code block}'s {@code side}
+     * along one axis of it: the block's own face, then each neighbour in line
+     * whose face is level with it and open on the same side, up to
+     * {@link #REACH} either way. A block that is not a full cube is its own face
+     * and nothing more, since its neighbours' faces are not level with it.
+     */
+    private static double[] extent(Block block, BlockFace side, Axis axis) {
+        BoundingBox box = block.getBoundingBox();
+        double lo = axis.min(box);
+        double hi = axis.max(box);
+        if (!full(block)) return new double[]{lo, hi};
+        for (int dir = -1; dir <= 1; dir += 2) {
+            for (int k = 1; k <= REACH; k++) {
+                Block next = axis.step(block, dir * k);
+                if (!full(next) || !paintable(next) || !next.getRelative(side).isPassable()) break;
+                if (dir < 0) lo -= 1;
+                else hi += 1;
+            }
+        }
+        return new double[]{lo, hi};
+    }
+
+    private static boolean full(Block b) {
+        BoundingBox box = b.getBoundingBox();
+        return box.getWidthX() > 0.999 && box.getHeight() > 0.999 && box.getWidthZ() > 0.999;
+    }
+
+    /** One of the two directions across a face. */
+    private enum Axis {
+        X, Y, Z;
+
+        static Axis[] of(BlockFace side) {
+            return switch (side) {
+                case UP, DOWN -> new Axis[]{X, Z};
+                case NORTH, SOUTH -> new Axis[]{X, Y};
+                default -> new Axis[]{Z, Y};
+            };
+        }
+
+        double get(Location l) {
+            return this == X ? l.getX() : this == Y ? l.getY() : l.getZ();
+        }
+
+        void set(Location l, double v) {
+            if (this == X) l.setX(v);
+            else if (this == Y) l.setY(v);
+            else l.setZ(v);
+        }
+
+        double min(BoundingBox b) {
+            return this == X ? b.getMinX() : this == Y ? b.getMinY() : b.getMinZ();
+        }
+
+        double max(BoundingBox b) {
+            return this == X ? b.getMaxX() : this == Y ? b.getMaxY() : b.getMaxZ();
+        }
+
+        int coord(Block b) {
+            return this == X ? b.getX() : this == Y ? b.getY() : b.getZ();
+        }
+
+        Block step(Block b, int by) {
+            return b.getRelative(this == X ? by : 0, this == Y ? by : 0, this == Z ? by : 0);
+        }
+    }
+
+    private static boolean paintable(Block b) {
+        Material m = b.getType();
+        return m.isSolid() && m != Material.BARRIER && m != Material.LIGHT && !m.name().endsWith("_SIGN");
+    }
+
+    private static Vector faceCenter(Block b, BlockFace side) {
+        Vector n = side.getDirection();
+        return new Vector(b.getX() + 0.5 + n.getX() * 0.5, b.getY() + 0.5 + n.getY() * 0.5, b.getZ() + 0.5 + n.getZ() * 0.5);
+    }
+
+    private static Vector tangentJitter(BlockFace side, double amount) {
+        ThreadLocalRandom rnd = ThreadLocalRandom.current();
+        double a = (rnd.nextDouble() * 2 - 1) * amount;
+        double b = (rnd.nextDouble() * 2 - 1) * amount;
+        return switch (side) {
+            case UP, DOWN -> new Vector(a, 0, b);
+            case NORTH, SOUTH -> new Vector(a, b, 0);
+            default -> new Vector(0, b, a);
+        };
+    }
+}

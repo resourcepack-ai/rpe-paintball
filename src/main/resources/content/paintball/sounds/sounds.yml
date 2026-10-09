@@ -1,0 +1,36 @@
+# Synthesised by tools/make_assets.py.
+
+shot:
+  file: shot
+  category: player
+  subtitle: "Paintball fired"
+
+splat:
+  file: splat
+  category: player
+  subtitle: "Paint splats"
+
+burst:
+  file: burst
+  category: player
+  subtitle: "Paint grenade bursts"
+
+hit:
+  file: hit
+  category: player
+  subtitle: "Hit confirmed"
+
+empty:
+  file: empty
+  category: player
+  subtitle: "Hopper empty"
+
+reload:
+  file: reload
+  category: player
+  subtitle: "Hopper reloads"
+
+whistle:
+  file: whistle
+  category: master
+  subtitle: "Referee whistle"

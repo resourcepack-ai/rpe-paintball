@@ -1,0 +1,421 @@
+{
+ "id": "paintball_hud",
+ "name": "Paintball HUD",
+ "dimension": "2d",
+ "slot": "action_bar",
+ "fullscreen": true,
+ "width": 64,
+ "height": 64,
+ "placement": {
+  "anchor": "center",
+  "x": 0,
+  "y": 0
+ },
+ "shapes": [
+  {
+   "id": "s1",
+   "kind": "box",
+   "x": -48,
+   "y": 14,
+   "radius": 0,
+   "width": 25,
+   "height": 10,
+   "thickness": 2,
+   "sides": 6,
+   "rotation": 0,
+   "color": "#ff4655",
+   "alpha": 0.92,
+   "op": "union",
+   "smoothing": 0,
+   "feather": 1,
+   "pin": "top",
+   "stretch": false
+  },
+  {
+   "id": "s2",
+   "kind": "box",
+   "x": -48,
+   "y": 23.5,
+   "radius": 0,
+   "width": 25,
+   "height": 0.5,
+   "thickness": 2,
+   "sides": 6,
+   "rotation": 0,
+   "color": "#a3202c",
+   "alpha": 0.95,
+   "op": "union",
+   "smoothing": 0,
+   "feather": 1,
+   "pin": "top",
+   "stretch": false
+  },
+  {
+   "id": "s3",
+   "kind": "box",
+   "x": 48,
+   "y": 14,
+   "radius": 0,
+   "width": 25,
+   "height": 10,
+   "thickness": 2,
+   "sides": 6,
+   "rotation": 0,
+   "color": "#2e9bff",
+   "alpha": 0.92,
+   "op": "union",
+   "smoothing": 0,
+   "feather": 1,
+   "pin": "top",
+   "stretch": false
+  },
+  {
+   "id": "s4",
+   "kind": "box",
+   "x": 48,
+   "y": 23.5,
+   "radius": 0,
+   "width": 25,
+   "height": 0.5,
+   "thickness": 2,
+   "sides": 6,
+   "rotation": 0,
+   "color": "#155e9e",
+   "alpha": 0.95,
+   "op": "union",
+   "smoothing": 0,
+   "feather": 1,
+   "pin": "top",
+   "stretch": false
+  },
+  {
+   "id": "s5",
+   "kind": "roundedBox",
+   "x": 0,
+   "y": 14,
+   "radius": 2,
+   "width": 21,
+   "height": 10,
+   "thickness": 2,
+   "sides": 6,
+   "rotation": 0,
+   "color": "#0d1117",
+   "alpha": 0.88,
+   "op": "union",
+   "smoothing": 0,
+   "feather": 1,
+   "pin": "top",
+   "stretch": false
+  },
+  {
+   "id": "s6",
+   "kind": "roundedBox",
+   "x": -46,
+   "y": -21,
+   "radius": 2,
+   "width": 38,
+   "height": 13,
+   "thickness": 2,
+   "sides": 6,
+   "rotation": 0,
+   "color": "#0d1117",
+   "alpha": 0.8,
+   "op": "union",
+   "smoothing": 0,
+   "feather": 1,
+   "pin": "bottom-right",
+   "stretch": false
+  },
+  {
+   "id": "s7",
+   "kind": "box",
+   "x": -46,
+   "y": -33.5,
+   "radius": 0,
+   "width": 38,
+   "height": 0.5,
+   "thickness": 2,
+   "sides": 6,
+   "rotation": 0,
+   "color": "#ffffff",
+   "alpha": 0.18,
+   "op": "union",
+   "smoothing": 0,
+   "feather": 1,
+   "pin": "bottom-right",
+   "stretch": false
+  },
+  {
+   "id": "s8",
+   "kind": "roundedBox",
+   "x": -101,
+   "y": -21,
+   "radius": 2,
+   "width": 14,
+   "height": 13,
+   "thickness": 2,
+   "sides": 6,
+   "rotation": 0,
+   "color": "#0d1117",
+   "alpha": 0.8,
+   "op": "union",
+   "smoothing": 0,
+   "feather": 1,
+   "pin": "bottom-right",
+   "stretch": false
+  }
+ ],
+ "texts": [
+  {
+   "id": "t9",
+   "x": 6,
+   "y": 8,
+   "text": "{pb_f1}",
+   "color": "#ffffff",
+   "pin": "top-left"
+  },
+  {
+   "id": "t10",
+   "x": 6,
+   "y": 8,
+   "text": "{pb_f1_kr}",
+   "color": "#ff6b77",
+   "pin": "top-left"
+  },
+  {
+   "id": "t11",
+   "x": 6,
+   "y": 8,
+   "text": "{pb_f1_kb}",
+   "color": "#5cb3ff",
+   "pin": "top-left"
+  },
+  {
+   "id": "t12",
+   "x": 6,
+   "y": 8,
+   "text": "{pb_f1_vr}",
+   "color": "#ff6b77",
+   "pin": "top-left"
+  },
+  {
+   "id": "t13",
+   "x": 6,
+   "y": 8,
+   "text": "{pb_f1_vb}",
+   "color": "#5cb3ff",
+   "pin": "top-left"
+  },
+  {
+   "id": "t14",
+   "x": 6,
+   "y": 23,
+   "text": "{pb_f2}",
+   "color": "#ffffff",
+   "pin": "top-left"
+  },
+  {
+   "id": "t15",
+   "x": 6,
+   "y": 23,
+   "text": "{pb_f2_kr}",
+   "color": "#ff6b77",
+   "pin": "top-left"
+  },
+  {
+   "id": "t16",
+   "x": 6,
+   "y": 23,
+   "text": "{pb_f2_kb}",
+   "color": "#5cb3ff",
+   "pin": "top-left"
+  },
+  {
+   "id": "t17",
+   "x": 6,
+   "y": 23,
+   "text": "{pb_f2_vr}",
+   "color": "#ff6b77",
+   "pin": "top-left"
+  },
+  {
+   "id": "t18",
+   "x": 6,
+   "y": 23,
+   "text": "{pb_f2_vb}",
+   "color": "#5cb3ff",
+   "pin": "top-left"
+  },
+  {
+   "id": "t19",
+   "x": 6,
+   "y": 38,
+   "text": "{pb_f3}",
+   "color": "#ffffff",
+   "pin": "top-left"
+  },
+  {
+   "id": "t20",
+   "x": 6,
+   "y": 38,
+   "text": "{pb_f3_kr}",
+   "color": "#ff6b77",
+   "pin": "top-left"
+  },
+  {
+   "id": "t21",
+   "x": 6,
+   "y": 38,
+   "text": "{pb_f3_kb}",
+   "color": "#5cb3ff",
+   "pin": "top-left"
+  },
+  {
+   "id": "t22",
+   "x": 6,
+   "y": 38,
+   "text": "{pb_f3_vr}",
+   "color": "#ff6b77",
+   "pin": "top-left"
+  },
+  {
+   "id": "t23",
+   "x": 6,
+   "y": 38,
+   "text": "{pb_f3_vb}",
+   "color": "#5cb3ff",
+   "pin": "top-left"
+  },
+  {
+   "id": "t24",
+   "x": -48,
+   "y": 11,
+   "text": "{pb_red}",
+   "color": "#ffffff",
+   "pin": "top"
+  },
+  {
+   "id": "t25",
+   "x": 48,
+   "y": 11,
+   "text": "{pb_blue}",
+   "color": "#ffffff",
+   "pin": "top"
+  },
+  {
+   "id": "t26",
+   "x": 0,
+   "y": 11,
+   "text": "{pb_time}",
+   "color": "#ffffff",
+   "pin": "top"
+  },
+  {
+   "id": "t27",
+   "x": 0,
+   "y": 30,
+   "text": "{pb_status}",
+   "color": "#ffffff",
+   "pin": "top"
+  },
+  {
+   "id": "t28",
+   "x": 0,
+   "y": 30,
+   "text": "{pb_status_hot}",
+   "color": "#ffd23f",
+   "pin": "top"
+  },
+  {
+   "id": "t29",
+   "x": -36,
+   "y": -15,
+   "text": "{pb_ammo}",
+   "color": "#ffffff",
+   "pin": "bottom-right"
+  },
+  {
+   "id": "t30",
+   "x": -12,
+   "y": -16,
+   "text": "{pb_ammo_cap}",
+   "color": "#9aa0a6",
+   "pin": "bottom-right"
+  },
+  {
+   "id": "t31",
+   "x": -12,
+   "y": -38,
+   "text": "{pb_gun}",
+   "color": "#9aa0a6",
+   "pin": "bottom-right"
+  },
+  {
+   "id": "t32",
+   "x": -12,
+   "y": -38,
+   "text": "{pb_gun_hot}",
+   "color": "#ffd23f",
+   "pin": "bottom-right"
+  },
+  {
+   "id": "t33",
+   "x": -95,
+   "y": -16,
+   "text": "{pb_nade}",
+   "color": "#ffffff",
+   "pin": "bottom-right"
+  },
+  {
+   "id": "t34",
+   "x": 0,
+   "y": 14,
+   "text": "{pb_respawn_lbl}",
+   "color": "#9aa0a6",
+   "pin": "center"
+  },
+  {
+   "id": "t35",
+   "x": 0,
+   "y": 26,
+   "text": "{pb_respawn}",
+   "color": "#ffffff",
+   "pin": "center"
+  },
+  {
+   "id": "t36",
+   "x": 0,
+   "y": 0,
+   "text": "{pb_hit}",
+   "color": "#ffffff",
+   "pin": "center"
+  }
+ ],
+ "heads": [],
+ "images": [],
+ "bars": [
+  {
+   "id": "b37",
+   "x": -12,
+   "y": -11,
+   "width": 68,
+   "height": 2,
+   "value": "pb_ammo_n",
+   "max": "pb_ammo_max",
+   "shape": "solid",
+   "segments": 10,
+   "gap": 1,
+   "color": "#ffffff",
+   "stops": [
+    {
+     "at": 0.25,
+     "color": "#ff4655"
+    }
+   ],
+   "background": "#2c323a",
+   "preview": 0.7,
+   "pin": "bottom-right"
+  }
+ ],
+ "triggers": []
+}

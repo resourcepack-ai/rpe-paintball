@@ -1,0 +1,83 @@
+package ai.resourcepack.addons.paintball.game;
+
+import ai.resourcepack.addons.paintball.Team;
+import ai.resourcepack.addons.paintball.stats.StatLine;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.entity.Player;
+
+import java.util.UUID;
+
+/** One player's part in the current match. */
+public final class GamePlayer {
+    final UUID id;
+    final String name;
+    Team team;
+
+    boolean alive;
+    int ammo;
+    /** Ticks of reloading still to go; 0 when the hopper is not being filled. */
+    int reloading;
+    long nextShot;
+    int grenades;
+    long protectedUntil;
+    /** The tick they come back, or 0 while they are in. */
+    long respawnAt;
+    /** Who splatted them last, for the HUD while they are out. */
+    String splattedBy;
+    /** Who they splatted last, and when, for the HUD's moment of glory. */
+    String lastKill;
+    long lastKillAt;
+    /** The hit marker is up until this tick. */
+    long hitUntil;
+    /** The last place they stood inside the arena, for putting them back when they stray. */
+    Location lastInside;
+
+    /** This match's counters: kills, deaths, shots, hits. */
+    final StatLine stats = new StatLine();
+    boolean left;
+
+    GamePlayer(UUID id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
+    public UUID id() {
+        return id;
+    }
+
+    public String name() {
+        return name;
+    }
+
+    public Team team() {
+        return team;
+    }
+
+    public StatLine stats() {
+        return stats;
+    }
+
+    public Player player() {
+        return left ? null : Bukkit.getPlayer(id);
+    }
+
+    void reset() {
+        stats.kills = 0;
+        stats.deaths = 0;
+        stats.shots = 0;
+        stats.hits = 0;
+        respawnAt = 0;
+        protectedUntil = 0;
+        reloading = 0;
+        splattedBy = null;
+        lastKill = null;
+        lastKillAt = 0;
+        hitUntil = 0;
+    }
+
+    /** Valorant orders a team by combat score; here that is kills, then fewer deaths, then hits. */
+    long rank() {
+        return stats.kills * 100_000L - stats.deaths * 100L + stats.hits;
+    }
+}

@@ -1,0 +1,90 @@
+# Team gear and the things the plugin draws in the world:
+# masks are worn, balls fly, splats sit on walls, grenades are thrown.
+
+mask_red:
+  material: PAPER
+  name: "&cRed Mask"
+  model:
+    parent: paintball:mask
+    textures: {mask: "paintball:item/mask_red", particle: "paintball:item/mask_red"}
+
+ball_red:
+  material: PAPER
+  name: "&fRed Paintball"
+  model:
+    parent: paintball:ball
+    textures: {ball: "paintball:item/ball_red", particle: "paintball:item/ball_red"}
+
+grenade_red:
+  material: PAPER
+  name: "&c&lPaint Grenade"
+  lore:
+    - "&7Right-click to throw. Bursts after a second and a half."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_red", particle: "paintball:item/grenade_red"}
+
+splat_red_1:
+  material: PAPER
+  name: "&fRed Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_red_1", particle: "paintball:item/splat_red_1"}
+
+splat_red_2:
+  material: PAPER
+  name: "&fRed Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_red_2", particle: "paintball:item/splat_red_2"}
+
+splat_red_3:
+  material: PAPER
+  name: "&fRed Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_red_3", particle: "paintball:item/splat_red_3"}
+
+mask_blue:
+  material: PAPER
+  name: "&9Blue Mask"
+  model:
+    parent: paintball:mask
+    textures: {mask: "paintball:item/mask_blue", particle: "paintball:item/mask_blue"}
+
+ball_blue:
+  material: PAPER
+  name: "&fBlue Paintball"
+  model:
+    parent: paintball:ball
+    textures: {ball: "paintball:item/ball_blue", particle: "paintball:item/ball_blue"}
+
+grenade_blue:
+  material: PAPER
+  name: "&9&lPaint Grenade"
+  lore:
+    - "&7Right-click to throw. Bursts after a second and a half."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_blue", particle: "paintball:item/grenade_blue"}
+
+splat_blue_1:
+  material: PAPER
+  name: "&fBlue Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_blue_1", particle: "paintball:item/splat_blue_1"}
+
+splat_blue_2:
+  material: PAPER
+  name: "&fBlue Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_blue_2", particle: "paintball:item/splat_blue_2"}
+
+splat_blue_3:
+  material: PAPER
+  name: "&fBlue Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_blue_3", particle: "paintball:item/splat_blue_3"}

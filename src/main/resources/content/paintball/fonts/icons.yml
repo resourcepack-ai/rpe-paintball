@@ -1,0 +1,200 @@
+# Glyphs the plugin writes into titles and the action bar.
+
+# Full-screen paint, shown as a title when you are hit and tinted the
+# shooter's colour. A title is drawn four times larger and its line sits 10
+# above the middle, so ascent = height/2 - 3 centres the picture on screen.
+
+screen_splat_1:
+  file: screen_splat_1
+  height: 96
+  ascent: 45
+
+screen_splat_2:
+  file: screen_splat_2
+  height: 96
+  ascent: 45
+
+screen_splat_3:
+  file: screen_splat_3
+  height: 96
+  ascent: 45
+
+pip:
+  file: pip
+  height: 7
+  ascent: 7
+
+grenade_icon:
+  file: grenade_icon
+  height: 8
+  ascent: 7
+
+# The HUD (huds/hud.json, drawn in Studio) prints these through its values.
+# Score and clock digits: 11 tall, hanging two pixels above a line of text.
+
+digit_0:
+  file: digits
+  grid: { rows: 1, columns: 10, cell: 1 }
+  height: 11
+  ascent: 9
+
+digit_1:
+  file: digits
+  grid: { rows: 1, columns: 10, cell: 2 }
+  height: 11
+  ascent: 9
+
+digit_2:
+  file: digits
+  grid: { rows: 1, columns: 10, cell: 3 }
+  height: 11
+  ascent: 9
+
+digit_3:
+  file: digits
+  grid: { rows: 1, columns: 10, cell: 4 }
+  height: 11
+  ascent: 9
+
+digit_4:
+  file: digits
+  grid: { rows: 1, columns: 10, cell: 5 }
+  height: 11
+  ascent: 9
+
+digit_5:
+  file: digits
+  grid: { rows: 1, columns: 10, cell: 6 }
+  height: 11
+  ascent: 9
+
+digit_6:
+  file: digits
+  grid: { rows: 1, columns: 10, cell: 7 }
+  height: 11
+  ascent: 9
+
+digit_7:
+  file: digits
+  grid: { rows: 1, columns: 10, cell: 8 }
+  height: 11
+  ascent: 9
+
+digit_8:
+  file: digits
+  grid: { rows: 1, columns: 10, cell: 9 }
+  height: 11
+  ascent: 9
+
+digit_9:
+  file: digits
+  grid: { rows: 1, columns: 10, cell: 10 }
+  height: 11
+  ascent: 9
+
+digit_colon:
+  file: digit_colon
+  height: 11
+  ascent: 9
+
+# The kill feed. Its panel is 13 tall, three pixels above and two below a line.
+
+feed_l_red:
+  file: feed_l_red
+  height: 13
+  ascent: 10
+
+feed_l_blue:
+  file: feed_l_blue
+  height: 13
+  ascent: 10
+
+feed_r_red:
+  file: feed_r_red
+  height: 13
+  ascent: 10
+
+feed_r_blue:
+  file: feed_r_blue
+  height: 13
+  ascent: 10
+
+feed_m1:
+  file: feed_m1
+  height: 13
+  ascent: 10
+
+feed_m2:
+  file: feed_m2
+  height: 13
+  ascent: 10
+
+feed_m4:
+  file: feed_m4
+  height: 13
+  ascent: 10
+
+feed_m8:
+  file: feed_m8
+  height: 13
+  ascent: 10
+
+feed_m16:
+  file: feed_m16
+  height: 13
+  ascent: 10
+
+feed_m32:
+  file: feed_m32
+  height: 13
+  ascent: 10
+
+feed_m64:
+  file: feed_m64
+  height: 13
+  ascent: 10
+
+feed_h1:
+  file: feed_h1
+  height: 13
+  ascent: 10
+
+feed_h2:
+  file: feed_h2
+  height: 13
+  ascent: 10
+
+feed_h4:
+  file: feed_h4
+  height: 13
+  ascent: 10
+
+feed_h8:
+  file: feed_h8
+  height: 13
+  ascent: 10
+
+feed_h16:
+  file: feed_h16
+  height: 13
+  ascent: 10
+
+feed_h32:
+  file: feed_h32
+  height: 13
+  ascent: 10
+
+feed_h64:
+  file: feed_h64
+  height: 13
+  ascent: 10
+
+feed_marker:
+  file: feed_marker
+  height: 9
+  ascent: 8
+
+hitmarker:
+  file: hitmarker
+  height: 9
+  ascent: 7

@@ -1,0 +1,52 @@
+# The marker: one model (assets/models/marker.json), a texture per skin.
+# The plugin hands these out; the names below are what /rp give shows.
+
+marker_classic:
+  material: PAPER
+  name: "&c&lClassic Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_classic", particle: "paintball:item/marker_classic"}
+
+marker_arctic:
+  material: PAPER
+  name: "&b&lArctic Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_arctic", particle: "paintball:item/marker_arctic"}
+
+marker_toxic:
+  material: PAPER
+  name: "&a&lToxic Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_toxic", particle: "paintball:item/marker_toxic"}
+
+marker_sunset:
+  material: PAPER
+  name: "&6&lSunset Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_sunset", particle: "paintball:item/marker_sunset"}
+
+marker_gold:
+  material: PAPER
+  name: "&e&lGold Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_gold", particle: "paintball:item/marker_gold"}

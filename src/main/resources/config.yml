@@ -1,0 +1,104 @@
+# Paintball, an RP Engine addon. Players /pb join; an op runs /pb start (alone is fine).
+# One mode: a hit splats you, you're back in a few seconds, and the team with
+# more kills when the clock runs out wins.
+
+match-seconds: 180
+# End early when a team reaches this many kills. 0 plays the whole clock.
+kill-limit: 0
+freeze-seconds: 3
+respawn-seconds: 3
+spawn-protection-seconds: 1.5
+grenades-per-life: 1
+# How long the final scoreboard stays up before everybody is back in the lobby.
+end-seconds: 12
+
+marker:
+  # Ticks between shots while the trigger is held (3 = about seven a second).
+  fire-interval-ticks: 3
+  hopper: 40
+  reload-seconds: 1.6
+  # Blocks per tick as the ball leaves the barrel, and what pulls it down.
+  speed: 2.4
+  gravity: 0.022
+  drag: 0.992
+  spread-degrees: 0.7
+  moving-spread-degrees: 2.4
+  lifetime-ticks: 60
+
+grenade:
+  fuse-ticks: 30
+  throw-speed: 1.1
+  radius: 3.5
+
+paint:
+  # The most splats one match keeps on the walls; the oldest go first.
+  max-decals: 1500
+
+# The HUD and the scoreboard are RP Engine content: this plugin installs them
+# into plugins/RPEngine/content/paintball/ (huds/hud.json and
+# dialogs/scoreboard.json, both drawn in ResourcePack AI Studio). Point these at
+# another HUD or dialog to replace them; it has to print the same values.
+ui:
+  hud: paintball:hud
+  scoreboard: paintball:scoreboard
+
+# Everything a player reads. MiniMessage; {prefix} is the prefix below, and the
+# other {names} are filled in by the plugin.
+messages:
+  prefix: "<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold> <#5F6368>▏</#5F6368><#E8EAED>"
+  brand: "<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold>"
+
+  joined-lobby: "{prefix}<#5BE37D>+</#5BE37D> <white>{player}</white> joined the lobby <#9AA0A6>({count})"
+  joined-team: "{prefix}<white>{player}</white> joined <{colour}>{team}</{colour}>."
+  left: "{prefix}<#FF5C5C>-</#FF5C5C> <white>{player}</white> left."
+  start-hint-op: "{prefix}Start whenever you like with <white>/pb start</white>."
+  start-hint: "{prefix}Waiting for an op to start the match."
+  already-in: "{prefix}<#FF5C5C>You're already in. <white>/pb leave</white> to go."
+  no-arena: "{prefix}<#FF5C5C>There's no arena yet. An op can build one with <white>/pb arena generate <id></white>."
+  arena-not-ready: "{prefix}<#FF5C5C>{arena} isn't set up: it needs {missing}."
+  not-during-match: "{prefix}<#FF5C5C>Not during a match. <white>/pb leave</white> to go."
+  restored: "{prefix}Your last match was cut short, so you've got your things back."
+  match-stopped: "{prefix}The match was stopped."
+  closed: "{prefix}Paintball is closed for now."
+
+  title-countdown: "<bold><#FFD23F>{seconds}"
+  title-team: "<#9AA0A6>You're on</#9AA0A6> <{colour}><bold>{team}</bold></{colour}>  <#5F6368>·</#5F6368>  <#9AA0A6>most kills wins"
+  title-go: "<bold><#5BE37D>GO!"
+  title-victory: "<bold><#5BE37D>VICTORY"
+  title-defeat: "<bold><#FF5C5C>DEFEAT"
+  title-draw: "<bold><#9AA0A6>DRAW"
+  title-score: "<bold><#FF4655>{red}</bold>  <#5F6368>—</#5F6368>  <bold><#2E9BFF>{blue}</bold>"
+
+  # Shown under the score while you're in the lobby.
+  lobby-bar: "<#9AA0A6>Lobby  <#5F6368>·</#5F6368>  <white>{count}</white> here  <#5F6368>·</#5F6368>  /pb leave to go"
+
+  # The HUD's words. Plain text: the HUD draws them in its own colours.
+  hud-get-ready: "GET READY"
+  hud-victory: "VICTORY"
+  hud-defeat: "DEFEAT"
+  hud-draw: "DRAW"
+  hud-splatted: "SPLATTED {player}"
+  hud-splatted-by: "SPLATTED BY {player}"
+  hud-protected: "PROTECTED"
+  hud-first-to: "FIRST TO {kills}"
+  hud-back-in: "BACK IN"
+  hud-reloading: "RELOADING"
+  hud-marker: "{skin} MARKER"
+
+  # The scoreboard dialog's heading.
+  scoreboard-victory: "VICTORY"
+  scoreboard-defeat: "DEFEAT"
+  scoreboard-draw: "DRAW"
+  scoreboard-live: "SCOREBOARD"
+  scoreboard-last: "LAST MATCH"
+
+  # The player list (Tab).
+  tab-header: "\n<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold>\n<#5F6368>{map}</#5F6368>\n\n<#FF4655><bold>RED  {red}</bold></#FF4655>     <white>{time}</white>     <#2E9BFF><bold>{blue}  BLUE</bold></#2E9BFF>\n"
+  tab-footer: "\n<#9AA0A6>Press <white><key:key.swapOffhand></white> for the full scoreboard</#9AA0A6>\n"
+
+  # The lobby's hotbar.
+  item-scoreboard: "<bold><#FFD23F>Scoreboard"
+  item-scoreboard-lore: "<#9AA0A6>The last match, player by player"
+  item-leave: "<bold><#FFD23F>Leave"
+  item-leave-lore: "<#9AA0A6>Back to where you were"
+  item-use: "<#5F6368>Right-click"

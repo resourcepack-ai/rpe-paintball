@@ -1,0 +1,25 @@
+name: RPEPaintball
+main: ai.resourcepack.addons.paintball.PaintballPlugin
+version: ${version}
+api-version: '1.21.11'
+description: 5v5 paintball for RP Engine - one hit and you're out for three seconds, most kills wins.
+author: ResourcePack AI
+# Hard, not soft: the marker, the paint, the HUD and the scoreboard are all
+# RP Engine content. This plugin is the game on top.
+depend: [RPEngine]
+softdepend: [Multiverse-Core]
+
+commands:
+  paintball:
+    description: Paintball - join, leave, the scoreboard; ops start and stop matches and build arenas.
+    usage: /<command> [join|leave|scoreboard|start|stop|arena|reload]
+    aliases: [pb]
+    permission: paintball.play
+
+permissions:
+  paintball.play:
+    description: Join, leave and see the scoreboard.
+    default: true
+  paintball.admin:
+    description: Start and stop matches, set up arenas, reload.
+    default: op

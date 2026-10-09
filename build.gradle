@@ -1,0 +1,63 @@
+plugins {
+    id 'java'
+}
+
+group = 'ai.resourcepack.addons'
+version = '0.3.0'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+// Paper 1.21.11 and newer, unlike the other addons' Spigot floor: the marker is
+// fired by holding use (a CONSUMABLE that never finishes, which needs the
+// use_effects component 1.21.11 added so a player can still run while holding
+// it), and the scoreboard's faces are the player-head text object 1.21.9 added.
+// A 1.21.11 server runs on Java 21.
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-Xlint:deprecation']
+}
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+}
+
+// The engine's jar, built beside this project. compileOnly, because the
+// engine is a plugin the server already has. ENGINE_JAR points at a
+// downloaded RPEngine jar instead.
+def engineJar = System.getenv('ENGINE_JAR')
+        ? files(System.getenv('ENGINE_JAR'))
+        : fileTree(dir: '../../rp-engine/build/libs', include: 'rp-engine-*.jar', exclude: '*-sources.jar')
+
+dependencies {
+    compileOnly 'io.papermc.paper:paper-api:1.21.11-R0.1-SNAPSHOT'
+    compileOnly engineJar
+}
+
+tasks.register('checkEngineJar') {
+    doFirst {
+        if (engineJar.files.isEmpty()) {
+            throw new GradleException(
+                    "No RP Engine jar to compile against. Build the engine first (cd ../../rp-engine && ./gradlew build) " +
+                    "or set ENGINE_JAR to a downloaded RPEngine jar.")
+        }
+    }
+}
+compileJava.dependsOn checkEngineJar
+
+processResources {
+    inputs.property('version', project.version)
+    filesMatching('plugin.yml') {
+        expand(version: project.version)
+    }
+}
+
+// RPE-paintball-<version>.jar: the deploy reads the version off the name.
+jar {
+    archiveBaseName.set('RPE-paintball')
+}

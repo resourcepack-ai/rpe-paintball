@@ -1,0 +1,1710 @@
+{
+ "parent": "block/block",
+ "textures": {
+  "atlas": "minecraft:block/speedball_paintball_marker_atlas",
+  "particle": "minecraft:block/speedball_paintball_marker_atlas"
+ },
+ "elements": [
+  {
+   "name": "receiver",
+   "from": [
+    5.5,
+    12,
+    1
+   ],
+   "to": [
+    10.5,
+    17,
+    13
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      3,
+      3.5,
+      4.25,
+      4.75
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      3,
+      3.5,
+      4.25,
+      4.75
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      0,
+      3.5,
+      3,
+      4.75
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      0,
+      3.5,
+      3,
+      4.75
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      3.25,
+      0,
+      4.5,
+      3
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      3.25,
+      0,
+      4.5,
+      3
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "barrel_collar",
+   "from": [
+    6,
+    13.5,
+    13
+   ],
+   "to": [
+    10,
+    17.5,
+    15
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      1.5,
+      4.75,
+      2.5,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      1.5,
+      4.75,
+      2.5,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      3.5,
+      4.75,
+      4,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      3.5,
+      4.75,
+      4,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      11.25,
+      4.75,
+      12.25,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      11.25,
+      4.75,
+      12.25,
+      5.25
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "straight_barrel",
+   "from": [
+    6.5,
+    14,
+    15
+   ],
+   "to": [
+    9.5,
+    17,
+    29
+   ],
+   "faces": {
+    "east": {
+     "uv": [
+      4.5,
+      4.75,
+      8,
+      5.5
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      4.5,
+      4.75,
+      8,
+      5.5
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      0,
+      0,
+      0.75,
+      3.5
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      0,
+      0,
+      0.75,
+      3.5
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "back_cap",
+   "from": [
+    6,
+    13,
+    0
+   ],
+   "to": [
+    10,
+    17,
+    1
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      1.5,
+      4.75,
+      2.5,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      4,
+      4.75,
+      4.25,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      4,
+      4.75,
+      4.25,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      3,
+      5.75,
+      4,
+      6
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "feed_neck",
+   "from": [
+    6.5,
+    17,
+    5
+   ],
+   "to": [
+    9.5,
+    20,
+    8
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      8,
+      4.75,
+      8.75,
+      5.5
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      8,
+      4.75,
+      8.75,
+      5.5
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      8,
+      4.75,
+      8.75,
+      5.5
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      8,
+      4.75,
+      8.75,
+      5.5
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      8,
+      4.75,
+      8.75,
+      5.5
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "grip_mount",
+   "from": [
+    6,
+    11,
+    2
+   ],
+   "to": [
+    10,
+    12,
+    6
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      3,
+      5.75,
+      4,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      3,
+      5.75,
+      4,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      3,
+      5.75,
+      4,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      3,
+      5.75,
+      4,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      1.5,
+      4.75,
+      2.5,
+      5.75
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "hopper_a_layer",
+   "from": [
+    4,
+    20,
+    4
+   ],
+   "to": [
+    12,
+    30,
+    8
+   ],
+   "faces": {
+    "up": {
+     "uv": [
+      11.5,
+      3.5,
+      13.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      11.5,
+      3.5,
+      13.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "hopper_b_layer",
+   "from": [
+    4,
+    23,
+    1
+   ],
+   "to": [
+    12,
+    27,
+    11
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      11.5,
+      3.5,
+      13.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      11.5,
+      3.5,
+      13.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "hopper_c_layer",
+   "from": [
+    4,
+    20,
+    4
+   ],
+   "to": [
+    12,
+    30,
+    8
+   ],
+   "faces": {
+    "up": {
+     "uv": [
+      11.5,
+      3.5,
+      13.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      11.5,
+      3.5,
+      13.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    }
+   },
+   "rotation": {
+    "origin": [
+     8,
+     25,
+     6
+    ],
+    "axis": "x",
+    "angle": 45
+   }
+  },
+  {
+   "name": "hopper_d_layer",
+   "from": [
+    4,
+    20,
+    4
+   ],
+   "to": [
+    12,
+    30,
+    8
+   ],
+   "faces": {
+    "up": {
+     "uv": [
+      11.5,
+      3.5,
+      13.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      11.5,
+      3.5,
+      13.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    }
+   },
+   "rotation": {
+    "origin": [
+     8,
+     25,
+     6
+    ],
+    "axis": "x",
+    "angle": -45
+   }
+  },
+  {
+   "name": "pressure_bottle_a",
+   "from": [
+    3,
+    3,
+    -15
+   ],
+   "to": [
+    13,
+    7,
+    -3
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      9,
+      3.5,
+      11.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      9,
+      3.5,
+      11.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      6,
+      3.5,
+      9,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      6,
+      3.5,
+      9,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      0.75,
+      0,
+      3.25,
+      3
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      0.75,
+      0,
+      3.25,
+      3
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "pressure_bottle_b",
+   "from": [
+    6,
+    0,
+    -14.94
+   ],
+   "to": [
+    10,
+    10,
+    -3.06
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      11,
+      0,
+      12,
+      2.5
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      11,
+      0,
+      12,
+      2.5
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      5.5,
+      0,
+      8.5,
+      2.5
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      5.5,
+      0,
+      8.5,
+      2.5
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      4.5,
+      0,
+      5.5,
+      3
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      4.5,
+      0,
+      5.5,
+      3
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "pressure_bottle_c",
+   "from": [
+    3,
+    3,
+    -15.06
+   ],
+   "to": [
+    13,
+    7,
+    -2.94
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      9,
+      3.5,
+      11.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      9,
+      3.5,
+      11.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      6,
+      3.5,
+      9,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      6,
+      3.5,
+      9,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      0.75,
+      0,
+      3.25,
+      3
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      0.75,
+      0,
+      3.25,
+      3
+     ],
+     "texture": "#atlas"
+    }
+   },
+   "rotation": {
+    "origin": [
+     8,
+     5,
+     -9
+    ],
+    "axis": "z",
+    "angle": 45
+   }
+  },
+  {
+   "name": "pressure_bottle_d",
+   "from": [
+    3,
+    3,
+    -14.88
+   ],
+   "to": [
+    13,
+    7,
+    -3.12
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      9,
+      3.5,
+      11.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      9,
+      3.5,
+      11.5,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      6,
+      3.5,
+      9,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      6,
+      3.5,
+      9,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      0.75,
+      0,
+      3.25,
+      3
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      0.75,
+      0,
+      3.25,
+      3
+     ],
+     "texture": "#atlas"
+    }
+   },
+   "rotation": {
+    "origin": [
+     8,
+     5,
+     -9
+    ],
+    "axis": "z",
+    "angle": -45
+   }
+  },
+  {
+   "name": "pistol_grip",
+   "from": [
+    6,
+    3,
+    2
+   ],
+   "to": [
+    10,
+    11,
+    6
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      12,
+      0,
+      13,
+      2
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      12,
+      0,
+      13,
+      2
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      13,
+      0,
+      14,
+      2
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      13,
+      0,
+      14,
+      2
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      2.5,
+      4.75,
+      3.5,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      2.5,
+      4.75,
+      3.5,
+      5.75
+     ],
+     "texture": "#atlas"
+    }
+   },
+   "free_rotation": {
+    "origin": [
+     8,
+     11,
+     2
+    ],
+    "angles": [
+     18.05,
+     0,
+     0
+    ]
+   },
+   "rotation": {
+    "origin": [
+     8,
+     11,
+     2
+    ],
+    "axis": "x",
+    "angle": 22.5
+   }
+  },
+  {
+   "name": "angled_air_adapter",
+   "from": [
+    6.06,
+    0.5,
+    -1
+   ],
+   "to": [
+    9.94,
+    2.5,
+    4
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      11.25,
+      4.75,
+      12.25,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      11.25,
+      4.75,
+      12.25,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      10,
+      4.75,
+      11.25,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      10,
+      4.75,
+      11.25,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      4.25,
+      3.5,
+      5.25,
+      4.75
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      4.25,
+      3.5,
+      5.25,
+      4.75
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "guard_front",
+   "from": [
+    7,
+    7,
+    11
+   ],
+   "to": [
+    9,
+    12,
+    12
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.25,
+      3.5,
+      5.75,
+      4.75
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      5.25,
+      3.5,
+      5.75,
+      4.75
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      5.75,
+      3.5,
+      6,
+      4.75
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      5.75,
+      3.5,
+      6,
+      4.75
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "guard_lower",
+   "from": [
+    7,
+    6,
+    6
+   ],
+   "to": [
+    9,
+    7,
+    12
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.75,
+      5.75,
+      6.25,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      5.75,
+      5.75,
+      6.25,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      0,
+      5.75,
+      1.5,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      0,
+      5.75,
+      1.5,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      14,
+      0,
+      14.5,
+      1.5
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      14,
+      0,
+      14.5,
+      1.5
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "guard_rear",
+   "from": [
+    7,
+    7,
+    6
+   ],
+   "to": [
+    9,
+    12,
+    7
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      5.25,
+      3.5,
+      5.75,
+      4.75
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      5.25,
+      3.5,
+      5.75,
+      4.75
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      5.75,
+      3.5,
+      6,
+      4.75
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      5.75,
+      3.5,
+      6,
+      4.75
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "red_muzzle_tip",
+   "from": [
+    6.5,
+    14,
+    29
+   ],
+   "to": [
+    9.5,
+    17,
+    31
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      8.75,
+      4.75,
+      9.5,
+      5.5
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      9.5,
+      4.75,
+      10,
+      5.5
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      9.5,
+      4.75,
+      10,
+      5.5
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      12.25,
+      4.75,
+      13,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      12.25,
+      4.75,
+      13,
+      5.25
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "blade_trigger",
+   "from": [
+    7.5,
+    8,
+    8
+   ],
+   "to": [
+    8.5,
+    12,
+    9
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      4.25,
+      4.75,
+      4.5,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      4.25,
+      4.75,
+      4.5,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      4.25,
+      4.75,
+      4.5,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      4.25,
+      4.75,
+      4.5,
+      5.75
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      6.25,
+      5.75,
+      6.5,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      6.25,
+      5.75,
+      6.5,
+      6
+     ],
+     "texture": "#atlas"
+    }
+   },
+   "free_rotation": {
+    "origin": [
+     8,
+     12,
+     9
+    ],
+    "angles": [
+     -12,
+     0,
+     0
+    ]
+   },
+   "rotation": {
+    "origin": [
+     8,
+     12,
+     9
+    ],
+    "axis": "x",
+    "angle": -22.5
+   }
+  },
+  {
+   "name": "rear_accent",
+   "from": [
+    6,
+    12,
+    0
+   ],
+   "to": [
+    10,
+    13,
+    1
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      4,
+      5.75,
+      5,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      6.25,
+      5.75,
+      6.5,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      6.25,
+      5.75,
+      6.5,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      4,
+      5.75,
+      5,
+      6
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "feed_clamp",
+   "from": [
+    6.5,
+    18,
+    8
+   ],
+   "to": [
+    9.5,
+    19,
+    9
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      5,
+      5.75,
+      5.75,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      6.25,
+      5.75,
+      6.5,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      6.25,
+      5.75,
+      6.5,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      5,
+      5.75,
+      5.75,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      5,
+      5.75,
+      5.75,
+      6
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "hopper_lid",
+   "from": [
+    5,
+    30,
+    4
+   ],
+   "to": [
+    11,
+    31,
+    8
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      1.5,
+      5.75,
+      3,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      1.5,
+      5.75,
+      3,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      4,
+      5.75,
+      5,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      4,
+      5.75,
+      5,
+      6
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      13.5,
+      3.5,
+      15,
+      4.5
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      0,
+      4.75,
+      1.5,
+      5.75
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "bottle_regulator",
+   "from": [
+    6.5,
+    1.5,
+    -3
+   ],
+   "to": [
+    9.5,
+    3.5,
+    -1
+   ],
+   "faces": {
+    "south": {
+     "uv": [
+      13,
+      4.75,
+      13.75,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      13.75,
+      4.75,
+      14.25,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      13,
+      4.75,
+      13.75,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      13,
+      4.75,
+      13.75,
+      5.25
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "regulator_gauge",
+   "from": [
+    9.5,
+    1.5,
+    -3
+   ],
+   "to": [
+    10.5,
+    3.5,
+    -1
+   ],
+   "faces": {
+    "north": {
+     "uv": [
+      14.75,
+      4.75,
+      15,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "south": {
+     "uv": [
+      14.75,
+      4.75,
+      15,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "east": {
+     "uv": [
+      14.25,
+      4.75,
+      14.75,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "up": {
+     "uv": [
+      14.75,
+      4.75,
+      15,
+      5.25
+     ],
+     "texture": "#atlas"
+    },
+    "down": {
+     "uv": [
+      14.75,
+      4.75,
+      15,
+      5.25
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "hopper_window_right",
+   "from": [
+    12.5,
+    20,
+    1
+   ],
+   "to": [
+    12.5,
+    30,
+    11
+   ],
+   "faces": {
+    "east": {
+     "uv": [
+      8.5,
+      0,
+      11,
+      2.5
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      8.5,
+      0,
+      11,
+      2.5
+     ],
+     "texture": "#atlas"
+    }
+   }
+  },
+  {
+   "name": "hopper_window_right_2",
+   "from": [
+    3.5,
+    20,
+    1
+   ],
+   "to": [
+    3.5,
+    30,
+    11
+   ],
+   "faces": {
+    "east": {
+     "uv": [
+      8.5,
+      0,
+      11,
+      2.5
+     ],
+     "texture": "#atlas"
+    },
+    "west": {
+     "uv": [
+      8.5,
+      0,
+      11,
+      2.5
+     ],
+     "texture": "#atlas"
+    }
+   }
+  }
+ ],
+ "groups": [
+  {
+   "name": "marker",
+   "origin": [
+    8,
+    0,
+    7
+   ],
+   "children": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22
+   ]
+  },
+  {
+   "name": "hopper",
+   "origin": [
+    8,
+    20,
+    6.5
+   ],
+   "children": [
+    6,
+    7,
+    8,
+    9,
+    23,
+    26,
+    27
+   ]
+  },
+  {
+   "name": "air_tank",
+   "origin": [
+    8,
+    5,
+    -1
+   ],
+   "children": [
+    10,
+    11,
+    12,
+    13,
+    24,
+    25
+   ]
+  }
+ ]
+}
