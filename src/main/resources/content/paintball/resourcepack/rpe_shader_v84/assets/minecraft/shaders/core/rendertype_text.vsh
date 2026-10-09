@@ -400,26 +400,26 @@ if (mark.r == 240 && mark.g == 0 && mark.b == 200) {
         matched = true;
       }
 if (mark.r == 240 && mark.g == 0 && mark.b == 208) {
-        delta = vec2((0.5 * gui.x + 0.0) - (floor(gui.x / 2.0) - 4.0), (0.5 * gui.y + 18.0) - (gui.y + -64.0));
-        vertexColor = vec4(0.604, 0.627, 0.651, Color.a);
-        rawColor = vec4(0.0); // Text always takes the vanilla fragment path.
-        matched = true;
-      } else if ((mark.r == 60 || mark.r == 59) && (mark.g == 0 || mark.g == -1) && (mark.b == 52 || mark.b == 51)) {
-        delta = vec2((0.5 * gui.x + 0.0) - (floor(gui.x / 2.0) - 4.0), (0.5 * gui.y + 18.0) - (gui.y + -64.0));
-        // A quarter of the authored colour, which is what a shadow is. Restored
-        // rather than left as the dimmed MARK, or the ghost would be a shadow of
-        // the address instead of a shadow of the label.
-        vertexColor = vec4(0.151, 0.157, 0.163, Color.a);
-        rawColor = vec4(0.0);
-        matched = true;
-      }
-if (mark.r == 240 && mark.g == 0 && mark.b == 216) {
         delta = vec2((0.5 * gui.x + 0.0) - (floor(gui.x / 2.0) - 4.0), (0.5 * gui.y + 30.0) - (gui.y + -64.0));
         vertexColor = vec4(1.000, 1.000, 1.000, Color.a);
         rawColor = vec4(0.0); // Text always takes the vanilla fragment path.
         matched = true;
-      } else if ((mark.r == 60 || mark.r == 59) && (mark.g == 0 || mark.g == -1) && (mark.b == 54 || mark.b == 53)) {
+      } else if ((mark.r == 60 || mark.r == 59) && (mark.g == 0 || mark.g == -1) && (mark.b == 52 || mark.b == 51)) {
         delta = vec2((0.5 * gui.x + 0.0) - (floor(gui.x / 2.0) - 4.0), (0.5 * gui.y + 30.0) - (gui.y + -64.0));
+        // A quarter of the authored colour, which is what a shadow is. Restored
+        // rather than left as the dimmed MARK, or the ghost would be a shadow of
+        // the address instead of a shadow of the label.
+        vertexColor = vec4(0.250, 0.250, 0.250, Color.a);
+        rawColor = vec4(0.0);
+        matched = true;
+      }
+if (mark.r == 240 && mark.g == 0 && mark.b == 216) {
+        delta = vec2((0.5 * gui.x + 0.0) - (floor(gui.x / 2.0) - 4.0), (0.5 * gui.y + 4.0) - (gui.y + -64.0));
+        vertexColor = vec4(1.000, 1.000, 1.000, Color.a);
+        rawColor = vec4(0.0); // Text always takes the vanilla fragment path.
+        matched = true;
+      } else if ((mark.r == 60 || mark.r == 59) && (mark.g == 0 || mark.g == -1) && (mark.b == 54 || mark.b == 53)) {
+        delta = vec2((0.5 * gui.x + 0.0) - (floor(gui.x / 2.0) - 4.0), (0.5 * gui.y + 4.0) - (gui.y + -64.0));
         // A quarter of the authored colour, which is what a shadow is. Restored
         // rather than left as the dimmed MARK, or the ghost would be a shadow of
         // the address instead of a shadow of the label.

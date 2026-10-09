@@ -30,6 +30,10 @@ public final class GamePlayer {
     long lastKillAt;
     /** The hit marker is up until this tick. */
     long hitUntil;
+    /** Down the sights: zoomed, slower, and every ball goes exactly where the crosshair is. */
+    boolean aiming;
+    /** When aiming last changed, so one click is one toggle. */
+    long aimChangedAt;
     /** The last place they stood inside the arena, for putting them back when they stray. */
     Location lastInside;
 
@@ -74,6 +78,7 @@ public final class GamePlayer {
         lastKill = null;
         lastKillAt = 0;
         hitUntil = 0;
+        aiming = false;
     }
 
     /** Valorant orders a team by combat score; here that is kills, then fewer deaths, then hits. */

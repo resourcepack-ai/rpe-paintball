@@ -64,25 +64,32 @@ def mix(a, b, t):
 # ---------------------------------------------------------------------------
 
 SKINS = {
-    # name: (accent, ball, body tint (h, s) or None, body lightness map, tank (h, s))
-    "classic": dict(accent=0xFF4655, ball=0xFF4655, body=None, tank=None),
-    "arctic": dict(accent=0x8FD8FF, ball=0x8FD8FF, body=("white", 0.58, 0.10), tank=(0.55, 0.12)),
-    "toxic": dict(accent=0x7CFF4F, ball=0x7CFF4F, body=("dark", 0.36, 0.18), tank=(0.33, 0.35)),
-    "sunset": dict(accent=0xFF8A3D, accent2=0xFF4FA3, ball=0xFF8A3D, body=("dark", 0.76, 0.42), tank=(0.92, 0.38)),
-    "gold": dict(accent=0xFFC94A, ball=0xFFC94A, body=None, tank=(0.12, 0.62)),
+    # body: (hue, saturation, lightness factor) for the tan furniture, or None to keep it;
+    # accent: the colour the blue trim becomes, or None to keep it.
+    "ember": dict(display="Ember", body=None, accent=0xFF4655),
+    "tide": dict(display="Tide", body=None, accent=None),
+    "toxic": dict(display="Toxic", body=(0.21, 0.42, 0.62), accent=0x7CFF4F),
+    "sunset": dict(display="Sunset", body=(0.76, 0.40, 0.62), accent=0xFF8A3D),
+    "gold": dict(display="Gold", body=(0.60, 0.10, 0.30), accent=0xFFC94A),
 }
+TAN_V = 198 / 255   # the furniture's main tan, which the lightness map is measured from
+TRIM_V = 200 / 255  # the main blue of the trim
+
+# Parts of the marker that sit between the eye and the sights when it is aimed.
+# The aimed first-person model leaves them out; everybody else still sees them.
+BEHIND_THE_SIGHTS = ("hopper", "air_bottle", "tank_", "stock_end", "pressure_gauge", "feed_neck")
 
 
-def classify(r, g, b):
+def classify(r, g, b, a):
     h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
     deg = h * 360
-    if s > 0.45 and (deg >= 320 or deg <= 20) and v > 0.35:
-        return "accent", h, s, v
-    if 175 <= deg <= 235 and s > 0.12 and v > 0.4:
-        return "tank", h, s, v
-    if 20 < deg < 70 and s > 0.4:
-        return "window", h, s, v
-    return "body", h, s, v
+    if a < 255:
+        return "lens", h, s, v
+    if 20 <= deg <= 55 and s > 0.25 and v > 0.4:
+        return "body", h, s, v
+    if 185 <= deg <= 220 and s > 0.45:
+        return "trim", h, s, v
+    return "metal", h, s, v
 
 
 def recolour(atlas, skin):
@@ -90,85 +97,79 @@ def recolour(atlas, skin):
     out = atlas.copy()
     px = out.load()
     w, hgt = out.size
-    acc = hexrgb(cfg["accent"])
-    acc2 = hexrgb(cfg.get("accent2", cfg["accent"]))
-    ah, as_, av = colorsys.rgb_to_hsv(*(c / 255 for c in acc))
+    if cfg["accent"] is not None:
+        ah, as_, av = colorsys.rgb_to_hsv(*(c / 255 for c in hexrgb(cfg["accent"])))
     for y in range(hgt):
         for x in range(w):
             r, g, b, a = px[x, y]
             if a == 0:
                 continue
-            kind, h, s, v = classify(r, g, b)
-            if kind == "accent":
-                if skin == "classic":
-                    continue
-                # keep the shading of the original red, in the new colour
-                k = v / 0.93
-                base = mix(acc2, acc, min(1, max(0, (v - 0.55) / 0.4))) if "accent2" in cfg else acc
-                nr, ng, nb = shade(base, 0.55 + 0.5 * k)
-                px[x, y] = (nr, ng, nb, a)
-            elif kind == "tank" and cfg["tank"] is not None:
-                th, ts = cfg["tank"]
-                nr, ng, nb = colorsys.hsv_to_rgb(th, ts, min(1, v * 1.02))
+            kind, h, s, v = classify(r, g, b, a)
+            if kind == "trim" and cfg["accent"] is not None:
+                # the trim's own shading, in the new colour
+                nr, ng, nb = colorsys.hsv_to_rgb(ah, min(1, as_ * s / 0.82), min(1, av * v / TRIM_V))
                 px[x, y] = (int(nr * 255), int(ng * 255), int(nb * 255), a)
             elif kind == "body" and cfg["body"] is not None:
-                mode, bh, bs = cfg["body"]
-                if mode == "white":
-                    nv = 0.97 - v * 0.55
-                    nr, ng, nb = colorsys.hsv_to_rgb(bh, bs * 0.6, nv)
-                else:
-                    nr, ng, nb = colorsys.hsv_to_rgb(bh, bs, min(1, v * 1.15 + 0.03))
+                bh, bs, bv = cfg["body"]
+                nr, ng, nb = colorsys.hsv_to_rgb(bh, bs, min(1, bv * v / TAN_V))
                 px[x, y] = (int(nr * 255), int(ng * 255), int(nb * 255), a)
-    paint_window(out, hexrgb(cfg["ball"]), skin)
     return out
-
-
-def paint_window(img, ball, skin):
-    """The hopper's window (atlas px 34..44 x 0..10): smoked plastic with paintballs inside."""
-    d = img.load()
-    smoke = (58, 66, 78) if skin != "arctic" else (150, 170, 190)
-    rim = (24, 27, 33) if skin != "arctic" else (210, 220, 230)
-    for y in range(0, 10):
-        for x in range(34, 44):
-            cx, cy = x - 38.5, y - 4.5
-            r = math.hypot(cx, cy)
-            if r > 5.2:
-                continue
-            col = rim if r > 4.2 else mix(smoke, (110, 125, 140), max(0, (-cx - cy) / 10))
-            d[x, y] = col + (255,)
-    for bx, by in [(36, 5), (39, 6), (41, 4), (37, 2), (40, 2)]:
-        for dx, dy, k in [(0, 0, 1.0), (1, 0, 0.85), (0, 1, 0.75), (1, 1, 0.6)]:
-            d[bx + dx, by + dy] = shade(ball, k) + (255,)
-        d[bx, by] = mix(ball, (255, 255, 255), 0.45) + (255,)
 
 
 def marker():
     model = json.load(open(os.path.join(SRC, "marker_generated.json"), encoding="utf-8"))
     model.pop("parent", None)
     model.pop("groups", None)
-    model["textures"] = {"atlas": "paintball:item/marker_classic", "particle": "paintball:item/marker_classic"}
-    # Barrel along +z, hopper up +y, 46 units long with the grip near the middle.
-    # First person points down the line of sight, turned 6 degrees in so the
-    # barrel meets the crosshair a few blocks out, low and to the right like any
-    # FPS (tools/preview_display.py draws it; the game mirrors the left hand).
+    model["textures"] = {"atlas": "paintball:item/marker_ember", "particle": "paintball:item/marker_ember"}
+    # Studio's Tactical marker: barrel along +z (muzzle at 32), stock at -16,
+    # the red dot's lens at (6, 19, 14). Hip fire holds it low and to the right
+    # like any FPS, turned 14 degrees in so the barrel points across at the
+    # crosshair (tools/preview_fp.py draws it the way the game projects it).
     # In third person the item frame is +x out, +y forward, +z up, so
     # rotationXYZ(90, 180, 0) lays it barrel-forward, hopper-up; 72 instead of
     # 90 takes back the 18 degrees the arm is raised by when holding an item.
-    model["display"] = {
+    display = {
         "thirdperson_righthand": {"rotation": [72, 180, 0], "translation": [0, 1.5, 1.5], "scale": [0.4, 0.4, 0.4]},
         "thirdperson_lefthand": {"rotation": [72, 180, 0], "translation": [0, 1.5, 1.5], "scale": [0.4, 0.4, 0.4]},
-        "firstperson_righthand": {"rotation": [0, 186, -2], "translation": [4, -4, -6], "scale": [0.32, 0.32, 0.32]},
-        "firstperson_lefthand": {"rotation": [0, 186, -2], "translation": [4, -4, -6], "scale": [0.32, 0.32, 0.32]},
+        "firstperson_righthand": {"rotation": [-4, 194, -4], "translation": [2.5, -2.8, -9], "scale": [0.42, 0.42, 0.42]},
+        "firstperson_lefthand": {"rotation": [-4, 194, -4], "translation": [2.5, -2.8, -9], "scale": [0.42, 0.42, 0.42]},
         "gui": {"rotation": [20, 115, 0], "translation": [0.8, -2.2, 0], "scale": [0.3, 0.3, 0.3]},
         "ground": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [0.25, 0.25, 0.25]},
         "fixed": {"rotation": [0, -90, 0], "translation": [0, -2.4, 0], "scale": [0.34, 0.34, 0.34]},
         "head": {"rotation": [0, 180, 0], "translation": [0, 0, 0], "scale": [0.4, 0.4, 0.4]},
     }
+    model["display"] = display
     model["gui_light"] = "side"
     save_json(model, "models", "marker.json")
+
+    # Aimed, as the holder sees it: the sights on the line of sight, the eye
+    # twenty pixels behind the lens, and nothing that would be between them.
+    # The lens itself is left open: the HUD's crosshair is the reticle.
+    sights = json.loads(json.dumps(model))
+    sights["elements"] = [e for e in sights["elements"] if not e.get("name", "").startswith(BEHIND_THE_SIGHTS)]
+    for e in sights["elements"]:
+        if e.get("name") == "sight_lens":
+            e["faces"] = {}
+    sights["elements"] = [e for e in sights["elements"] if e.get("faces")]
+    aim = aim_transform((6, 19, 14), distance=0.45, scale=0.40)
+    sights["display"] = {"firstperson_righthand": aim, "firstperson_lefthand": aim}
+    save_json(sights, "models", "marker_sights.json")
+
     atlas = Image.open(os.path.join(SRC, "marker_atlas.png")).convert("RGBA")
     for skin in SKINS:
         recolour(atlas, skin).save(path("textures", "item", f"marker_{skin}.png"))
+
+
+def aim_transform(sight, distance, scale):
+    """The first-person display that puts model pixel `sight` dead ahead of the eye, `distance` blocks out.
+
+    The right hand's arm transform is (0.56, -0.52, -0.72); the model is turned
+    half a turn about y so its +z barrel points away from the eye.
+    """
+    x, y, z = [c / 16 - 0.5 for c in sight]
+    turned = (-x, y, -z)
+    t = [0 - 0.56 - scale * turned[0], 0 + 0.52 - scale * turned[1], -distance + 0.72 - scale * turned[2]]
+    return {"rotation": [0, 180, 0], "translation": [round(v * 16, 3) for v in t], "scale": [scale] * 3}
 
 
 # ---------------------------------------------------------------------------
@@ -537,7 +538,6 @@ MARKER_ICON = [
     "........##..........",
 ]
 
-HITMARKER = ["##.....##", "###...###", ".##...##.", ".........", ".........", ".........", ".##...##.", "###...###", "##.....##"]
 
 
 def bitmap(rows, colour=(255, 255, 255, 255)):
@@ -579,7 +579,83 @@ def hud_glyphs():
         hi.save(path("textures", "font", f"feed_h{w}.png"))
 
     bitmap(MARKER_ICON).save(path("textures", "font", "feed_marker.png"))
-    bitmap(HITMARKER).save(path("textures", "font", "hitmarker.png"))
+    hitmarker().save(path("textures", "font", "hitmarker.png"))
+    for n, gap in CROSSHAIRS.items():
+        crosshair(gap).save(path("textures", "font", f"xhair_{n}.png"))
+
+
+# The crosshair, drawn by the HUD over the game's own (the HUD is drawn after it).
+# The game puts its 1-pixel plus at floor((w - 15) / 2) + 7, which is half a pixel
+# up and left of the middle on an even screen and on it on an odd one; a 2-pixel
+# plus over the middle covers it either way, and is the thinnest one that does.
+# Each glyph is the plus and, from the hip, four ticks this far out: aimed,
+# standing, moving, in the air. Glyph pixel (c, r) lands at (c - R - 1, r - R - 1)
+# from the middle of the screen: the engine centres the run on its width, 2R + 2,
+# and an ascent of R + 4 hangs it there (fonts/icons.yml).
+CROSSHAIRS = {0: None, 1: 7, 2: 10, 3: 13}
+TICK = 3
+PLUS = 5  # the plus reaches this far from the middle, past the game's 4.5
+
+
+HIT_R = 8  # the hit marker's glyph is 2R + 1 square, centred the way the crosshair is
+
+
+def hitmarker():
+    """Four short diagonals round the crosshair, clear of its plus: a hit, without hiding the aim."""
+    n = 2 * HIT_R + 1
+    img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    px = img.load()
+    ink = set()
+    for k in range(3, 7):
+        for x, y in ((k, k), (-k - 1, k), (k, -k - 1), (-k - 1, -k - 1)):
+            ink.add((x + HIT_R + 1, y + HIT_R + 1))
+            # two pixels wide along the diagonal, so it reads at any GUI scale
+            ink.add((x + HIT_R + 1 + (1 if x >= 0 else -1), y + HIT_R + 1))
+    for x, y in ink:
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if 0 <= x + dx < n and 0 <= y + dy < n and (x + dx, y + dy) not in ink:
+                    px[x + dx, y + dy] = (10, 12, 16, 150)
+    for x, y in ink:
+        px[x, y] = (255, 255, 255, 255)
+    if not any(img.getpixel((n - 1, y))[3] for y in range(n)):
+        px[n - 1, 0] = FAINT
+    return img
+
+
+def crosshair_radius(gap):
+    return (gap + TICK if gap else PLUS) + 1
+
+
+def crosshair(gap):
+    R = crosshair_radius(gap)
+    n = 2 * R + 1
+    img = Image.new("RGBA", (n, n), (0, 0, 0, 0))
+    px = img.load()
+    ink = set()
+
+    def rect(x0, x1, y0, y1):  # from the middle, half-open
+        for x in range(x0, x1):
+            for y in range(y0, y1):
+                ink.add((x + R + 1, y + R + 1))
+
+    rect(-1, 1, -PLUS, PLUS)
+    rect(-PLUS, PLUS, -1, 1)
+    if gap:
+        rect(-1, 1, -(gap + TICK), -gap)
+        rect(-1, 1, gap, gap + TICK)
+        rect(-(gap + TICK), -gap, -1, 1)
+        rect(gap, gap + TICK, -1, 1)
+    for x, y in ink:
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if 0 <= x + dx < n and 0 <= y + dy < n and (x + dx, y + dy) not in ink:
+                    px[x + dx, y + dy] = (10, 12, 16, 160)
+    for x, y in ink:
+        px[x, y] = (255, 255, 255, 255)
+    if not any(img.getpixel((n - 1, y))[3] for y in range(n)):
+        px[n - 1, 0] = FAINT
+    return img
 
 # ---------------------------------------------------------------------------
 # Sounds
@@ -700,15 +776,20 @@ def sounds():
 # ---------------------------------------------------------------------------
 
 def definitions():
-    lines = ["# The marker: one model (assets/models/marker.json), a texture per skin.",
-             "# The plugin hands these out; the names below are what /rp give shows.", ""]
-    names = {"classic": ("Classic", "c"), "arctic": ("Arctic", "b"), "toxic": ("Toxic", "a"),
-             "sunset": ("Sunset", "6"), "gold": ("Gold", "e")}
-    lore = ["  lore:", '    - "&7Hold &fright-click&7 to fire"', '    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"']
-    for skin, (nice, code) in names.items():
-        lines += [f"marker_{skin}:", "  material: PAPER", f'  name: "&{code}&l{nice} Marker"'] + lore + ["  model:",
-                  "    parent: paintball:marker",
-                  f"    textures: {{atlas: \"paintball:item/marker_{skin}\", particle: \"paintball:item/marker_{skin}\"}}", ""]
+    lines = ["# The marker: one model (assets/models/marker.json), a texture per skin, and an",
+             "# aimed twin of each whose holder sees the sights. The plugin hands these out.", ""]
+    codes = {"ember": "c", "tide": "9", "toxic": "a", "sunset": "6", "gold": "e"}
+    lore = ["  lore:", '    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"',
+            '    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"']
+    for skin, cfg in SKINS.items():
+        textures = f"    textures: {{atlas: \"paintball:item/marker_{skin}\", particle: \"paintball:item/marker_{skin}\"}}"
+        name = f'  name: "&{codes[skin]}&l{cfg["display"]} Marker"'
+        lines += [f"marker_{skin}:", "  material: PAPER", name] + lore + ["  model:", "    parent: paintball:marker", textures, ""]
+        # Aimed: the plugin swaps this in on a left click. Everybody else sees
+        # the same marker; its holder sees the sights (models/marker_sights.json).
+        lines += [f"marker_{skin}_aim:", "  material: PAPER", name] + lore + [
+            "  model:", "    parent: paintball:marker", textures,
+            "  first-person:", "    parent: paintball:marker_sights", textures, ""]
     write_text("\n".join(lines), "items", "markers.yml")
 
     lines = ["# Team gear and the things the plugin draws in the world:",
@@ -748,7 +829,12 @@ def definitions():
     for name in names:
         icons += [f"{name}:", f"  file: {name}", f"  height: {FEED_H}", "  ascent: 10", ""]
     icons += ["feed_marker:", "  file: feed_marker", "  height: 9", "  ascent: 8", "",
-              "hitmarker:", "  file: hitmarker", "  height: 9", "  ascent: 7", ""]
+              "# Centred on the crosshair: half a pixel up and left of the middle, where",
+              "# the game's own plus is on a screen an even number of pixels across.",
+              "hitmarker:", "  file: hitmarker", f"  height: {2 * HIT_R + 1}", f"  ascent: {HIT_R + 4}", ""]
+    for n, gap in CROSSHAIRS.items():
+        R = crosshair_radius(gap)
+        icons += [f"xhair_{n}:", f"  file: xhair_{n}", f"  height: {2 * R + 1}", f"  ascent: {R + 4}", ""]
     write_text("\n".join(icons), "fonts", "icons.yml")
 
     snd = ["# Synthesised by tools/make_assets.py.", ""]

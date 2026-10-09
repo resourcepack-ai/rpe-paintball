@@ -42,6 +42,11 @@ final class Fx {
         content.sound(p.getLocation(), "reload", 0.8f, 1f, Sound.ITEM_CROSSBOW_LOADING_MIDDLE);
     }
 
+    /** The sights coming up, or going down. */
+    void aim(Player p, boolean up) {
+        p.playSound(p.getLocation(), up ? Sound.ITEM_SPYGLASS_USE : Sound.ITEM_SPYGLASS_STOP_USING, 0.6f, up ? 1.3f : 1.1f);
+    }
+
     void reloadDone(Player p) {
         p.playSound(p.getLocation(), Sound.ITEM_CROSSBOW_LOADING_END, 0.7f, 1.4f);
     }

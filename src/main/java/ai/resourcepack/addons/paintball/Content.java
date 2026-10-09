@@ -31,9 +31,21 @@ public final class Content {
         return ContentId.parse(NS + ":" + path).orElseThrow();
     }
 
-    /** A fresh stack of one of our items, or paper if the engine does not have it. */
+    private final java.util.Set<String> missing = java.util.concurrent.ConcurrentHashMap.newKeySet();
+
+    /**
+     * A fresh stack of one of our items, or paper if the engine does not have
+     * it, which is said once in the log: a match played with plain paper is
+     * otherwise a mystery (nothing fires, nothing is aimed).
+     */
     public ItemStack item(String path) {
-        return engine.items().create(id(path)).orElseGet(() -> new ItemStack(Material.PAPER));
+        return engine.items().create(id(path)).orElseGet(() -> {
+            if (missing.add(path)) {
+                org.bukkit.Bukkit.getLogger().warning("[RPEPaintball] RP Engine has no item " + NS + ":" + path
+                        + ". Is the paintball content installed (plugins/RPEngine/content/paintball) and loaded (/rp reload)?");
+            }
+            return new ItemStack(Material.PAPER);
+        });
     }
 
     public boolean is(ItemStack stack, String path) {

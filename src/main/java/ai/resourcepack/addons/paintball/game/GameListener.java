@@ -16,8 +16,11 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import io.papermc.paper.event.player.PlayerArmSwingEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
+import org.bukkit.event.player.PlayerToggleSprintEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerInteractEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
@@ -38,6 +41,8 @@ public final class GameListener implements Listener {
     private final PaintballPlugin plugin;
     private final GameManager games;
     private final Content content;
+    /** The tick each player last dropped (pressed Q), to tell the game's drop swing from a click. */
+    private final java.util.Map<java.util.UUID, Integer> dropped = new java.util.HashMap<>();
 
     public GameListener(PaintballPlugin plugin) {
         this.plugin = plugin;
@@ -47,6 +52,7 @@ public final class GameListener implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
+        dropped.remove(e.getPlayer().getUniqueId());
         games.leave(e.getPlayer());
     }
 
@@ -102,6 +108,7 @@ public final class GameListener implements Listener {
     public void onDrop(PlayerDropItemEvent e) {
         Game g = games.of(e.getPlayer());
         if (g == null) return;
+        dropped.put(e.getPlayer().getUniqueId(), Bukkit.getCurrentTick());
         e.setCancelled(true);
         if (Loadout.isMarker(content, e.getItemDrop().getItemStack())) g.reload(e.getPlayer());
     }
@@ -149,7 +156,43 @@ public final class GameListener implements Listener {
         if (right && Loadout.isGrenade(content, item)) {
             e.setCancelled(true);
             g.throwGrenade(p);
+            return;
         }
+        boolean left = e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK;
+        if (left && Loadout.isMarker(content, item)) e.setCancelled(true);
+    }
+
+    /**
+     * A left click with the marker aims, or stops aiming. The swing is what the
+     * server hears for every left click (the marker has no reach, so there is
+     * never a hit instead, and no swing animation, so nothing is seen); the one
+     * swing that is not a click is the one the game adds to dropping an item,
+     * which here is Q to reload, so a swing straight after a drop is let go.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onSwing(PlayerArmSwingEvent e) {
+        if (e.getHand() != EquipmentSlot.HAND) return;
+        Player p = e.getPlayer();
+        Game g = games.of(p);
+        if (g == null || !Loadout.isMarker(content, p.getInventory().getItemInMainHand())) return;
+        Integer drop = dropped.get(p.getUniqueId());
+        if (drop != null && Bukkit.getCurrentTick() - drop <= 2) return;
+        g.toggleAim(p);
+    }
+
+    /** Another slot in hand: the sights come down (the marker in the hotbar goes back to hip). */
+    @EventHandler(ignoreCancelled = true)
+    public void onHeld(PlayerItemHeldEvent e) {
+        Game g = games.of(e.getPlayer());
+        if (g != null) g.lowerAim(e.getPlayer());
+    }
+
+    /** Nobody sprints down the sights. */
+    @EventHandler(ignoreCancelled = true)
+    public void onSprint(PlayerToggleSprintEvent e) {
+        if (!e.isSprinting()) return;
+        Game g = games.of(e.getPlayer());
+        if (g != null) g.lowerAim(e.getPlayer());
     }
 
     @EventHandler(ignoreCancelled = true)

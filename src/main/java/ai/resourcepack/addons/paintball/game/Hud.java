@@ -160,7 +160,7 @@ final class Hud {
     // ---- the HUD ---------------------------------------------------------------------
 
     private void drawHud(GamePlayer gp, Player p) {
-        Map<String, String> values = values(gp);
+        Map<String, String> values = values(gp, p);
         String signature = String.join("|", values.values());
         if (signature.equals(drawn.get(p.getUniqueId()))) return;
         drawn.put(p.getUniqueId(), signature);
@@ -173,12 +173,12 @@ final class Hud {
     private static List<String> names() {
         List<String> out = new java.util.ArrayList<>(List.of("pb_red", "pb_blue", "pb_time", "pb_status", "pb_status_hot",
                 "pb_ammo", "pb_ammo_cap", "pb_ammo_n", "pb_ammo_max", "pb_gun", "pb_gun_hot", "pb_nade",
-                "pb_respawn", "pb_respawn_lbl", "pb_hit"));
+                "pb_respawn", "pb_hit", "pb_xhair"));
         for (int k = 1; k <= FEED_LINES; k++) for (String s : FEED_SUFFIXES) out.add("pb_f" + k + s);
         return out;
     }
 
-    private Map<String, String> values(GamePlayer gp) {
+    private Map<String, String> values(GamePlayer gp, Player p) {
         var s = game.settings();
         Messages m = messages();
         Map<String, String> v = new LinkedHashMap<>();
@@ -225,11 +225,17 @@ final class Hud {
         v.put("pb_gun_hot", reloading ? m.plain("hud-reloading") : "");
         v.put("pb_nade", armed ? icon("grenade_icon") + overlays().space(2) + gp.grenades : "");
 
-        // The middle of the screen: the countdown while out, the hit marker while in.
+        // The middle of the screen: the countdown while out; while in, the hit
+        // marker and the spread round the crosshair (the crosshair itself is the
+        // HUD's own, drawn over the game's). Down the sights there is no spread.
         boolean out = game.phase == Game.Phase.LIVE && !gp.alive && gp.respawnAt > 0;
-        v.put("pb_respawn_lbl", out ? m.plain("hud-back-in") : "");
         v.put("pb_respawn", out ? digits(String.valueOf(Math.max(1, (gp.respawnAt - game.now + 19) / 20))) : "");
         v.put("pb_hit", armed && game.now < gp.hitUntil ? icon("hitmarker") : "");
+        // The crosshair is the HUD's own, a plus drawn over the game's (which is
+        // why it is there whenever the game's would be): from the hip it carries
+        // the spread, down the sights it is the plus alone.
+        int ticks = armed && !gp.aiming ? spreadTicks(game.combat.spreadDegrees(gp, p)) : 0;
+        v.put("pb_xhair", p.getGameMode() != org.bukkit.GameMode.SPECTATOR ? icon("xhair_" + ticks) : "");
 
         int k = 1;
         for (Game.Kill kill : game.feed) {
@@ -283,6 +289,11 @@ final class Hud {
         v.put(p + "_kb", kill.killerTeam() == Team.BLUE ? killer : "");
         v.put(p + "_vr", kill.victimTeam() == Team.RED ? victim : "");
         v.put(p + "_vb", kill.victimTeam() == Team.BLUE ? victim : "");
+    }
+
+    /** Which ring of spread ticks a spread draws: standing, moving, flying. */
+    private static int spreadTicks(double degrees) {
+        return degrees < 1.0 ? 1 : degrees < 2.4 ? 2 : 3;
     }
 
     /** Numbers in the HUD's big digits. Anything else is left as it is. */

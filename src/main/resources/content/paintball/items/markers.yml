@@ -1,52 +1,117 @@
-# The marker: one model (assets/models/marker.json), a texture per skin.
-# The plugin hands these out; the names below are what /rp give shows.
+# The marker: one model (assets/models/marker.json), a texture per skin, and an
+# aimed twin of each whose holder sees the sights. The plugin hands these out.
 
-marker_classic:
+marker_ember:
   material: PAPER
-  name: "&c&lClassic Marker"
+  name: "&c&lEmber Marker"
   lore:
-    - "&7Hold &fright-click&7 to fire"
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
     - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
   model:
     parent: paintball:marker
-    textures: {atlas: "paintball:item/marker_classic", particle: "paintball:item/marker_classic"}
+    textures: {atlas: "paintball:item/marker_ember", particle: "paintball:item/marker_ember"}
 
-marker_arctic:
+marker_ember_aim:
   material: PAPER
-  name: "&b&lArctic Marker"
+  name: "&c&lEmber Marker"
   lore:
-    - "&7Hold &fright-click&7 to fire"
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
     - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
   model:
     parent: paintball:marker
-    textures: {atlas: "paintball:item/marker_arctic", particle: "paintball:item/marker_arctic"}
+    textures: {atlas: "paintball:item/marker_ember", particle: "paintball:item/marker_ember"}
+  first-person:
+    parent: paintball:marker_sights
+    textures: {atlas: "paintball:item/marker_ember", particle: "paintball:item/marker_ember"}
+
+marker_tide:
+  material: PAPER
+  name: "&9&lTide Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_tide", particle: "paintball:item/marker_tide"}
+
+marker_tide_aim:
+  material: PAPER
+  name: "&9&lTide Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_tide", particle: "paintball:item/marker_tide"}
+  first-person:
+    parent: paintball:marker_sights
+    textures: {atlas: "paintball:item/marker_tide", particle: "paintball:item/marker_tide"}
 
 marker_toxic:
   material: PAPER
   name: "&a&lToxic Marker"
   lore:
-    - "&7Hold &fright-click&7 to fire"
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
     - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
   model:
     parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_toxic", particle: "paintball:item/marker_toxic"}
+
+marker_toxic_aim:
+  material: PAPER
+  name: "&a&lToxic Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_toxic", particle: "paintball:item/marker_toxic"}
+  first-person:
+    parent: paintball:marker_sights
     textures: {atlas: "paintball:item/marker_toxic", particle: "paintball:item/marker_toxic"}
 
 marker_sunset:
   material: PAPER
   name: "&6&lSunset Marker"
   lore:
-    - "&7Hold &fright-click&7 to fire"
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
     - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
   model:
     parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_sunset", particle: "paintball:item/marker_sunset"}
+
+marker_sunset_aim:
+  material: PAPER
+  name: "&6&lSunset Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_sunset", particle: "paintball:item/marker_sunset"}
+  first-person:
+    parent: paintball:marker_sights
     textures: {atlas: "paintball:item/marker_sunset", particle: "paintball:item/marker_sunset"}
 
 marker_gold:
   material: PAPER
   name: "&e&lGold Marker"
   lore:
-    - "&7Hold &fright-click&7 to fire"
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
     - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
   model:
     parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_gold", particle: "paintball:item/marker_gold"}
+
+marker_gold_aim:
+  material: PAPER
+  name: "&e&lGold Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_gold", particle: "paintball:item/marker_gold"}
+  first-person:
+    parent: paintball:marker_sights
     textures: {atlas: "paintball:item/marker_gold", particle: "paintball:item/marker_gold"}

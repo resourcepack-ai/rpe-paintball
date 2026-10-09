@@ -113,29 +113,46 @@ final class Combat {
 
     void reload(GamePlayer gp, Player p) {
         if (gp.reloading > 0 || gp.ammo >= s().hopper) return;
+        game.aim(gp, p, false);
         gp.reloading = s().reloadTicks;
         fx.reloadStart(p);
     }
 
+    /**
+     * How far a shot may stray from the crosshair now, in degrees: none down the
+     * sights, a little from the hip, more on the move or in the air, half of
+     * either crouched. The HUD draws the same number as its spread ticks.
+     */
     @SuppressWarnings("deprecation") // isOnGround: only widens the spread
-    private void fire(GamePlayer gp, Player p) {
-        Location eye = p.getEyeLocation();
-        Vector aim = eye.getDirection();
+    double spreadDegrees(GamePlayer gp, Player p) {
+        if (gp.aiming) return s().aimSpread;
         double spread = s().spread;
         Vector v = p.getVelocity();
         boolean moving = Math.hypot(v.getX(), v.getZ()) > 0.09 || !p.isOnGround() || p.isSprinting();
         if (moving) spread += s().movingSpread;
         if (p.isSneaking()) spread *= 0.5;
-        Vector dir = scatter(aim, Math.toRadians(spread));
+        return spread;
+    }
+
+    private void fire(GamePlayer gp, Player p) {
+        Location eye = p.getEyeLocation();
+        Vector aim = eye.getDirection();
+        Vector origin = eye.toVector();
+        // Where the crosshair is, then the direction that lands a ball there:
+        // the drop is aimed off, so the crosshair is where the paint goes.
+        Vector target = crosshairTarget(gp, eye);
+        Vector dir = scatter(launchTowards(origin, target), Math.toRadians(spreadDegrees(gp, p)));
 
         // The simulation starts at the eye, so a ball goes where the crosshair is;
         // the ball you SEE starts at the barrel and slides onto that line.
         Vector right = aim.clone().crossProduct(new Vector(0, 1, 0));
         if (right.lengthSquared() < 1e-6) right = new Vector(1, 0, 0);
         right.normalize();
-        Vector muzzle = eye.toVector().add(aim.clone().multiply(0.6)).add(right.multiply(0.24)).add(new Vector(0, -0.2, 0));
+        // Down the sights the barrel is under the crosshair rather than off to the right.
+        Vector muzzle = eye.toVector().add(aim.clone().multiply(0.6))
+                .add(right.multiply(gp.aiming ? 0.0 : 0.24)).add(new Vector(0, gp.aiming ? -0.12 : -0.2, 0));
 
-        Ball b = new Ball(gp, gp.team, eye.toVector(), dir.multiply(s().speed));
+        Ball b = new Ball(gp, gp.team, origin.clone(), dir.multiply(s().speed));
         World w = p.getWorld();
         b.display = w.spawn(muzzle.toLocation(w), ItemDisplay.class, e -> {
             e.setPersistent(false);
@@ -150,6 +167,63 @@ final class Combat {
         });
         balls.add(b);
         fx.shot(eye);
+    }
+
+    /**
+     * What the crosshair is on: the first block, or the first enemy a ball
+     * could hit, along the line of sight; or, with nothing in range, a point
+     * that far out.
+     */
+    private Vector crosshairTarget(GamePlayer gp, Location eye) {
+        Vector look = eye.getDirection();
+        RayTraceResult hit = eye.getWorld().rayTrace(eye, look, s().range, FluidCollisionMode.ALWAYS, true, 0.12,
+                e -> mayHit(gp, e));
+        return hit != null ? hit.getHitPosition() : eye.toVector().add(look.clone().multiply(s().range));
+    }
+
+    /**
+     * The direction to fire from {@code origin} so the ball, dropping and
+     * slowing exactly as {@link #tickBalls} moves it, passes through
+     * {@code target}. Aims at the target, flies the ball to its distance, and
+     * aims off by however much it missed; three or four rounds and it is under
+     * a hundredth of a block. A target out of the ball's reach gets the
+     * straight line.
+     */
+    Vector launchTowards(Vector origin, Vector target) {
+        Vector line = target.clone().subtract(origin);
+        double distance = line.length();
+        if (distance < 0.5) return line.lengthSquared() < 1e-9 ? new Vector(0, 0, 1) : line.normalize();
+        Vector axis = line.clone().normalize();
+        Vector aimAt = target.clone();
+        Vector dir = axis.clone();
+        for (int i = 0; i < 6; i++) {
+            dir = aimAt.clone().subtract(origin).normalize();
+            Vector at = flyTo(origin, dir, axis, distance);
+            if (at == null) return axis;
+            Vector miss = target.clone().subtract(at);
+            if (miss.lengthSquared() < 1e-4) break;
+            aimAt.add(miss);
+        }
+        return dir;
+    }
+
+    /** Where a ball fired along {@code dir} is when it has come {@code distance} along {@code axis}, or null if it never does. */
+    private Vector flyTo(Vector origin, Vector dir, Vector axis, double distance) {
+        Settings s = s();
+        Vector pos = origin.clone();
+        Vector vel = dir.clone().multiply(s.speed);
+        for (int tick = 0; tick <= s.lifetimeTicks; tick++) {
+            Vector next = pos.clone().add(vel);
+            double before = pos.clone().subtract(origin).dot(axis);
+            double after = next.clone().subtract(origin).dot(axis);
+            if (after >= distance) {
+                double t = after - before < 1e-9 ? 0 : (distance - before) / (after - before);
+                return pos.add(vel.clone().multiply(t));
+            }
+            pos = next;
+            vel.multiply(s.drag).subtract(new Vector(0, s.gravity, 0));
+        }
+        return null;
     }
 
     /** A direction nudged by up to {@code radians}, evenly over the cone. */

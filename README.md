@@ -16,8 +16,10 @@ Paper 1.21.11 or newer, with RP Engine 0.2.3 or newer.
 | **F** or `/pb scoreboard` | The match scoreboard |
 | **Tab** | The live player list: score and clock on top, each player's kills / deaths |
 
-In a match: hold right-click to fire, Q reloads (it also reloads itself when empty),
-right-click the grenade to throw it.
+In a match: hold right-click to fire, left-click to aim down the sights (zoomed,
+slower, no spread), Q reloads (it also reloads itself when empty), right-click the
+grenade to throw it. Every ball is fired so that, drop and all, it lands exactly on
+the crosshair; from the hip it strays by the spread the crosshair's ticks show.
 
 ## Everything you see is RP Engine content
 
@@ -32,8 +34,13 @@ screen is drawn by this plugin:
   sets its values (`pb_red`, `pb_time`, `pb_f1`..., see `game/Hud.java`).
 - **The scoreboard** is `dialogs/scoreboard.json`, a Studio dialog: both teams'
   tables with faces, kills, deaths and accuracy.
-- **The marker, mask, balls, splats, grenade, HUD glyphs and sounds** are
-  ordinary items, icons and sounds. Their names and lore are in `items/*.yml`.
+- **The marker** is Studio's Tactical model in five colourways (Ember for red,
+  Tide for blue), each with an aimed twin (`marker_<skin>_aim`) whose holder sees
+  `models/marker_sights.json` down the sights instead (RP Engine's `first-person:`).
+- **The crosshair** is the HUD's own, a 2-pixel plus drawn over the game's 1-pixel
+  one (the HUD is drawn after it), with spread ticks from the hip.
+- **The mask, balls, splats, grenade, HUD glyphs and sounds** are ordinary items,
+  icons and sounds. Item names and lore are in `items/*.yml`.
 - **Every word a player reads** is in `config.yml` under `messages:`.
 
 `config.yml`'s `ui.hud` and `ui.scoreboard` point at other content ids to

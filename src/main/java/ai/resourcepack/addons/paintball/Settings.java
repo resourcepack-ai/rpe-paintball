@@ -20,6 +20,9 @@ public final class Settings {
     public final double drag;
     public final double spread;
     public final double movingSpread;
+    public final double aimSpread;
+    public final double aimSlowdown;
+    public final double range;
     public final int lifetimeTicks;
 
     public final int fuseTicks;
@@ -48,6 +51,9 @@ public final class Settings {
         drag = c.getDouble("marker.drag", 0.992);
         spread = c.getDouble("marker.spread-degrees", 0.7);
         movingSpread = c.getDouble("marker.moving-spread-degrees", 2.4);
+        aimSpread = Math.max(0, c.getDouble("marker.aim-spread-degrees", 0.0));
+        aimSlowdown = Math.max(0, Math.min(0.9, c.getDouble("marker.aim-slowdown", 0.55)));
+        range = Math.max(8, c.getDouble("marker.range", 96));
         lifetimeTicks = Math.max(5, c.getInt("marker.lifetime-ticks", 60));
 
         fuseTicks = Math.max(5, c.getInt("grenade.fuse-ticks", 30));

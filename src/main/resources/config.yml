@@ -23,6 +23,13 @@ marker:
   drag: 0.992
   spread-degrees: 0.7
   moving-spread-degrees: 2.4
+  # Left click aims down the sights: no spread at all, and slower on your feet.
+  # The slowdown is also the zoom (the game narrows the view as you slow down).
+  aim-spread-degrees: 0.0
+  aim-slowdown: 0.55
+  # How far out the crosshair finds what you are aiming at. Every ball is fired
+  # so that, drop and all, it lands there.
+  range: 96
   lifetime-ticks: 60
 
 grenade:
@@ -81,7 +88,6 @@ messages:
   hud-splatted-by: "SPLATTED BY {player}"
   hud-protected: "PROTECTED"
   hud-first-to: "FIRST TO {kills}"
-  hud-back-in: "BACK IN"
   hud-reloading: "RELOADING"
   hud-marker: "{skin} MARKER"
 

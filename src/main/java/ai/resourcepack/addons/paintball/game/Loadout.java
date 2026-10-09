@@ -6,9 +6,11 @@ import ai.resourcepack.addons.paintball.Skin;
 import ai.resourcepack.addons.paintball.Team;
 import ai.resourcepack.addons.paintball.Text;
 import io.papermc.paper.datacomponent.DataComponentTypes;
+import io.papermc.paper.datacomponent.item.AttackRange;
 import io.papermc.paper.datacomponent.item.Consumable;
 import io.papermc.paper.datacomponent.item.DyedItemColor;
 import io.papermc.paper.datacomponent.item.Equippable;
+import io.papermc.paper.datacomponent.item.SwingAnimation;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
 import io.papermc.paper.datacomponent.item.UseEffects;
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
@@ -40,12 +42,18 @@ public final class Loadout {
 
     /** Each team carries its own colourway of the one marker model. */
     static Skin skin(Team team) {
-        return team == Team.BLUE ? Skin.ARCTIC : Skin.CLASSIC;
+        return team == Team.BLUE ? Skin.TIDE : Skin.EMBER;
     }
 
     public static boolean isMarker(Content content, ItemStack stack) {
         String id = content.idOf(stack);
         return id != null && id.startsWith("marker_");
+    }
+
+    /** Whether a marker is the aimed twin. */
+    public static boolean isAimed(Content content, ItemStack stack) {
+        String id = content.idOf(stack);
+        return id != null && id.startsWith("marker_") && id.endsWith("_aim");
     }
 
     public static boolean isGrenade(Content content, ItemStack stack) {
@@ -60,9 +68,26 @@ public final class Loadout {
      */
     @SuppressWarnings("UnstableApiUsage")
     public static ItemStack marker(Content content, Skin skin) {
+        return marker(content, skin, false);
+    }
+
+    /**
+     * The marker, hip or aimed. Both are PAPER, so swapping one for the other in
+     * the hand does not stop a held trigger: the game only drops an item in use
+     * when the item itself changes, and its components are not the item.
+     *
+     * <p>A left click aims rather than swings: no swing animation, and no reach
+     * to hit anybody with, so every left click is a miss the server hears.
+     */
+    @SuppressWarnings("UnstableApiUsage")
+    public static ItemStack marker(Content content, Skin skin, boolean aimed) {
         // The name and the lore are the item's own (items/markers.yml); what is
         // added here is how it behaves.
-        ItemStack item = content.item(skin.item());
+        ItemStack item = content.item(aimed ? skin.aimedItem() : skin.item());
+        item.setData(DataComponentTypes.SWING_ANIMATION, SwingAnimation.swingAnimation()
+                .type(SwingAnimation.Animation.NONE).build());
+        item.setData(DataComponentTypes.ATTACK_RANGE, AttackRange.attackRange()
+                .minReach(0f).maxReach(0f).minCreativeReach(0f).maxCreativeReach(0f).hitboxMargin(0f).build());
         item.setData(DataComponentTypes.MAX_STACK_SIZE, 1);
         item.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable()
                 .consumeSeconds(3600)
@@ -139,7 +164,7 @@ public final class Loadout {
     static void lobby(Content content, Messages messages, Player p) {
         PlayerInventory inv = p.getInventory();
         inv.clear();
-        ItemStack marker = marker(content, Skin.CLASSIC);
+        ItemStack marker = marker(content, Skin.EMBER);
         marker.unsetData(DataComponentTypes.CONSUMABLE);
         inv.setItem(0, marker);
         inv.setItem(7, lobbyItem(new ItemStack(Material.GOLD_INGOT), SCOREBOARD, messages, "item-scoreboard"));

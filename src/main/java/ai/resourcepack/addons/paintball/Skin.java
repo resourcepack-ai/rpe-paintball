@@ -2,30 +2,24 @@ package ai.resourcepack.addons.paintball;
 
 import net.kyori.adventure.text.format.TextColor;
 
-/** The marker's looks: one model, a texture each. */
+/** The marker's looks: one model, a texture each, and an aimed twin of each (items/markers.yml). */
 public enum Skin {
-    CLASSIC("Classic", "Black anodised, red trim. The one everybody starts with.", 0xFF4655),
-    ARCTIC("Arctic", "Frosted white with ice-blue hardware.", 0x8FD8FF),
-    TOXIC("Toxic", "Gunmetal and a glowing green you can see from the other base.", 0x7CFF4F),
-    SUNSET("Sunset", "Violet body, orange and pink fade.", 0xFF8A3D),
-    GOLD("Gold", "Black and gold. For the ones who never miss.", 0xFFC94A);
+    EMBER("Ember", 0xFF4655),
+    TIDE("Tide", 0x2E9BFF),
+    TOXIC("Toxic", 0x7CFF4F),
+    SUNSET("Sunset", 0xFF8A3D),
+    GOLD("Gold", 0xFFC94A);
 
     private final String display;
-    private final String blurb;
     private final int rgb;
 
-    Skin(String display, String blurb, int rgb) {
+    Skin(String display, int rgb) {
         this.display = display;
-        this.blurb = blurb;
         this.rgb = rgb;
     }
 
     public String display() {
         return display;
-    }
-
-    public String blurb() {
-        return blurb;
     }
 
     public TextColor color() {
@@ -37,9 +31,14 @@ public enum Skin {
         return "marker_" + name().toLowerCase();
     }
 
+    /** The same marker aimed: everybody sees the marker, its holder sees down the sights. */
+    public String aimedItem() {
+        return item() + "_aim";
+    }
+
     public static Skin parse(String s) {
-        if (s == null) return CLASSIC;
+        if (s == null) return EMBER;
         for (Skin k : values()) if (k.name().equalsIgnoreCase(s)) return k;
-        return CLASSIC;
+        return EMBER;
     }
 }

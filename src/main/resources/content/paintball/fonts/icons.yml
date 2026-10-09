@@ -194,7 +194,29 @@ feed_marker:
   height: 9
   ascent: 8
 
+# Centred on the crosshair: half a pixel up and left of the middle, where
+# the game's own plus is on a screen an even number of pixels across.
 hitmarker:
   file: hitmarker
-  height: 9
-  ascent: 7
+  height: 17
+  ascent: 12
+
+xhair_0:
+  file: xhair_0
+  height: 13
+  ascent: 10
+
+xhair_1:
+  file: xhair_1
+  height: 23
+  ascent: 15
+
+xhair_2:
+  file: xhair_2
+  height: 29
+  ascent: 18
+
+xhair_3:
+  file: xhair_3
+  height: 35
+  ascent: 21

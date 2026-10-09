@@ -369,16 +369,16 @@
   {
    "id": "t34",
    "x": 0,
-   "y": 14,
-   "text": "{pb_respawn_lbl}",
-   "color": "#9aa0a6",
+   "y": 26,
+   "text": "{pb_respawn}",
+   "color": "#ffffff",
    "pin": "center"
   },
   {
    "id": "t35",
    "x": 0,
-   "y": 26,
-   "text": "{pb_respawn}",
+   "y": 0,
+   "text": "{pb_xhair}",
    "color": "#ffffff",
    "pin": "center"
   },

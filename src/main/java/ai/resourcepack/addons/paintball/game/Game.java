@@ -41,6 +41,7 @@ public final class Game {
     public enum Phase { WAITING, FREEZE, LIVE, ENDED }
 
     private static NamespacedKey FREEZE_KEY;
+    private static NamespacedKey AIM_KEY;
 
     final PaintballPlugin plugin;
     final Arena arena;
@@ -78,6 +79,7 @@ public final class Game {
         this.combat = new Combat(this, content, fx);
         this.hud = new Hud(this);
         if (FREEZE_KEY == null) FREEZE_KEY = new NamespacedKey(plugin, "freeze");
+        if (AIM_KEY == null) AIM_KEY = new NamespacedKey(plugin, "aim");
         for (Team t : Team.values()) kills.put(t, 0);
     }
 
@@ -162,6 +164,7 @@ public final class Game {
         if (gp == null) return;
         if (live()) gp.left = true;
         else players.remove(p.getUniqueId());
+        aim(gp, p, false);
         unfreeze(p);
         hud.leave(p);
         if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
@@ -312,6 +315,7 @@ public final class Game {
         gp.reloading = 0;
         gp.grenades = s.grenadesPerLife;
         gp.protectedUntil = first ? 0 : now + s.protectionTicks;
+        aim(gp, p, false);
         Location at = first ? slotFor(gp) : spawnFor(gp);
         if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
         p.setGameMode(GameMode.ADVENTURE);
@@ -364,6 +368,7 @@ public final class Game {
         fx.hitConfirm(sp);
         if (vp != null) {
             // The paint on their screen is the title; who did it is on the HUD.
+            aim(victim, vp, false);
             fx.knockedOut(vp);
             vp.getInventory().clear();
             vp.setGameMode(GameMode.SPECTATOR);
@@ -387,6 +392,7 @@ public final class Game {
         for (GamePlayer gp : active()) {
             Player p = gp.player();
             if (p == null) continue;
+            aim(gp, p, false);
             unfreeze(p);
             if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
             p.setGameMode(GameMode.ADVENTURE);
@@ -480,6 +486,51 @@ public final class Game {
         gp.grenades--;
         combat.throwGrenade(gp, p);
         Loadout.grenades(content, p, gp);
+    }
+
+    /** A left click with the marker: up to the sights, or back down. */
+    public void toggleAim(Player p) {
+        GamePlayer gp = players.get(p.getUniqueId());
+        if (gp == null || phase != Phase.LIVE || !gp.alive || now - gp.aimChangedAt < 4) return;
+        if (!gp.aiming && gp.reloading > 0) return;
+        aim(gp, p, !gp.aiming);
+    }
+
+    /** Down from the sights, if they were up: a new weapon in hand, a sprint. */
+    public void lowerAim(Player p) {
+        GamePlayer gp = players.get(p.getUniqueId());
+        if (gp != null && gp.aiming) aim(gp, p, false);
+    }
+
+    /**
+     * Up to the sights or back down. Aimed, the marker in the hotbar is its
+     * aimed twin (the holder sees down the sights, everybody else the marker),
+     * every ball goes exactly to the crosshair, and the player is slowed, which
+     * is also the zoom: the game narrows the view of a player who walks slower.
+     */
+    void aim(GamePlayer gp, Player p, boolean on) {
+        boolean changed = gp.aiming != on;
+        gp.aiming = on;
+        if (changed) gp.aimChangedAt = now;
+        if (p == null) return;
+        var inv = p.getInventory();
+        int held = inv.getHeldItemSlot();
+        for (int slot = 0; slot < 9; slot++) {
+            if (!Loadout.isMarker(content, inv.getItem(slot)) || gp.team == null) continue;
+            boolean aimed = on && slot == held;
+            if (Loadout.isAimed(content, inv.getItem(slot)) != aimed) {
+                inv.setItem(slot, Loadout.marker(content, Loadout.skin(gp.team), aimed));
+            }
+        }
+        AttributeInstance speed = p.getAttribute(Attribute.MOVEMENT_SPEED);
+        if (speed != null) {
+            if (speed.getModifier(AIM_KEY) != null) speed.removeModifier(AIM_KEY);
+            if (on) {
+                speed.addTransientModifier(new AttributeModifier(AIM_KEY, -settings().aimSlowdown,
+                        AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+            }
+        }
+        if (changed) fx.aim(p, on);
     }
 
     public void reload(Player p) {
