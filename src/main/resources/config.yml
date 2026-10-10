@@ -2,7 +2,7 @@
 # One mode: a hit splats you, you're back in a few seconds, and the team with
 # more kills when the clock runs out wins.
 
-match-seconds: 180
+match-seconds: 60
 # End early when a team reaches this many kills. 0 plays the whole clock.
 kill-limit: 0
 freeze-seconds: 3
