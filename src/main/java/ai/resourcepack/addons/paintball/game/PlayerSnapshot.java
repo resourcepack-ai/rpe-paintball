@@ -48,9 +48,7 @@ public final class PlayerSnapshot {
 
     public void take(Player p) {
         YamlConfiguration y = new YamlConfiguration();
-        ItemStack[] contents = p.getInventory().getContents();
-        for (int i = 0; i < contents.length; i++) if (contents[i] == null) contents[i] = ItemStack.empty();
-        y.set("inventory", Base64.getEncoder().encodeToString(ItemStack.serializeItemsAsBytes(contents)));
+        y.set("items", java.util.Arrays.asList(p.getInventory().getContents()));
         Location l = p.getLocation();
         y.set("world", l.getWorld().getName());
         y.set("pos", List.of(l.getX(), l.getY(), l.getZ(), (double) l.getYaw(), (double) l.getPitch()));
@@ -78,9 +76,9 @@ public final class PlayerSnapshot {
         YamlConfiguration y = YamlConfiguration.loadConfiguration(f);
         reset(p);
         try {
-            String inv = y.getString("inventory");
-            if (inv != null) p.getInventory().setContents(ItemStack.deserializeItemsFromBytes(Base64.getDecoder().decode(inv)));
-        } catch (RuntimeException e) {
+            ItemStack[] contents = contents(y);
+            if (contents != null) p.getInventory().setContents(contents);
+        } catch (RuntimeException | ReflectiveOperationException e) {
             log.severe("Could not read " + p.getName() + "'s saved inventory (kept at " + f.getName() + ".bad): " + e.getMessage());
             f.renameTo(new File(dir, f.getName() + ".bad"));
             return false;
@@ -114,6 +112,24 @@ public final class PlayerSnapshot {
         }
         f.delete();
         return true;
+    }
+
+    /**
+     * The saved inventory: a list of items (written on Spigot and Paper alike),
+     * or, from a snapshot an older build took on Paper, Paper's own bytes, which
+     * only Paper can read back.
+     */
+    private static ItemStack[] contents(YamlConfiguration y) throws ReflectiveOperationException {
+        List<?> items = y.getList("items");
+        if (items != null) {
+            ItemStack[] out = new ItemStack[items.size()];
+            for (int i = 0; i < out.length; i++) out[i] = items.get(i) instanceof ItemStack s ? s : null;
+            return out;
+        }
+        String bytes = y.getString("inventory");
+        if (bytes == null) return null;
+        return (ItemStack[]) ItemStack.class.getMethod("deserializeItemsFromBytes", byte[].class)
+                .invoke(null, (Object) Base64.getDecoder().decode(bytes));
     }
 
     /** A clean slate: empty inventory, full health and food, no effects, not on fire. */

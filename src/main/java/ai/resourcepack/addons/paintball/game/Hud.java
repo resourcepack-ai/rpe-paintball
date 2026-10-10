@@ -5,15 +5,11 @@ import ai.resourcepack.addons.paintball.Settings;
 import ai.resourcepack.addons.paintball.Team;
 import ai.resourcepack.addons.paintball.Text;
 import ai.resourcepack.engine.api.Overlays;
-import io.papermc.paper.scoreboard.numbers.NumberFormat;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.Criteria;
-import org.bukkit.scoreboard.DisplaySlot;
-import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 
 import java.util.HashMap;
@@ -67,7 +63,6 @@ final class Hud {
 
     private final Game game;
     private final Scoreboard board;
-    private final Objective tab;
     /** What was last drawn for each player, so an unchanged HUD is not sent again. */
     private final Map<UUID, String> drawn = new HashMap<>();
     /** Who has the HUD on screen: kept apart from {@link #drawn}, which is cleared to force a redraw. */
@@ -79,14 +74,12 @@ final class Hud {
         // Sorted by name, so red is listed above blue, as a scoreboard should be.
         for (Team t : Team.values()) {
             org.bukkit.scoreboard.Team st = board.registerNewTeam((t == Team.RED ? "a_" : "b_") + t.id());
-            st.color(t == Team.RED ? NamedTextColor.RED : NamedTextColor.BLUE);
+            st.setColor(t == Team.RED ? ChatColor.RED : ChatColor.BLUE);
             // Enemies' names stay hidden: you find them by looking, not through walls.
             st.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, org.bukkit.scoreboard.Team.OptionStatus.FOR_OWN_TEAM);
             st.setOption(org.bukkit.scoreboard.Team.Option.COLLISION_RULE, org.bukkit.scoreboard.Team.OptionStatus.NEVER);
             st.setAllowFriendlyFire(false);
         }
-        tab = board.registerNewObjective("paintball_kd", Criteria.DUMMY, Component.text("K / D"));
-        tab.setDisplaySlot(DisplaySlot.PLAYER_LIST);
     }
 
     private Overlays overlays() {
@@ -112,12 +105,11 @@ final class Hud {
         for (String key : names()) overlays().set(p, key, null);
         drawn.remove(p.getUniqueId());
         shown.remove(p.getUniqueId());
-        board.resetScores(p.getName());
         for (org.bukkit.scoreboard.Team st : board.getTeams()) st.removeEntry(p.getName());
         p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
-        p.playerListName(null);
-        p.sendPlayerListHeaderAndFooter(Component.empty(), Component.empty());
-        p.sendActionBar(Component.empty());
+        p.setPlayerListName(null);
+        p.setPlayerListHeaderFooter("", "");
+        Text.actionBar(p, Component.empty());
     }
 
     void close() {
@@ -131,25 +123,31 @@ final class Hud {
             for (String e : new HashSet<>(st.getEntries())) st.removeEntry(e);
         }
         for (GamePlayer gp : game.active()) {
-            Player p = gp.player();
             if (gp.team != null) {
                 org.bukkit.scoreboard.Team st = board.getTeam((gp.team == Team.RED ? "a_" : "b_") + gp.team.id());
                 if (st != null) st.addEntry(gp.name);
-            }
-            if (p != null) {
-                p.playerListName(gp.team == null ? Text.plain(gp.name, Text.BODY)
-                        : Component.text().append(Component.text("▍", gp.team.color())).append(Text.plain(" " + gp.name, Text.BODY)).build());
             }
         }
         refreshScores();
     }
 
-    /** Each player's kills and deaths, right-aligned in the player list. */
+    /**
+     * Each player's line in the player list: their team's colour, their name,
+     * and in a match their kills and deaths after it. In the name rather than a
+     * score beside it, because a score is a number and Spigot has no way to
+     * show one as "3 / 1".
+     */
     void refreshScores() {
         for (GamePlayer gp : game.active()) {
-            var score = tab.getScore(gp.name);
-            score.setScore(gp.stats.kills);
-            score.numberFormat(NumberFormat.fixed(Component.text()
+            Player p = gp.player();
+            if (p == null) continue;
+            if (gp.team == null) {
+                p.setPlayerListName(Text.legacy(Text.plain(gp.name, Text.BODY)));
+                continue;
+            }
+            p.setPlayerListName(Text.legacy(Component.text()
+                    .append(Text.plain("▍", gp.team.color()))
+                    .append(Text.plain(" " + gp.name + "  ", Text.BODY))
                     .append(Text.plain(String.valueOf(gp.stats.kills), Text.BODY).decorate(TextDecoration.BOLD))
                     .append(Text.plain(" / ", Text.DIM))
                     .append(Text.plain(String.valueOf(gp.stats.deaths), Text.MUTED)).build()));
@@ -168,16 +166,16 @@ final class Hud {
                     // between the lobby's action bars.
                     drawn.remove(p.getUniqueId());
                     if (shown.remove(p.getUniqueId())) overlays().hide(p, hudId());
-                    p.sendActionBar(lobbyBar(gp));
+                    Text.actionBar(p, lobbyBar(gp));
                 } else {
                     drawHud(gp, p);
                 }
             }
         }
         if (game.now % 10 == 0) {
-            Component header = header();
-            Component footer = messages().component("tab-footer");
-            for (Player p : game.online()) p.sendPlayerListHeaderAndFooter(header, footer);
+            String header = Text.legacy(header());
+            String footer = Text.legacy(messages().component("tab-footer"));
+            for (Player p : game.online()) p.setPlayerListHeaderFooter(header, footer);
         }
     }
 

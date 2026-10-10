@@ -3,7 +3,6 @@ package ai.resourcepack.addons.paintball.arena;
 import ai.resourcepack.addons.paintball.Team;
 import ai.resourcepack.addons.paintball.Text;
 import ai.resourcepack.addons.paintball.game.GameManager;
-import net.kyori.adventure.text.Component;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -45,16 +44,16 @@ public final class ArenaSetup implements Listener {
     public Arena create(Player p, String id, String name) {
         id = id.toLowerCase();
         if (!ArenaStore.ID.matcher(id).matches()) {
-            p.sendMessage(Text.error("An arena id is lower-case letters, digits, - and _ (up to 32)."));
+            Text.send(p, Text.error("An arena id is lower-case letters, digits, - and _ (up to 32)."));
             return null;
         }
         if (store.get(id) != null) {
-            p.sendMessage(Text.error("There's already an arena called " + id + "."));
+            Text.send(p, Text.error("There's already an arena called " + id + "."));
             return null;
         }
         Arena a = new Arena(id, name == null || name.isBlank() ? pretty(id) : name, p.getWorld().getName());
         store.put(a);
-        p.sendMessage(Text.msg("Created <#FFD23F>" + a.name() + "</#FFD23F> in <white>" + a.worldName()
+        Text.send(p, Text.msg("Created <#FFD23F>" + a.name() + "</#FFD23F> in <white>" + a.worldName()
                 + "</white>. Now: setwaiting, addspawn red/blue, wand + setbounds, enable."));
         return a;
     }
@@ -72,13 +71,13 @@ public final class ArenaSetup implements Listener {
     private boolean sameWorld(Player p, Arena a) {
         if (a.waiting() == null && a.spawnCount(Team.RED) == 0 && a.spawnCount(Team.BLUE) == 0 && a.bounds() == null) return true;
         if (p.getWorld().getName().equals(a.worldName())) return true;
-        p.sendMessage(Text.error(a.name() + " is in " + a.worldName() + "; go there first."));
+        Text.send(p, Text.error(a.name() + " is in " + a.worldName() + "; go there first."));
         return false;
     }
 
     private boolean idle(Player p, Arena a) {
         if (games.existing(a.id()) != null && games.existing(a.id()).live()) {
-            p.sendMessage(Text.error("A match is being played on " + a.name() + ". <white>/pb stop " + a.id() + "</white> first."));
+            Text.send(p, Text.error("A match is being played on " + a.name() + ". <white>/pb stop " + a.id() + "</white> first."));
             return false;
         }
         return true;
@@ -88,7 +87,7 @@ public final class ArenaSetup implements Listener {
         if (!sameWorld(p, a)) return;
         a.waiting(p.getLocation());
         store.save();
-        p.sendMessage(Text.msg("Waiting spot set."));
+        Text.send(p, Text.msg("Waiting spot set."));
     }
 
     public void addSpawn(Player p, Arena a, Team t) {
@@ -102,7 +101,7 @@ public final class ArenaSetup implements Listener {
         }
         a.addSpawn(t, at);
         store.save();
-        p.sendMessage(Text.msg("Added a <" + t.color().asHexString() + ">" + t.display().toLowerCase() + "</"
+        Text.send(p, Text.msg("Added a <" + t.color().asHexString() + ">" + t.display().toLowerCase() + "</"
                 + t.color().asHexString() + "> spawn <#9AA0A6>(" + a.spawnCount(t) + "/" + Arena.MAX_SPAWNS + ")"));
     }
 
@@ -110,20 +109,20 @@ public final class ArenaSetup implements Listener {
         if (!idle(p, a)) return;
         a.clearSpawns(t);
         store.save();
-        p.sendMessage(Text.msg("Cleared the " + t.display().toLowerCase() + " spawns."));
+        Text.send(p, Text.msg("Cleared the " + t.display().toLowerCase() + " spawns."));
     }
 
     public void setBounds(Player p, Arena a) {
         Location[] pick = picks.get(p.getUniqueId());
         if (pick == null || pick[0] == null || pick[1] == null) {
-            p.sendMessage(Text.error("Mark two corners with the wand first: <white>/pb arena wand"));
+            Text.send(p, Text.error("Mark two corners with the wand first: <white>/pb arena wand"));
             return;
         }
         if (!pick[0].getWorld().equals(pick[1].getWorld()) || !sameWorld(p, a) || !idle(p, a)) return;
         BoundingBox box = BoundingBox.of(pick[0].getBlock(), pick[1].getBlock());
         a.bounds(box);
         store.save();
-        p.sendMessage(Text.msg("Bounds set: <white>" + (int) box.getWidthX() + "×" + (int) box.getHeight() + "×" + (int) box.getWidthZ() + "</white>."));
+        Text.send(p, Text.msg("Bounds set: <white>" + (int) box.getWidthX() + "×" + (int) box.getHeight() + "×" + (int) box.getWidthZ() + "</white>."));
     }
 
     public void bounds(Arena a, BoundingBox box) {
@@ -135,7 +134,7 @@ public final class ArenaSetup implements Listener {
         if (on) {
             List<String> missing = a.missing();
             if (!missing.isEmpty()) {
-                p.sendMessage(Text.error(a.name() + " still needs " + String.join(", ", missing) + "."));
+                Text.send(p, Text.error(a.name() + " still needs " + String.join(", ", missing) + "."));
                 return;
             }
         } else if (!idle(p, a)) {
@@ -143,7 +142,7 @@ public final class ArenaSetup implements Listener {
         }
         a.enabled(on);
         store.save();
-        p.sendMessage(Text.msg(a.name() + " is " + (on ? "<#5BE37D>open</#5BE37D>. Players can <white>/pb join</white>." : "<#FF5C5C>closed</#FF5C5C>.")));
+        Text.send(p, Text.msg(a.name() + " is " + (on ? "<#5BE37D>open</#5BE37D>. Players can <white>/pb join</white>." : "<#FF5C5C>closed</#FF5C5C>.")));
     }
 
     // ---- the bounds wand -------------------------------------------------------------
@@ -151,9 +150,10 @@ public final class ArenaSetup implements Listener {
     public ItemStack wand() {
         ItemStack w = new ItemStack(Material.BLAZE_ROD);
         ItemMeta m = w.getItemMeta();
-        m.itemName(Text.mm("<bold><#FFD23F>Arena bounds wand"));
-        m.lore(List.of(Text.mm("<#9AA0A6>Left-click a block: first corner"), Text.mm("<#9AA0A6>Right-click a block: second corner"),
-                Component.empty(), Text.mm("<#9AA0A6>Then <white>/pb arena setbounds <id>")));
+        m.setItemName(Text.legacy(Text.mm("<bold><#FFD23F>Arena bounds wand")));
+        m.setLore(List.of(Text.legacy(Text.mm("<#9AA0A6>Left-click a block: first corner")),
+                Text.legacy(Text.mm("<#9AA0A6>Right-click a block: second corner")), "",
+                Text.legacy(Text.mm("<#9AA0A6>Then <white>/pb arena setbounds <id>"))));
         m.getPersistentDataContainer().set(wandKey, PersistentDataType.BYTE, (byte) 1);
         m.setEnchantmentGlintOverride(true);
         w.setItemMeta(m);
@@ -179,7 +179,7 @@ public final class ArenaSetup implements Listener {
             BoundingBox box = BoundingBox.of(pick[0].getBlock(), pick[1].getBlock());
             size = "  <#9AA0A6>(" + (int) box.getWidthX() + "×" + (int) box.getHeight() + "×" + (int) box.getWidthZ() + ")";
         }
-        e.getPlayer().sendMessage(Text.msg((i == 0 ? "First" : "Second") + " corner: <white>" + b.getX() + ", " + b.getY() + ", " + b.getZ() + "</white>" + size));
+        Text.send(e.getPlayer(), Text.msg((i == 0 ? "First" : "Second") + " corner: <white>" + b.getX() + ", " + b.getY() + ", " + b.getZ() + "</white>" + size));
     }
 
     public boolean hasPicks(Player p) {

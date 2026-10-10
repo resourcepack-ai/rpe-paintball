@@ -1,5 +1,6 @@
 package ai.resourcepack.addons.paintball.game;
 
+import ai.resourcepack.addons.paintball.Text;
 import ai.resourcepack.addons.paintball.Content;
 import ai.resourcepack.addons.paintball.PaintballPlugin;
 import org.bukkit.Bukkit;
@@ -16,7 +17,8 @@ import org.bukkit.event.entity.EntityPickupItemEvent;
 import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
-import io.papermc.paper.event.player.PlayerArmSwingEvent;
+import org.bukkit.event.player.PlayerAnimationEvent;
+import org.bukkit.event.player.PlayerAnimationType;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerToggleSprintEvent;
@@ -42,7 +44,7 @@ public final class GameListener implements Listener {
     private final GameManager games;
     private final Content content;
     /** The tick each player last dropped (pressed Q), to tell the game's drop swing from a click. */
-    private final java.util.Map<java.util.UUID, Integer> dropped = new java.util.HashMap<>();
+    private final java.util.Map<java.util.UUID, Long> dropped = new java.util.HashMap<>();
 
     public GameListener(PaintballPlugin plugin) {
         this.plugin = plugin;
@@ -60,10 +62,11 @@ public final class GameListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent e) {
         Player p = e.getPlayer();
+        Game.clearModifiers(p, plugin);
         if (!plugin.snapshots().has(p.getUniqueId())) return;
         Bukkit.getScheduler().runTaskLater(plugin, () -> {
             if (p.isOnline() && !games.playing(p) && plugin.snapshots().restore(p)) {
-                p.sendMessage(plugin.messages().component("restored"));
+                Text.send(p, plugin.messages().component("restored"));
             }
         }, 5L);
     }
@@ -108,7 +111,7 @@ public final class GameListener implements Listener {
     public void onDrop(PlayerDropItemEvent e) {
         Game g = games.of(e.getPlayer());
         if (g == null) return;
-        dropped.put(e.getPlayer().getUniqueId(), Bukkit.getCurrentTick());
+        dropped.put(e.getPlayer().getUniqueId(), plugin.ticks());
         e.setCancelled(true);
         if (Loadout.isMarker(content, e.getItemDrop().getItemStack())) g.reload(e.getPlayer());
     }
@@ -172,13 +175,13 @@ public final class GameListener implements Listener {
      * which here is Q to reload, so a swing straight after a drop is let go.
      */
     @EventHandler(ignoreCancelled = true)
-    public void onSwing(PlayerArmSwingEvent e) {
-        if (e.getHand() != EquipmentSlot.HAND) return;
+    public void onSwing(PlayerAnimationEvent e) {
+        if (e.getAnimationType() != PlayerAnimationType.ARM_SWING) return;
         Player p = e.getPlayer();
         Game g = games.of(p);
         if (g == null || !Loadout.isMarker(content, p.getInventory().getItemInMainHand())) return;
-        Integer drop = dropped.get(p.getUniqueId());
-        if (drop != null && Bukkit.getCurrentTick() - drop <= 2) return;
+        Long drop = dropped.get(p.getUniqueId());
+        if (drop != null && plugin.ticks() - drop <= 2) return;
         g.toggleAim(p);
     }
 
@@ -211,7 +214,7 @@ public final class GameListener implements Listener {
         if (colon >= 0) label = label.substring(colon + 1);
         if (!ALLOWED.contains(label)) {
             e.setCancelled(true);
-            p.sendMessage(plugin.messages().component("not-during-match"));
+            Text.send(p, plugin.messages().component("not-during-match"));
         }
     }
 

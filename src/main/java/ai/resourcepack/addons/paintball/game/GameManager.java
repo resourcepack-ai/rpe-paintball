@@ -50,15 +50,15 @@ public final class GameManager {
 
     public boolean join(Player p, Arena arena) {
         if (playing(p)) {
-            p.sendMessage(plugin.messages().component("already-in"));
+            Text.send(p, plugin.messages().component("already-in"));
             return false;
         }
         if (arena == null) {
-            p.sendMessage(plugin.messages().component("no-arena"));
+            Text.send(p, plugin.messages().component("no-arena"));
             return false;
         }
         if (!arena.missing().isEmpty()) {
-            p.sendMessage(plugin.messages().component("arena-not-ready", "arena", arena.name(), "missing", String.join(", ", arena.missing())));
+            Text.send(p, plugin.messages().component("arena-not-ready", "arena", arena.name(), "missing", String.join(", ", arena.missing())));
             return false;
         }
         Game g = game(arena);

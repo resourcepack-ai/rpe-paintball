@@ -12,7 +12,7 @@ softdepend: [Multiverse-Core]
 commands:
   paintball:
     description: Paintball - join, leave, the scoreboard; ops start and stop matches and build arenas.
-    usage: /<command> [join|leave|scoreboard|start|stop|arena|reload]
+    usage: /<command> [join|team|leave|scoreboard|start|stop|arena|reload]
     aliases: [pb]
     permission: paintball.play
 

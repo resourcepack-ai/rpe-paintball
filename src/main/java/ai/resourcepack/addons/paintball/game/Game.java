@@ -15,6 +15,7 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.EquipmentSlotGroup;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -158,7 +159,7 @@ public final class Game {
         } else {
             toLobby(p, gp);
             broadcast(messages().component("joined-lobby", "player", p.getName(), "count", String.valueOf(size())));
-            p.sendMessage(messages().component(p.hasPermission("paintball.admin") ? "start-hint-op" : "start-hint"));
+            Text.send(p, messages().component(p.hasPermission("paintball.admin") ? "start-hint-op" : "start-hint"));
         }
     }
 
@@ -210,9 +211,9 @@ public final class Game {
         gp.pick = team == null || (toggle && gp.pick == team) ? null : team;
         gp.pickedAt = now;
         if (gp.pick == null) {
-            p.sendMessage(messages().component("picked-random"));
+            Text.send(p, messages().component("picked-random"));
         } else {
-            p.sendMessage(messages().component(live() ? "picked-next" : "picked",
+            Text.send(p, messages().component(live() ? "picked-next" : "picked",
                     "colour", gp.pick.color().asHexString(), "team", gp.pick.display()));
         }
         if (!live() && p.getGameMode() != GameMode.SPECTATOR) {
@@ -330,7 +331,7 @@ public final class Game {
         for (GamePlayer gp : moved) {
             Player p = gp.player();
             if (p != null) {
-                p.sendMessage(messages().component("pick-moved", "from", gp.team.other().display(),
+                Text.send(p, messages().component("pick-moved", "from", gp.team.other().display(),
                         "from_colour", gp.team.other().color().asHexString(),
                         "team", gp.team.display(), "colour", gp.team.color().asHexString()));
             }
@@ -383,7 +384,7 @@ public final class Game {
         PlayerSnapshot.reset(p);
         Loadout.equip(content, s, p, gp);
         // The grenade keeps recharging through a death: dying is not a way to get it back sooner.
-        if (gp.grenadeReadyAt > now) p.setCooldown(Loadout.GRENADE_COOLDOWN, (int) (gp.grenadeReadyAt - now));
+        if (gp.grenadeReadyAt > now) p.setCooldown(Loadout.grenade(content, gp.team, s.grenadeCooldownTicks), (int) (gp.grenadeReadyAt - now));
         if (!first) fx.respawned(p);
     }
 
@@ -515,8 +516,8 @@ public final class Game {
     private static void freeze(Player p) {
         for (Attribute a : new Attribute[]{Attribute.MOVEMENT_SPEED, Attribute.JUMP_STRENGTH}) {
             AttributeInstance inst = p.getAttribute(a);
-            if (inst == null || inst.getModifier(FREEZE_KEY) != null) continue;
-            inst.addTransientModifier(new AttributeModifier(FREEZE_KEY, -1.0, AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+            if (inst == null || modifier(inst, FREEZE_KEY) != null) continue;
+            inst.addModifier(new AttributeModifier(FREEZE_KEY, -1.0, AttributeModifier.Operation.MULTIPLY_SCALAR_1, EquipmentSlotGroup.ANY));
         }
     }
 
@@ -524,7 +525,31 @@ public final class Game {
         if (FREEZE_KEY == null) return;
         for (Attribute a : new Attribute[]{Attribute.MOVEMENT_SPEED, Attribute.JUMP_STRENGTH}) {
             AttributeInstance inst = p.getAttribute(a);
-            if (inst != null && inst.getModifier(FREEZE_KEY) != null) inst.removeModifier(FREEZE_KEY);
+            AttributeModifier mine = inst == null ? null : modifier(inst, FREEZE_KEY);
+            if (mine != null) inst.removeModifier(mine);
+        }
+    }
+
+    /** One of our modifiers on an attribute, by key, or null. */
+    private static AttributeModifier modifier(AttributeInstance inst, NamespacedKey key) {
+        for (AttributeModifier m : inst.getModifiers()) if (key.equals(m.getKey())) return m;
+        return null;
+    }
+
+    /**
+     * Takes off every modifier this plugin puts on a player. Spigot has no
+     * transient modifiers, so the freeze and the aim's slowdown are saved with
+     * the player like any other; a server that goes down mid-match would
+     * otherwise leave somebody frozen, so they come off on every join.
+     */
+    public static void clearModifiers(Player p, org.bukkit.plugin.Plugin plugin) {
+        String ns = plugin.getName().toLowerCase(java.util.Locale.ROOT);
+        for (Attribute a : new Attribute[]{Attribute.MOVEMENT_SPEED, Attribute.JUMP_STRENGTH}) {
+            AttributeInstance inst = p.getAttribute(a);
+            if (inst == null) continue;
+            for (AttributeModifier m : new ArrayList<>(inst.getModifiers())) {
+                if (m.getKey() != null && m.getKey().getNamespace().equals(ns)) inst.removeModifier(m);
+            }
         }
     }
 
@@ -540,7 +565,7 @@ public final class Game {
     }
 
     void broadcast(Component c) {
-        for (Player p : online()) p.sendMessage(c);
+        for (Player p : online()) Text.send(p, c);
     }
 
     /** Throws a grenade for a player, if they have one. */
@@ -551,7 +576,7 @@ public final class Game {
         int cooldown = settings().grenadeCooldownTicks;
         gp.grenadeReadyAt = now + cooldown;
         combat.throwGrenade(gp, p);
-        if (cooldown > 0) p.setCooldown(Loadout.GRENADE_COOLDOWN, cooldown);
+        if (cooldown > 0) p.setCooldown(Loadout.grenade(content, gp.team, cooldown), cooldown);
     }
 
     /** A left click with the marker: up to the sights, or back down. */
@@ -590,10 +615,11 @@ public final class Game {
         }
         AttributeInstance speed = p.getAttribute(Attribute.MOVEMENT_SPEED);
         if (speed != null) {
-            if (speed.getModifier(AIM_KEY) != null) speed.removeModifier(AIM_KEY);
+            AttributeModifier slowed = modifier(speed, AIM_KEY);
+            if (slowed != null) speed.removeModifier(slowed);
             if (on) {
-                speed.addTransientModifier(new AttributeModifier(AIM_KEY, -settings().aimSlowdown,
-                        AttributeModifier.Operation.MULTIPLY_SCALAR_1));
+                speed.addModifier(new AttributeModifier(AIM_KEY, -settings().aimSlowdown,
+                        AttributeModifier.Operation.MULTIPLY_SCALAR_1, EquipmentSlotGroup.ANY));
             }
         }
         if (changed) fx.aim(p, on);

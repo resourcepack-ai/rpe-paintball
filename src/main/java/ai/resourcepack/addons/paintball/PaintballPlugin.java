@@ -39,6 +39,8 @@ public final class PaintballPlugin extends JavaPlugin {
     private GameManager games;
     private ArenaSetup setup;
     private Scoreboard scoreboard;
+    /** Ticks since enable: Spigot has no current-tick counter of its own. */
+    private long ticks;
 
     @Override
     public void onEnable() {
@@ -83,7 +85,10 @@ public final class PaintballPlugin extends JavaPlugin {
             cmd.setExecutor(handler);
             cmd.setTabCompleter(handler);
         }
-        getServer().getScheduler().runTaskTimer(this, games::tick, 1L, 1L);
+        getServer().getScheduler().runTaskTimer(this, () -> {
+            ticks++;
+            games.tick();
+        }, 1L, 1L);
         getLogger().info("Paintball is ready: " + arenas.all().size() + " arena(s). /pb join, then an op runs /pb start.");
     }
 
@@ -125,6 +130,10 @@ public final class PaintballPlugin extends JavaPlugin {
     private void addNewOptions() {
         getConfig().options().copyDefaults(true);
         saveConfig();
+    }
+
+    public long ticks() {
+        return ticks;
     }
 
     public Content content() {

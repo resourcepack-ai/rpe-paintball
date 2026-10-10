@@ -48,7 +48,7 @@ public final class PaintballCommand implements TabExecutor {
             case "leave", "quit" -> {
                 Player p = player(sender);
                 if (p == null) return true;
-                if (!plugin.games().playing(p)) p.sendMessage(Text.error("You're not in paintball."));
+                if (!plugin.games().playing(p)) Text.send(p, Text.error("You're not in paintball."));
                 else plugin.games().leave(p);
             }
             case "team", "pick" -> {
@@ -58,9 +58,9 @@ public final class PaintballCommand implements TabExecutor {
                 String which = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
                 Team t = Team.parse(which);
                 if (g == null) {
-                    p.sendMessage(Text.error("Join first: <white>/pb join"));
+                    Text.send(p, Text.error("Join first: <white>/pb join"));
                 } else if (t == null && !List.of("auto", "random", "any").contains(which)) {
-                    p.sendMessage(Text.error("/pb team <red|blue|auto>"));
+                    Text.send(p, Text.error("/pb team <red|blue|auto>"));
                 } else {
                     g.pick(p, t, false);
                 }
@@ -69,7 +69,7 @@ public final class PaintballCommand implements TabExecutor {
                 Player p = player(sender);
                 if (p == null) return true;
                 Game g = plugin.games().of(p);
-                if (g == null) p.sendMessage(Text.error("Join first: <white>/pb join"));
+                if (g == null) Text.send(p, Text.error("Join first: <white>/pb join"));
                 else plugin.scoreboard().open(p, g);
             }
             case "start" -> {
@@ -77,15 +77,15 @@ public final class PaintballCommand implements TabExecutor {
                 Game g = gameFor(sender, args.length > 1 ? args[1] : null, true);
                 if (g == null) return true;
                 if (g.live()) {
-                    sender.sendMessage(Text.error("A match is already on."));
+                    Text.send(sender, Text.error("A match is already on."));
                 } else if (g.start()) {
-                    sender.sendMessage(Text.msg("Match on " + g.arena().name() + " starting."));
+                    Text.send(sender, Text.msg("Match on " + g.arena().name() + " starting."));
                 }
             }
             case "stop", "end" -> {
                 if (!admin) return deny(sender);
                 Game g = gameFor(sender, args.length > 1 ? args[1] : null, false);
-                if (g == null) sender.sendMessage(Text.error("Nobody is playing."));
+                if (g == null) Text.send(sender, Text.error("Nobody is playing."));
                 else g.stop();
             }
             case "as" -> {
@@ -93,14 +93,14 @@ public final class PaintballCommand implements TabExecutor {
                 if (!admin) return deny(sender);
                 Player target = args.length > 2 ? Bukkit.getPlayerExact(args[1]) : null;
                 if (target == null) {
-                    sender.sendMessage(Text.error("/pb as <online player> <what they run>"));
+                    Text.send(sender, Text.error("/pb as <online player> <what they run>"));
                     return true;
                 }
                 return onCommand(target, command, label, Arrays.copyOfRange(args, 2, args.length));
             }
             case "reload" -> {
                 if (!admin) return deny(sender);
-                sender.sendMessage(plugin.reloadSettings() ? Text.msg("Reloaded config.yml and arenas.yml.")
+                Text.send(sender, plugin.reloadSettings() ? Text.msg("Reloaded config.yml and arenas.yml.")
                         : Text.msg("Reloaded config.yml. arenas.yml is left alone while somebody is playing."));
             }
             case "arena" -> {
@@ -121,20 +121,20 @@ public final class PaintballCommand implements TabExecutor {
         Player self = as(sender);
         Arena arena = arenaId != null ? plugin.arenas().get(arenaId) : null;
         if (arenaId != null && arena == null) {
-            sender.sendMessage(Text.error("No arena called " + arenaId + "."));
+            Text.send(sender, Text.error("No arena called " + arenaId + "."));
             return null;
         }
         if (arena == null && self != null && plugin.games().of(self) != null) return plugin.games().of(self);
         if (arena == null) arena = plugin.games().defaultArena();
         if (arena == null) {
-            sender.sendMessage(Text.error("There's no arena yet: <white>/pb arena generate <id> confirm</white> builds one where you stand."));
+            Text.send(sender, Text.error("There's no arena yet: <white>/pb arena generate <id> confirm</white> builds one where you stand."));
             return null;
         }
         if (joinSelf && self != null && !plugin.games().playing(self)) {
             if (!plugin.games().join(self, arena)) return null;
         }
         Game g = plugin.games().existing(arena.id());
-        if (g == null && joinSelf) sender.sendMessage(Text.error("Nobody is in " + arena.name() + " yet."));
+        if (g == null && joinSelf) Text.send(sender, Text.error("Nobody is in " + arena.name() + " yet."));
         return g;
     }
 
@@ -143,12 +143,12 @@ public final class PaintballCommand implements TabExecutor {
     private void arena(CommandSender sender, String[] a) {
         if (a.length == 0 || a[0].equalsIgnoreCase("list")) {
             if (plugin.arenas().all().isEmpty()) {
-                sender.sendMessage(Text.msg("No arenas yet. <white>/pb arena generate <id> confirm</white> builds one where you stand."));
+                Text.send(sender, Text.msg("No arenas yet. <white>/pb arena generate <id> confirm</white> builds one where you stand."));
                 return;
             }
             for (Arena x : plugin.arenas().all()) {
                 String state = x.enabled() ? "<#5BE37D>open" : x.missing().isEmpty() ? "<#FFD23F>ready" : "<#FF5C5C>needs " + String.join(", ", x.missing());
-                sender.sendMessage(Text.msg("<white><bold>" + x.name() + "</bold></white> <#5F6368>(" + x.id() + ", " + x.worldName() + ")</#5F6368>  " + state));
+                Text.send(sender, Text.msg("<white><bold>" + x.name() + "</bold></white> <#5F6368>(" + x.id() + ", " + x.worldName() + ")</#5F6368>  " + state));
             }
             return;
         }
@@ -160,18 +160,18 @@ public final class PaintballCommand implements TabExecutor {
                 consoleGenerate(sender, a);
                 return;
             }
-            sender.sendMessage(Text.error("Arena setup is done in game (or: /pb arena generate <id> at <world> <x> <y> <z> [name])."));
+            Text.send(sender, Text.error("Arena setup is done in game (or: /pb arena generate <id> at <world> <x> <y> <z> [name])."));
             return;
         }
         ArenaSetup setup = plugin.setup();
         String op = a[0].toLowerCase(Locale.ROOT);
         if (op.equals("wand")) {
             p.getInventory().addItem(setup.wand());
-            p.sendMessage(Text.msg("Left-click one corner, right-click the other, then <white>/pb arena setbounds <id></white>."));
+            Text.send(p, Text.msg("Left-click one corner, right-click the other, then <white>/pb arena setbounds <id></white>."));
             return;
         }
         if (a.length < 2) {
-            p.sendMessage(Text.error("/pb arena " + op + " <id>"));
+            Text.send(p, Text.error("/pb arena " + op + " <id>"));
             return;
         }
         String id = a[1].toLowerCase(Locale.ROOT);
@@ -181,8 +181,8 @@ public final class PaintballCommand implements TabExecutor {
             case "generate" -> {
                 // It replaces every block in a big box, so it asks once.
                 if (rest == null || !rest.toLowerCase(Locale.ROOT).startsWith("confirm")) {
-                    p.sendMessage(Text.msg("This builds a speedball field centred on you and replaces every block in a 31 × 13 × 57 box."));
-                    p.sendMessage(Text.msg("Best in an empty world (<white>/mv create paintball2 normal --world-type flat</white>). "
+                    Text.send(p, Text.msg("This builds a speedball field centred on you and replaces every block in a 31 × 13 × 57 box."));
+                    Text.send(p, Text.msg("Best in an empty world (<white>/mv create paintball2 normal --world-type flat</white>). "
                             + "Run <white>/pb arena generate " + id + " confirm [name]</white> to build it."));
                     return;
                 }
@@ -196,12 +196,12 @@ public final class PaintballCommand implements TabExecutor {
                 if (target == null) return;
                 new FieldBuilder(p.getLocation()).build(target, setup);
                 p.teleport(target.waiting());
-                p.sendMessage(Text.msg("Built <#FFD23F>" + target.name() + "</#FFD23F>. <white>/pb start</white> when you're ready."));
+                Text.send(p, Text.msg("Built <#FFD23F>" + target.name() + "</#FFD23F>. <white>/pb start</white> when you're ready."));
             }
             default -> {
                 Arena arena = plugin.arenas().get(id);
                 if (arena == null) {
-                    p.sendMessage(Text.error("No arena called " + id + ". <white>/pb arena list"));
+                    Text.send(p, Text.error("No arena called " + id + ". <white>/pb arena list"));
                     return;
                 }
                 switch (op) {
@@ -209,17 +209,17 @@ public final class PaintballCommand implements TabExecutor {
                         Game g = plugin.games().existing(arena.id());
                         if (g != null) g.stop();
                         plugin.arenas().remove(arena.id());
-                        p.sendMessage(Text.msg("Deleted " + arena.name() + "."));
+                        Text.send(p, Text.msg("Deleted " + arena.name() + "."));
                     }
                     case "setwaiting", "waiting", "setlobby" -> setup.setWaiting(p, arena);
                     case "addspawn", "spawn" -> {
                         Team t = Team.parse(a.length > 2 ? a[2] : null);
-                        if (t == null) p.sendMessage(Text.error("/pb arena addspawn " + id + " <red|blue>"));
+                        if (t == null) Text.send(p, Text.error("/pb arena addspawn " + id + " <red|blue>"));
                         else setup.addSpawn(p, arena, t);
                     }
                     case "clearspawns" -> {
                         Team t = Team.parse(a.length > 2 ? a[2] : null);
-                        if (t == null) p.sendMessage(Text.error("/pb arena clearspawns " + id + " <red|blue>"));
+                        if (t == null) Text.send(p, Text.error("/pb arena clearspawns " + id + " <red|blue>"));
                         else setup.clearSpawns(p, arena, t);
                     }
                     case "setbounds", "bounds" -> setup.setBounds(p, arena);
@@ -227,18 +227,18 @@ public final class PaintballCommand implements TabExecutor {
                     case "disable", "close" -> setup.enable(p, arena, false);
                     case "tp", "goto" -> {
                         if (arena.waiting() != null) p.teleport(arena.waiting());
-                        else p.sendMessage(Text.error(arena.name() + " has no waiting spot yet."));
+                        else Text.send(p, Text.error(arena.name() + " has no waiting spot yet."));
                     }
                     case "name", "rename" -> {
                         if (rest == null) {
-                            p.sendMessage(Text.error("/pb arena name " + id + " <display name>"));
+                            Text.send(p, Text.error("/pb arena name " + id + " <display name>"));
                             return;
                         }
                         arena.name(rest);
                         plugin.arenas().save();
-                        p.sendMessage(Text.msg("Renamed to <#FFD23F>" + rest + "</#FFD23F>."));
+                        Text.send(p, Text.msg("Renamed to <#FFD23F>" + rest + "</#FFD23F>."));
                     }
-                    default -> p.sendMessage(Text.error("Unknown: /pb arena " + op));
+                    default -> Text.send(p, Text.error("Unknown: /pb arena " + op));
                 }
             }
         }
@@ -248,7 +248,7 @@ public final class PaintballCommand implements TabExecutor {
         String id = a[1].toLowerCase(Locale.ROOT);
         World world = Bukkit.getWorld(a[3]);
         if (world == null || !ArenaStore.ID.matcher(id).matches()) {
-            sender.sendMessage(Text.error("No world " + a[3] + ", or a bad arena id."));
+            Text.send(sender, Text.error("No world " + a[3] + ", or a bad arena id."));
             return;
         }
         double x;
@@ -259,7 +259,7 @@ public final class PaintballCommand implements TabExecutor {
             y = Double.parseDouble(a[5]);
             z = Double.parseDouble(a[6]);
         } catch (NumberFormatException e) {
-            sender.sendMessage(Text.error("x y z have to be numbers."));
+            Text.send(sender, Text.error("x y z have to be numbers."));
             return;
         }
         String name = a.length > 7 ? String.join(" ", Arrays.copyOfRange(a, 7, a.length)) : id;
@@ -268,7 +268,7 @@ public final class PaintballCommand implements TabExecutor {
         Arena target = new Arena(id, name, world.getName());
         plugin.arenas().put(target);
         new FieldBuilder(new Location(world, x, y, z)).build(target, plugin.setup());
-        sender.sendMessage(Text.msg("Built and opened " + name + " in " + world.getName() + "."));
+        Text.send(sender, Text.msg("Built and opened " + name + " in " + world.getName() + "."));
     }
 
     // ---- helpers -----------------------------------------------------------------------
@@ -282,20 +282,20 @@ public final class PaintballCommand implements TabExecutor {
 
     private static Player player(CommandSender sender) {
         Player p = as(sender);
-        if (p == null) sender.sendMessage(Text.error("Players only (or /pb as <player> ...)."));
+        if (p == null) Text.send(sender, Text.error("Players only (or /pb as <player> ...)."));
         return p;
     }
 
     private static boolean deny(CommandSender sender) {
-        sender.sendMessage(Text.error("You can't do that."));
+        Text.send(sender, Text.error("You can't do that."));
         return true;
     }
 
     private static void help(CommandSender s, boolean admin) {
-        s.sendMessage(Text.msg("<white>/pb join</white> <#9AA0A6>·</#9AA0A6> <white>/pb team <red|blue|auto></white> <#9AA0A6>·</#9AA0A6> <white>/pb leave</white> <#9AA0A6>·</#9AA0A6> <white>/pb scoreboard</white> <#9AA0A6>(or F in a match)"));
+        Text.send(s, Text.msg("<white>/pb join</white> <#9AA0A6>·</#9AA0A6> <white>/pb team <red|blue|auto></white> <#9AA0A6>·</#9AA0A6> <white>/pb leave</white> <#9AA0A6>·</#9AA0A6> <white>/pb scoreboard</white> <#9AA0A6>(or F in a match)"));
         if (admin) {
-            s.sendMessage(Text.msg("<white>/pb start</white> <#9AA0A6>(works alone) ·</#9AA0A6> <white>/pb stop</white> <#9AA0A6>·</#9AA0A6> <white>/pb reload</white> <#9AA0A6>·</#9AA0A6> <white>/pb as <player> ...</white>"));
-            s.sendMessage(Text.msg("<white>/pb arena</white> <#9AA0A6>list · generate <id> confirm · create · setwaiting · addspawn · clearspawns · wand · setbounds · enable · disable · tp · name · delete"));
+            Text.send(s, Text.msg("<white>/pb start</white> <#9AA0A6>(works alone) ·</#9AA0A6> <white>/pb stop</white> <#9AA0A6>·</#9AA0A6> <white>/pb reload</white> <#9AA0A6>·</#9AA0A6> <white>/pb as <player> ...</white>"));
+            Text.send(s, Text.msg("<white>/pb arena</white> <#9AA0A6>list · generate <id> confirm · create · setwaiting · addspawn · clearspawns · wand · setbounds · enable · disable · tp · name · delete"));
         }
     }
 

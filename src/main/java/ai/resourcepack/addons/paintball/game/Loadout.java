@@ -5,26 +5,18 @@ import ai.resourcepack.addons.paintball.Messages;
 import ai.resourcepack.addons.paintball.Skin;
 import ai.resourcepack.addons.paintball.Team;
 import ai.resourcepack.addons.paintball.Text;
-import io.papermc.paper.datacomponent.DataComponentTypes;
-import io.papermc.paper.datacomponent.item.AttackRange;
-import io.papermc.paper.datacomponent.item.Consumable;
-import io.papermc.paper.datacomponent.item.DyedItemColor;
-import io.papermc.paper.datacomponent.item.Equippable;
-import io.papermc.paper.datacomponent.item.SwingAnimation;
-import io.papermc.paper.datacomponent.item.TooltipDisplay;
-import io.papermc.paper.datacomponent.item.UseCooldown;
-import io.papermc.paper.datacomponent.item.UseEffects;
-import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
-import net.kyori.adventure.key.Key;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.components.EquippableComponent;
+import org.bukkit.inventory.meta.components.UseCooldownComponent;
 import org.bukkit.persistence.PersistentDataType;
 
 import java.util.List;
@@ -47,7 +39,53 @@ public final class Loadout {
     }
 
     /** The grenade's cooldown group: its recharge greys out the grenade and nothing else (the marker is paper too). */
-    public static final Key GRENADE_COOLDOWN = Key.key("paintball", "grenade");
+    public static final NamespacedKey GRENADE_COOLDOWN = new NamespacedKey("paintball", "grenade");
+
+    /**
+     * How a marker is held, as item components. Bukkit has no API for these
+     * (they are 1.21.11's), so they go in as the string /give would take,
+     * parsed by the server itself, on Spigot and Paper alike. A left click aims
+     * rather than swings: no swing animation, and no reach to hit anybody with,
+     * so every left click is a miss the server hears.
+     */
+    private static final String MARKER_HANDS = "minecraft:swing_animation={type:\"none\"},"
+            + "minecraft:attack_range={min_reach:0f,max_reach:0f,min_creative_reach:0f,max_creative_reach:0f,hitbox_margin:0f}";
+
+    /**
+     * How it fires. Right-click "eats" it for an hour with no animation and no
+     * sound, which is how the server learns the trigger is held, every tick;
+     * use_effects keeps the player at full speed while it is.
+     */
+    private static final String MARKER_TRIGGER = "minecraft:consumable={consume_seconds:3600f,animation:\"none\","
+            + "sound:\"minecraft:intentionally_empty\",has_consume_particles:false},"
+            + "minecraft:use_effects={can_sprint:true,speed_multiplier:1.0f,interact_vibrations:false}";
+
+    private static boolean warnedComponents;
+
+    /**
+     * {@code item} with {@code extra} components added, through the server's
+     * own item parser: the item's components as a string, and these after them.
+     * An item the parser refuses comes back unchanged, said once in the log,
+     * because a marker without them still fires, only with a swing.
+     */
+    static ItemStack withComponents(ItemStack item, String extra) {
+        ItemMeta meta = item.getItemMeta();
+        String own = meta == null ? "[]" : meta.getAsComponentString();
+        String inner = own.length() >= 2 ? own.substring(1, own.length() - 1) : "";
+        String spec = "minecraft:" + item.getType().name().toLowerCase(java.util.Locale.ROOT) + "[" + (inner.isEmpty() ? extra : inner + "," + extra) + "]";
+        try {
+            ItemStack out = Bukkit.getItemFactory().createItemStack(spec);
+            out.setAmount(item.getAmount());
+            return out;
+        } catch (IllegalArgumentException e) {
+            if (!warnedComponents) {
+                warnedComponents = true;
+                Bukkit.getLogger().warning("[RPEPaintball] The server would not take the marker's components ("
+                        + e.getMessage() + "). It still fires, but a left click swings instead of aiming.");
+            }
+            return item;
+        }
+    }
 
     public static boolean isMarker(Content content, ItemStack stack) {
         String id = content.idOf(stack);
@@ -65,12 +103,7 @@ public final class Loadout {
         return id != null && id.startsWith("grenade_");
     }
 
-    /**
-     * A marker in a skin. Right-click "eats" it for an hour with no animation and
-     * no sound, which is how the server learns the trigger is held, every tick;
-     * {@code use_effects} keeps the player at full speed while it is.
-     */
-    @SuppressWarnings("UnstableApiUsage")
+    /** A marker in a skin, from the hip. */
     public static ItemStack marker(Content content, Skin skin) {
         return marker(content, skin, false);
     }
@@ -79,64 +112,63 @@ public final class Loadout {
      * The marker, hip or aimed. Both are PAPER, so swapping one for the other in
      * the hand does not stop a held trigger: the game only drops an item in use
      * when the item itself changes, and its components are not the item.
-     *
-     * <p>A left click aims rather than swings: no swing animation, and no reach
-     * to hit anybody with, so every left click is a miss the server hears.
      */
-    @SuppressWarnings("UnstableApiUsage")
     public static ItemStack marker(Content content, Skin skin, boolean aimed) {
+        return marker(content, skin, aimed, true);
+    }
+
+    /** The marker; {@code fires} false for the lobby's, which is only to look at. */
+    static ItemStack marker(Content content, Skin skin, boolean aimed, boolean fires) {
         // The name and the lore are the item's own (items/markers.yml); what is
         // added here is how it behaves.
         ItemStack item = content.item(aimed ? skin.aimedItem() : skin.item());
-        item.setData(DataComponentTypes.SWING_ANIMATION, SwingAnimation.swingAnimation()
-                .type(SwingAnimation.Animation.NONE).build());
-        item.setData(DataComponentTypes.ATTACK_RANGE, AttackRange.attackRange()
-                .minReach(0f).maxReach(0f).minCreativeReach(0f).maxCreativeReach(0f).hitboxMargin(0f).build());
-        item.setData(DataComponentTypes.MAX_STACK_SIZE, 1);
-        item.setData(DataComponentTypes.CONSUMABLE, Consumable.consumable()
-                .consumeSeconds(3600)
-                .animation(ItemUseAnimation.NONE)
-                .sound(Key.key("minecraft", "intentionally_empty"))
-                .hasConsumeParticles(false)
-                .build());
-        item.setData(DataComponentTypes.USE_EFFECTS, UseEffects.useEffects()
-                .canSprint(true)
-                .speedMultiplier(1.0f)
-                .interactVibrations(false)
-                .build());
-        return item;
+        ItemMeta meta = item.getItemMeta();
+        if (meta != null) {
+            meta.setMaxStackSize(1);
+            item.setItemMeta(meta);
+        }
+        return withComponents(item, fires ? MARKER_HANDS + "," + MARKER_TRIGGER : MARKER_HANDS);
     }
 
-    @SuppressWarnings("UnstableApiUsage")
     static ItemStack mask(Content content, Team team) {
         ItemStack item = content.item("mask_" + team.id());
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
         // Worn on the head: the model is drawn there, and the goggles' frame is
         // drawn round the wearer's own view, like a carved pumpkin's.
-        item.setData(DataComponentTypes.EQUIPPABLE, Equippable.equippable(EquipmentSlot.HEAD)
-                .cameraOverlay(Key.key("paintball", "misc/mask_overlay"))
-                .swappable(false)
-                .dispensable(false)
-                .damageOnHurt(false)
-                .equipSound(Key.key("minecraft", "intentionally_empty"))
-                .build());
+        EquippableComponent worn = meta.getEquippable();
+        worn.setSlot(EquipmentSlot.HEAD);
+        worn.setCameraOverlay(new NamespacedKey("paintball", "misc/mask_overlay"));
+        worn.setSwappable(false);
+        worn.setDispensable(false);
+        worn.setDamageOnHurt(false);
+        worn.setEquipSound(Sound.INTENTIONALLY_EMPTY);
+        meta.setEquippable(worn);
+        item.setItemMeta(meta);
         return item;
     }
 
-    @SuppressWarnings("UnstableApiUsage")
     static ItemStack armour(Material material, Team team) {
         ItemStack item = new ItemStack(material);
-        item.setData(DataComponentTypes.DYED_COLOR, DyedItemColor.dyedItemColor(team.bukkitColor()));
-        item.setData(DataComponentTypes.UNBREAKABLE);
-        item.setData(DataComponentTypes.TOOLTIP_DISPLAY, TooltipDisplay.tooltipDisplay().hideTooltip(true).build());
+        if (item.getItemMeta() instanceof LeatherArmorMeta meta) {
+            meta.setColor(team.bukkitColor());
+            meta.setUnbreakable(true);
+            meta.setHideTooltip(true);
+            item.setItemMeta(meta);
+        }
         return item;
     }
 
-    @SuppressWarnings("UnstableApiUsage")
     static ItemStack grenade(Content content, Team team, int cooldownTicks) {
         ItemStack item = content.item("grenade_" + team.id());
-        item.setData(DataComponentTypes.MAX_STACK_SIZE, 1);
-        item.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(Math.max(0.05f, cooldownTicks / 20f))
-                .cooldownGroup(GRENADE_COOLDOWN).build());
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
+        meta.setMaxStackSize(1);
+        UseCooldownComponent cooldown = meta.getUseCooldown();
+        cooldown.setCooldownSeconds(Math.max(0.05f, cooldownTicks / 20f));
+        cooldown.setCooldownGroup(GRENADE_COOLDOWN);
+        meta.setUseCooldown(cooldown);
+        item.setItemMeta(meta);
         return item;
     }
 
@@ -170,9 +202,7 @@ public final class Loadout {
     static void lobby(Content content, Messages messages, Player p, Team pick) {
         PlayerInventory inv = p.getInventory();
         inv.clear();
-        ItemStack marker = marker(content, Skin.EMBER);
-        marker.unsetData(DataComponentTypes.CONSUMABLE);
-        inv.setItem(0, marker);
+        inv.setItem(0, marker(content, Skin.EMBER, false, false));
         inv.setItem(3, picked(lobbyItem(new ItemStack(Material.RED_CONCRETE), PICK_RED, messages, "item-team-red"), pick == Team.RED));
         inv.setItem(5, picked(lobbyItem(new ItemStack(Material.BLUE_CONCRETE), PICK_BLUE, messages, "item-team-blue"), pick == Team.BLUE));
         inv.setItem(7, lobbyItem(new ItemStack(Material.GOLD_INGOT), SCOREBOARD, messages, "item-scoreboard"));
@@ -182,8 +212,8 @@ public final class Loadout {
 
     private static ItemStack lobbyItem(ItemStack item, String action, Messages messages, String key) {
         ItemMeta meta = item.getItemMeta();
-        meta.itemName(messages.component(key));
-        meta.lore(List.of(messages.component(key + "-lore"), Component.empty(), messages.component("item-use")));
+        meta.setItemName(Text.legacy(messages.component(key)));
+        meta.setLore(List.of(Text.legacy(messages.component(key + "-lore")), "", Text.legacy(messages.component("item-use"))));
         meta.getPersistentDataContainer().set(LOBBY_KEY, PersistentDataType.STRING, action);
         item.setItemMeta(meta);
         return item;

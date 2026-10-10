@@ -97,7 +97,7 @@ final class Combat {
             }
             return;
         }
-        boolean held = p.isHandRaised() && Loadout.isMarker(content, p.getActiveItem());
+        boolean held = p.isHandRaised() && Loadout.isMarker(content, p.getItemInUse());
         if (!held || now < gp.nextShot) return;
         if (gp.ammo <= 0) {
             fx.empty(p);

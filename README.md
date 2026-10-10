@@ -3,13 +3,14 @@
 5v5 paintball on RP Engine. One mode: a hit splats you, you're back in three
 seconds, and the team with more kills when the clock runs out wins.
 
-Paper 1.21.11 or newer, with RP Engine 0.2.3 or newer.
+Spigot or Paper, 1.21.11 or newer, with RP Engine 0.2.3 or newer.
 
 ## Playing
 
 | | |
 |---|---|
 | `/pb join` | Into the lobby (the waiting box over the field) |
+| `/pb team red\|blue\|auto` | The side you'd like, from the next match; the red and blue items in the lobby's hotbar do the same. Picks are kept within one player of even: whoever picked a crowded side last is moved, and told |
 | `/pb start` | Op: starts the match now, even if you're alone (it joins you first) |
 | `/pb stop` | Op: ends the match (scoreboard, then back to the lobby); in the lobby, sends everybody home |
 | `/pb leave` | Out, with your inventory and position back |
