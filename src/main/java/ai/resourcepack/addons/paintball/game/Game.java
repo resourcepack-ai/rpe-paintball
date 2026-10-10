@@ -156,7 +156,7 @@ public final class Game {
             broadcast(messages().component("joined-team", "player", p.getName(),
                     "colour", gp.team.color().asHexString(), "team", gp.team.display()));
         } else {
-            toLobby(p);
+            toLobby(p, gp);
             broadcast(messages().component("joined-lobby", "player", p.getName(), "count", String.valueOf(size())));
             p.sendMessage(messages().component(p.hasPermission("paintball.admin") ? "start-hint-op" : "start-hint"));
         }
@@ -190,13 +190,69 @@ public final class Game {
         return red <= blue ? Team.RED : Team.BLUE;
     }
 
-    private void toLobby(Player p) {
+    private void toLobby(Player p, GamePlayer gp) {
         unfreeze(p);
         if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
         p.setGameMode(GameMode.ADVENTURE);
         p.teleport(arena.waiting());
         PlayerSnapshot.reset(p);
-        Loadout.lobby(content, messages(), p);
+        Loadout.lobby(content, messages(), p, gp.pick);
+    }
+
+    /**
+     * A team picked in the lobby, used from the next match dealt. With
+     * {@code toggle} (the hotbar's team items) picking the same side again
+     * leaves it to chance; {@code null} always does.
+     */
+    public void pick(Player p, Team team, boolean toggle) {
+        GamePlayer gp = players.get(p.getUniqueId());
+        if (gp == null) return;
+        gp.pick = team == null || (toggle && gp.pick == team) ? null : team;
+        gp.pickedAt = now;
+        if (gp.pick == null) {
+            p.sendMessage(messages().component("picked-random"));
+        } else {
+            p.sendMessage(messages().component(live() ? "picked-next" : "picked",
+                    "colour", gp.pick.color().asHexString(), "team", gp.pick.display()));
+        }
+        if (!live() && p.getGameMode() != GameMode.SPECTATOR) {
+            int held = p.getInventory().getHeldItemSlot();
+            Loadout.lobby(content, messages(), p, gp.pick);
+            p.getInventory().setHeldItemSlot(held);
+        }
+    }
+
+    /**
+     * Teams for a new match. Everybody who picked a side gets it, as long as
+     * the two stay within one player of each other: past that, whoever picked
+     * the crowded side last crosses over. Everybody else fills in, the smaller
+     * team first. Answers who was moved off their pick.
+     */
+    private List<GamePlayer> deal(List<GamePlayer> list) {
+        Collections.shuffle(list);
+        EnumMap<Team, List<GamePlayer>> sides = new EnumMap<>(Team.class);
+        for (Team t : Team.values()) sides.put(t, new ArrayList<>());
+        List<GamePlayer> open = new ArrayList<>();
+        for (GamePlayer gp : list) {
+            if (gp.pick != null) sides.get(gp.pick).add(gp);
+            else open.add(gp);
+        }
+        int most = (list.size() + 1) / 2;
+        List<GamePlayer> moved = new ArrayList<>();
+        for (Team t : Team.values()) {
+            List<GamePlayer> side = sides.get(t);
+            side.sort(Comparator.comparingLong(gp -> gp.pickedAt));
+            while (side.size() > most) {
+                GamePlayer crossing = side.remove(side.size() - 1);
+                sides.get(t.other()).add(crossing);
+                moved.add(crossing);
+            }
+        }
+        for (GamePlayer gp : open) {
+            sides.get(sides.get(Team.RED).size() <= sides.get(Team.BLUE).size() ? Team.RED : Team.BLUE).add(gp);
+        }
+        for (Team t : Team.values()) for (GamePlayer gp : sides.get(t)) gp.team = t;
+        return moved;
     }
 
     // ---- the clock -----------------------------------------------------------------
@@ -269,11 +325,15 @@ public final class Game {
         if (phase == Phase.ENDED) backToLobby();
         players.values().removeIf(gp -> gp.left);
         List<GamePlayer> list = new ArrayList<>(active());
-        Collections.shuffle(list);
-        for (int i = 0; i < list.size(); i++) {
-            GamePlayer gp = list.get(i);
-            gp.team = i % 2 == 0 ? Team.RED : Team.BLUE;
-            gp.reset();
+        List<GamePlayer> moved = deal(list);
+        for (GamePlayer gp : list) gp.reset();
+        for (GamePlayer gp : moved) {
+            Player p = gp.player();
+            if (p != null) {
+                p.sendMessage(messages().component("pick-moved", "from", gp.team.other().display(),
+                        "from_colour", gp.team.other().color().asHexString(),
+                        "team", gp.team.display(), "colour", gp.team.color().asHexString()));
+            }
         }
         for (Team t : Team.values()) kills.put(t, 0);
         feed.clear();
@@ -417,7 +477,7 @@ public final class Game {
         players.values().removeIf(gp -> gp.left);
         for (GamePlayer gp : active()) {
             Player p = gp.player();
-            if (p != null) toLobby(p);
+            if (p != null) toLobby(p, gp);
         }
         hud.refreshTeams();
     }

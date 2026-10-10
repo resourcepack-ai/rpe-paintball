@@ -148,6 +148,8 @@ public final class GameListener implements Listener {
             switch (lobby) {
                 case Loadout.SCOREBOARD -> plugin.scoreboard().open(p, g);
                 case Loadout.LEAVE -> games.leave(p);
+                case Loadout.PICK_RED -> g.pick(p, ai.resourcepack.addons.paintball.Team.RED, true);
+                case Loadout.PICK_BLUE -> g.pick(p, ai.resourcepack.addons.paintball.Team.BLUE, true);
                 default -> {
                 }
             }

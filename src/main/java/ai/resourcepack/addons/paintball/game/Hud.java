@@ -168,7 +168,7 @@ final class Hud {
                     // between the lobby's action bars.
                     drawn.remove(p.getUniqueId());
                     if (shown.remove(p.getUniqueId())) overlays().hide(p, hudId());
-                    p.sendActionBar(messages().component("lobby-bar", "count", String.valueOf(game.size())));
+                    p.sendActionBar(lobbyBar(gp));
                 } else {
                     drawHud(gp, p);
                 }
@@ -179,6 +179,21 @@ final class Hud {
             Component footer = messages().component("tab-footer");
             for (Player p : game.online()) p.sendPlayerListHeaderAndFooter(header, footer);
         }
+    }
+
+    /** The lobby's line: how each side is picking, and what this player picked. */
+    private Component lobbyBar(GamePlayer gp) {
+        int red = 0;
+        int blue = 0;
+        for (GamePlayer o : game.active()) {
+            if (o.pick == Team.RED) red++;
+            else if (o.pick == Team.BLUE) blue++;
+        }
+        Messages m = messages();
+        return m.component("lobby-teams", "count", String.valueOf(game.size()),
+                "red", String.valueOf(red), "blue", String.valueOf(blue),
+                "pick", gp.pick == null ? m.plain("pick-none") : gp.pick.display().toUpperCase(),
+                "pick_colour", gp.pick == null ? "#9AA0A6" : gp.pick.color().asHexString());
     }
 
     // ---- the HUD ---------------------------------------------------------------------

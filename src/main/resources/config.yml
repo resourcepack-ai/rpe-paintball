@@ -84,8 +84,16 @@ messages:
   match-stopped: "{prefix}The match was stopped."
   closed: "{prefix}Paintball is closed for now."
 
-  # Shown under the score while you're in the lobby.
-  lobby-bar: "<#9AA0A6>Lobby  <#5F6368>·</#5F6368>  <white>{count}</white> here  <#5F6368>·</#5F6368>  /pb leave to go"
+  # Picking a side in the lobby. Picks are kept even: past one player apart,
+  # whoever picked the crowded side last plays for the other.
+  picked: "{prefix}You'll play for <{colour}>{team}</{colour}>."
+  picked-next: "{prefix}You'll play for <{colour}>{team}</{colour}> from the next match."
+  picked-random: "{prefix}You'll play wherever you're needed."
+  pick-moved: "{prefix}Too many picked <{from_colour}>{from}</{from_colour}>, so you're on <{colour}>{team}</{colour}> this match."
+  pick-none: "RANDOM"
+
+  # Shown at the bottom of the screen while you're in the lobby.
+  lobby-teams: "<#9AA0A6>Lobby  <#5F6368>·</#5F6368>  <#FF4655>RED {red}</#FF4655>  <#2E9BFF>BLUE {blue}</#2E9BFF>  <#5F6368>·</#5F6368>  you: <{pick_colour}>{pick}</{pick_colour}>  <#5F6368>·</#5F6368>  /pb leave to go"
 
   # The HUD's words. Plain text: the HUD draws them in its own colours.
   hud-get-ready: "GET READY"
@@ -108,6 +116,10 @@ messages:
   # The lobby's hotbar.
   item-scoreboard: "<bold><#FFD23F>Scoreboard"
   item-scoreboard-lore: "<#9AA0A6>The last match, player by player"
+  item-team-red: "<bold><#FF4655>Play for Red"
+  item-team-red-lore: "<#9AA0A6>From the next match. Sides are kept even"
+  item-team-blue: "<bold><#2E9BFF>Play for Blue"
+  item-team-blue-lore: "<#9AA0A6>From the next match. Sides are kept even"
   item-leave: "<bold><#FFD23F>Leave"
   item-leave-lore: "<#9AA0A6>Back to where you were"
   item-use: "<#5F6368>Right-click"

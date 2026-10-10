@@ -23,7 +23,7 @@ import java.util.Locale;
  * {@code /paintball}, alias {@code /pb}.
  *
  * <pre>
- * /pb join | leave | scoreboard           everybody
+ * /pb join | team | leave | scoreboard    everybody
  * /pb start | stop | reload | as | arena  ops
  * </pre>
  */
@@ -50,6 +50,20 @@ public final class PaintballCommand implements TabExecutor {
                 if (p == null) return true;
                 if (!plugin.games().playing(p)) p.sendMessage(Text.error("You're not in paintball."));
                 else plugin.games().leave(p);
+            }
+            case "team", "pick" -> {
+                Player p = player(sender);
+                if (p == null) return true;
+                Game g = plugin.games().of(p);
+                String which = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
+                Team t = Team.parse(which);
+                if (g == null) {
+                    p.sendMessage(Text.error("Join first: <white>/pb join"));
+                } else if (t == null && !List.of("auto", "random", "any").contains(which)) {
+                    p.sendMessage(Text.error("/pb team <red|blue|auto>"));
+                } else {
+                    g.pick(p, t, false);
+                }
             }
             case "scoreboard", "sb", "score", "top" -> {
                 Player p = player(sender);
@@ -278,7 +292,7 @@ public final class PaintballCommand implements TabExecutor {
     }
 
     private static void help(CommandSender s, boolean admin) {
-        s.sendMessage(Text.msg("<white>/pb join</white> <#9AA0A6>·</#9AA0A6> <white>/pb leave</white> <#9AA0A6>·</#9AA0A6> <white>/pb scoreboard</white> <#9AA0A6>(or F in a match)"));
+        s.sendMessage(Text.msg("<white>/pb join</white> <#9AA0A6>·</#9AA0A6> <white>/pb team <red|blue|auto></white> <#9AA0A6>·</#9AA0A6> <white>/pb leave</white> <#9AA0A6>·</#9AA0A6> <white>/pb scoreboard</white> <#9AA0A6>(or F in a match)"));
         if (admin) {
             s.sendMessage(Text.msg("<white>/pb start</white> <#9AA0A6>(works alone) ·</#9AA0A6> <white>/pb stop</white> <#9AA0A6>·</#9AA0A6> <white>/pb reload</white> <#9AA0A6>·</#9AA0A6> <white>/pb as <player> ...</white>"));
             s.sendMessage(Text.msg("<white>/pb arena</white> <#9AA0A6>list · generate <id> confirm · create · setwaiting · addspawn · clearspawns · wand · setbounds · enable · disable · tp · name · delete"));
@@ -290,11 +304,12 @@ public final class PaintballCommand implements TabExecutor {
         boolean admin = sender.hasPermission("paintball.admin");
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            out.addAll(List.of("join", "leave", "scoreboard"));
+            out.addAll(List.of("join", "team", "leave", "scoreboard"));
             if (admin) out.addAll(List.of("start", "stop", "arena", "reload", "as"));
         } else if (args.length == 2) {
             switch (args[0].toLowerCase(Locale.ROOT)) {
                 case "join", "start", "stop" -> plugin.arenas().all().forEach(a -> out.add(a.id()));
+                case "team", "pick" -> out.addAll(List.of("red", "blue", "auto"));
                 case "arena" -> {
                     if (admin) out.addAll(List.of("list", "generate", "create", "setwaiting", "addspawn", "clearspawns",
                             "wand", "setbounds", "enable", "disable", "tp", "name", "delete"));

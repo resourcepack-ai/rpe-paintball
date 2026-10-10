@@ -14,6 +14,11 @@ public final class GamePlayer {
     final String name;
     Team team;
 
+    /** The team they asked for in the lobby, or null for wherever they are needed; kept from match to match. */
+    Team pick;
+    /** When they last picked, so whoever picked a crowded side last is the one moved. */
+    long pickedAt;
+
     boolean alive;
     int ammo;
     /** Ticks of reloading still to go; 0 when the hopper is not being filled. */

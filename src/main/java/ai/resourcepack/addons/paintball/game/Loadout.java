@@ -158,19 +158,23 @@ public final class Loadout {
 
     public static final String LEAVE = "leave";
     public static final String SCOREBOARD = "scoreboard";
+    public static final String PICK_RED = "pick_red";
+    public static final String PICK_BLUE = "pick_blue";
 
     /** The marker's name in the HUD, from its skin. */
     static String skinName(ai.resourcepack.addons.paintball.Settings s, GamePlayer gp) {
         return skin(s, gp.team).display().toUpperCase();
     }
 
-    /** In the lobby: the marker to look at, the last scoreboard, and the way out. */
-    static void lobby(Content content, Messages messages, Player p) {
+    /** In the lobby: the marker to look at, a side to pick (lit while picked; again for neither), the last scoreboard, and the way out. */
+    static void lobby(Content content, Messages messages, Player p, Team pick) {
         PlayerInventory inv = p.getInventory();
         inv.clear();
         ItemStack marker = marker(content, Skin.EMBER);
         marker.unsetData(DataComponentTypes.CONSUMABLE);
         inv.setItem(0, marker);
+        inv.setItem(3, picked(lobbyItem(new ItemStack(Material.RED_CONCRETE), PICK_RED, messages, "item-team-red"), pick == Team.RED));
+        inv.setItem(5, picked(lobbyItem(new ItemStack(Material.BLUE_CONCRETE), PICK_BLUE, messages, "item-team-blue"), pick == Team.BLUE));
         inv.setItem(7, lobbyItem(new ItemStack(Material.GOLD_INGOT), SCOREBOARD, messages, "item-scoreboard"));
         inv.setItem(8, lobbyItem(new ItemStack(Material.BARRIER), LEAVE, messages, "item-leave"));
         inv.setHeldItemSlot(0);
@@ -181,6 +185,13 @@ public final class Loadout {
         meta.itemName(messages.component(key));
         meta.lore(List.of(messages.component(key + "-lore"), Component.empty(), messages.component("item-use")));
         meta.getPersistentDataContainer().set(LOBBY_KEY, PersistentDataType.STRING, action);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private static ItemStack picked(ItemStack item, boolean on) {
+        ItemMeta meta = item.getItemMeta();
+        meta.setEnchantmentGlintOverride(on);
         item.setItemMeta(meta);
         return item;
     }
