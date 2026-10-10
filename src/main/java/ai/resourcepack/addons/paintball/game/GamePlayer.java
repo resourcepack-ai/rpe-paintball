@@ -24,10 +24,15 @@ public final class GamePlayer {
     long protectedUntil;
     /** The tick they come back, or 0 while they are in. */
     long respawnAt;
-    /** Who splatted them last, for the HUD while they are out. */
+    /** Who splatted them last, and their team, for the HUD while they are out. */
     String splattedBy;
-    /** Who they splatted last, and when, for the HUD's moment of glory. */
+    Team splattedByTeam;
+    /** When they were splatted, and which of the screen splats they got. */
+    long splattedAt;
+    int splat = 1;
+    /** Who they splatted last, their team, and when, for the HUD's moment of glory. */
     String lastKill;
+    Team lastKillTeam;
     long lastKillAt;
     /** The hit marker is up until this tick. */
     long hitUntil;
@@ -76,7 +81,10 @@ public final class GamePlayer {
         protectedUntil = 0;
         reloading = 0;
         splattedBy = null;
+        splattedByTeam = null;
+        splattedAt = 0;
         lastKill = null;
+        lastKillTeam = null;
         lastKillAt = 0;
         hitUntil = 0;
         aiming = false;

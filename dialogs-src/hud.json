@@ -106,68 +106,27 @@
    "feather": 1,
    "pin": "top",
    "stretch": false
-  },
-  {
-   "id": "s6",
-   "kind": "roundedBox",
-   "x": -46,
-   "y": -21,
-   "radius": 2,
-   "width": 38,
-   "height": 13,
-   "thickness": 2,
-   "sides": 6,
-   "rotation": 0,
-   "color": "#0d1117",
-   "alpha": 0.8,
-   "op": "union",
-   "smoothing": 0,
-   "feather": 1,
-   "pin": "bottom-right",
-   "stretch": false
-  },
-  {
-   "id": "s7",
-   "kind": "box",
-   "x": -46,
-   "y": -33.5,
-   "radius": 0,
-   "width": 38,
-   "height": 0.5,
-   "thickness": 2,
-   "sides": 6,
-   "rotation": 0,
-   "color": "#ffffff",
-   "alpha": 0.18,
-   "op": "union",
-   "smoothing": 0,
-   "feather": 1,
-   "pin": "bottom-right",
-   "stretch": false
-  },
-  {
-   "id": "s8",
-   "kind": "roundedBox",
-   "x": -101,
-   "y": -21,
-   "radius": 2,
-   "width": 14,
-   "height": 13,
-   "thickness": 2,
-   "sides": 6,
-   "rotation": 0,
-   "color": "#0d1117",
-   "alpha": 0.8,
-   "op": "union",
-   "smoothing": 0,
-   "feather": 1,
-   "pin": "bottom-right",
-   "stretch": false
   }
  ],
  "texts": [
   {
-   "id": "t9",
+   "id": "t6",
+   "x": 0,
+   "y": 0,
+   "text": "{pb_splat_r}",
+   "color": "#ff4655",
+   "pin": "center"
+  },
+  {
+   "id": "t7",
+   "x": 0,
+   "y": 0,
+   "text": "{pb_splat_b}",
+   "color": "#2e9bff",
+   "pin": "center"
+  },
+  {
+   "id": "t8",
    "x": 6,
    "y": 8,
    "text": "{pb_f1}",
@@ -175,7 +134,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t10",
+   "id": "t9",
    "x": 6,
    "y": 8,
    "text": "{pb_f1_kr}",
@@ -183,7 +142,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t11",
+   "id": "t10",
    "x": 6,
    "y": 8,
    "text": "{pb_f1_kb}",
@@ -191,7 +150,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t12",
+   "id": "t11",
    "x": 6,
    "y": 8,
    "text": "{pb_f1_vr}",
@@ -199,7 +158,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t13",
+   "id": "t12",
    "x": 6,
    "y": 8,
    "text": "{pb_f1_vb}",
@@ -207,7 +166,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t14",
+   "id": "t13",
    "x": 6,
    "y": 23,
    "text": "{pb_f2}",
@@ -215,7 +174,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t15",
+   "id": "t14",
    "x": 6,
    "y": 23,
    "text": "{pb_f2_kr}",
@@ -223,7 +182,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t16",
+   "id": "t15",
    "x": 6,
    "y": 23,
    "text": "{pb_f2_kb}",
@@ -231,7 +190,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t17",
+   "id": "t16",
    "x": 6,
    "y": 23,
    "text": "{pb_f2_vr}",
@@ -239,7 +198,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t18",
+   "id": "t17",
    "x": 6,
    "y": 23,
    "text": "{pb_f2_vb}",
@@ -247,7 +206,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t19",
+   "id": "t18",
    "x": 6,
    "y": 38,
    "text": "{pb_f3}",
@@ -255,7 +214,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t20",
+   "id": "t19",
    "x": 6,
    "y": 38,
    "text": "{pb_f3_kr}",
@@ -263,7 +222,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t21",
+   "id": "t20",
    "x": 6,
    "y": 38,
    "text": "{pb_f3_kb}",
@@ -271,7 +230,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t22",
+   "id": "t21",
    "x": 6,
    "y": 38,
    "text": "{pb_f3_vr}",
@@ -279,7 +238,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t23",
+   "id": "t22",
    "x": 6,
    "y": 38,
    "text": "{pb_f3_vb}",
@@ -287,7 +246,7 @@
    "pin": "top-left"
   },
   {
-   "id": "t24",
+   "id": "t23",
    "x": -48,
    "y": 11,
    "text": "{pb_red}",
@@ -295,7 +254,7 @@
    "pin": "top"
   },
   {
-   "id": "t25",
+   "id": "t24",
    "x": 48,
    "y": 11,
    "text": "{pb_blue}",
@@ -303,7 +262,7 @@
    "pin": "top"
   },
   {
-   "id": "t26",
+   "id": "t25",
    "x": 0,
    "y": 11,
    "text": "{pb_time}",
@@ -311,7 +270,7 @@
    "pin": "top"
   },
   {
-   "id": "t27",
+   "id": "t26",
    "x": 0,
    "y": 30,
    "text": "{pb_status}",
@@ -319,63 +278,31 @@
    "pin": "top"
   },
   {
-   "id": "t28",
-   "x": 0,
-   "y": 30,
-   "text": "{pb_status_hot}",
-   "color": "#ffd23f",
-   "pin": "top"
-  },
-  {
-   "id": "t29",
-   "x": -36,
-   "y": -15,
-   "text": "{pb_ammo}",
+   "id": "t27",
+   "x": -6,
+   "y": -35,
+   "text": "{pb_weapon}",
    "color": "#ffffff",
    "pin": "bottom-right"
   },
   {
-   "id": "t30",
-   "x": -12,
-   "y": -16,
-   "text": "{pb_ammo_cap}",
-   "color": "#9aa0a6",
-   "pin": "bottom-right"
-  },
-  {
-   "id": "t31",
-   "x": -12,
+   "id": "t28",
+   "x": -6,
    "y": -38,
    "text": "{pb_gun}",
    "color": "#9aa0a6",
    "pin": "bottom-right"
   },
   {
-   "id": "t32",
-   "x": -12,
+   "id": "t29",
+   "x": -6,
    "y": -38,
    "text": "{pb_gun_hot}",
    "color": "#ffd23f",
    "pin": "bottom-right"
   },
   {
-   "id": "t33",
-   "x": -95,
-   "y": -16,
-   "text": "{pb_nade}",
-   "color": "#ffffff",
-   "pin": "bottom-right"
-  },
-  {
-   "id": "t34",
-   "x": 0,
-   "y": 26,
-   "text": "{pb_respawn}",
-   "color": "#ffffff",
-   "pin": "center"
-  },
-  {
-   "id": "t35",
+   "id": "t30",
    "x": 0,
    "y": 0,
    "text": "{pb_xhair}",
@@ -383,39 +310,48 @@
    "pin": "center"
   },
   {
-   "id": "t36",
+   "id": "t31",
    "x": 0,
    "y": 0,
    "text": "{pb_hit}",
    "color": "#ffffff",
    "pin": "center"
+  },
+  {
+   "id": "t32",
+   "x": 0,
+   "y": 0,
+   "text": "{pb_center}",
+   "color": "#ffffff",
+   "pin": "center"
+  },
+  {
+   "id": "t33",
+   "x": 0,
+   "y": 44,
+   "text": "{pb_center2}",
+   "color": "#ffffff",
+   "pin": "center"
+  },
+  {
+   "id": "t34",
+   "x": 0,
+   "y": 57,
+   "text": "{pb_name_r}",
+   "color": "#ff6b77",
+   "pin": "center"
+  },
+  {
+   "id": "t35",
+   "x": 0,
+   "y": 57,
+   "text": "{pb_name_b}",
+   "color": "#5cb3ff",
+   "pin": "center"
   }
  ],
  "heads": [],
  "images": [],
- "bars": [
-  {
-   "id": "b37",
-   "x": -12,
-   "y": -11,
-   "width": 68,
-   "height": 2,
-   "value": "pb_ammo_n",
-   "max": "pb_ammo_max",
-   "shape": "solid",
-   "segments": 10,
-   "gap": 1,
-   "color": "#ffffff",
-   "stops": [
-    {
-     "at": 0.25,
-     "color": "#ff4655"
-    }
-   ],
-   "background": "#2c323a",
-   "preview": 0.7,
-   "pin": "bottom-right"
-  }
- ],
+ "bars": [],
  "triggers": []
 }

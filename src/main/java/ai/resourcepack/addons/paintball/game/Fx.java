@@ -2,9 +2,6 @@ package ai.resourcepack.addons.paintball.game;
 
 import ai.resourcepack.addons.paintball.Content;
 import ai.resourcepack.addons.paintball.Team;
-import ai.resourcepack.addons.paintball.Text;
-import net.kyori.adventure.text.Component;
-import net.kyori.adventure.title.Title;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
@@ -15,7 +12,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.FireworkMeta;
 
-import java.time.Duration;
 import java.util.concurrent.ThreadLocalRandom;
 
 /** Everything a match sounds and looks like that is not the HUD. */
@@ -69,14 +65,9 @@ final class Fx {
         at.getWorld().spawnParticle(Particle.SPLASH, at, 8, 0.1, 0.05, 0.1, 0);
     }
 
-    /** The victim's screen, painted in the colour of whoever hit them. */
-    void screenSplat(Player victim, Team shooter) {
+    /** The splat in the victim's ears; the paint on their screen is the HUD's. */
+    void splatted(Player victim) {
         if (victim == null) return;
-        int n = 1 + ThreadLocalRandom.current().nextInt(3);
-        String glyph = content.icon("screen_splat_" + n, "");
-        if (glyph.isEmpty()) return;
-        victim.showTitle(Title.title(Component.text(glyph, shooter.color()), Component.empty(),
-                Title.Times.times(Duration.ZERO, Duration.ofMillis(450), Duration.ofMillis(1100))));
         content.sound(victim, "splat", 1f, 0.8f, Sound.ENTITY_SLIME_SQUISH);
     }
 
@@ -123,14 +114,5 @@ final class Fx {
             meta.setPower(1);
             f.setFireworkMeta(meta);
         });
-    }
-
-    void title(Player p, Component title, Component subtitle, int fadeIn, int stay, int fadeOut) {
-        p.showTitle(Title.title(title, subtitle, Title.Times.times(Duration.ofMillis(fadeIn * 50L),
-                Duration.ofMillis(stay * 50L), Duration.ofMillis(fadeOut * 50L))));
-    }
-
-    static Component big(String s, net.kyori.adventure.text.format.TextColor c) {
-        return Text.plain(s, c).decorate(net.kyori.adventure.text.format.TextDecoration.BOLD);
     }
 }

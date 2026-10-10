@@ -70,7 +70,6 @@ ui:
 # other {names} are filled in by the plugin.
 messages:
   prefix: "<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold> <#5F6368>▏</#5F6368><#E8EAED>"
-  brand: "<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold>"
 
   joined-lobby: "{prefix}<#5BE37D>+</#5BE37D> <white>{player}</white> joined the lobby <#9AA0A6>({count})"
   joined-team: "{prefix}<white>{player}</white> joined <{colour}>{team}</{colour}>."
@@ -85,24 +84,11 @@ messages:
   match-stopped: "{prefix}The match was stopped."
   closed: "{prefix}Paintball is closed for now."
 
-  title-countdown: "<bold><#FFD23F>{seconds}"
-  title-team: "<#9AA0A6>You're on</#9AA0A6> <{colour}><bold>{team}</bold></{colour}>  <#5F6368>·</#5F6368>  <#9AA0A6>most kills wins"
-  title-go: "<bold><#5BE37D>GO!"
-  title-victory: "<bold><#5BE37D>VICTORY"
-  title-defeat: "<bold><#FF5C5C>DEFEAT"
-  title-draw: "<bold><#9AA0A6>DRAW"
-  title-score: "<bold><#FF4655>{red}</bold>  <#5F6368>—</#5F6368>  <bold><#2E9BFF>{blue}</bold>"
-
   # Shown under the score while you're in the lobby.
   lobby-bar: "<#9AA0A6>Lobby  <#5F6368>·</#5F6368>  <white>{count}</white> here  <#5F6368>·</#5F6368>  /pb leave to go"
 
   # The HUD's words. Plain text: the HUD draws them in its own colours.
   hud-get-ready: "GET READY"
-  hud-victory: "VICTORY"
-  hud-defeat: "DEFEAT"
-  hud-draw: "DRAW"
-  hud-splatted: "SPLATTED {player}"
-  hud-splatted-by: "SPLATTED BY {player}"
   hud-protected: "PROTECTED"
   hud-first-to: "FIRST TO {kills}"
   hud-reloading: "RELOADING"

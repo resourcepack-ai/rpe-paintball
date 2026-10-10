@@ -1,6 +1,7 @@
 package ai.resourcepack.addons.paintball.game;
 
 import ai.resourcepack.addons.paintball.Messages;
+import ai.resourcepack.addons.paintball.Settings;
 import ai.resourcepack.addons.paintball.Team;
 import ai.resourcepack.addons.paintball.Text;
 import ai.resourcepack.engine.api.Overlays;
@@ -20,36 +21,57 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
- * Everything on a player's screen during a match.
+ * Everything on a player's screen during a match. Nothing here is a title:
+ * every moment of the match is drawn by the HUD.
  *
  * <ul>
  *   <li><b>The HUD</b> is the content folder's {@code huds/hud.json}: a
  *   full-screen shader object drawn in ResourcePack AI Studio, which RP Engine
- *   draws in the action bar. The score strip (top centre), the kill feed (top
- *   left), the marker (bottom right), the hit marker and the respawn countdown
- *   are all in it; this class only fills its values, and redraws it the moment
- *   one changes, because the engine's own redraw is every second and a half.</li>
+ *   draws in the action bar. Its shapes are the score strip; everything else
+ *   is a run whose value this class writes, and redraws the moment one
+ *   changes, which is also what animates it (a value per two ticks).</li>
  *   <li><b>The player list</b> (Tab) is the live scoreboard: the score and the
  *   clock in the header, both teams in order, each player's kills and deaths.</li>
  * </ul>
  *
- * <p>The HUD has a run per colour, because a shader run's colour is its
- * address: so a kill feed line is five values (the panel and the weapon, then
- * the killer and the victim, each in a red and a blue run of which one is
- * empty), laid out against each other with the engine's own measurements.
+ * <p>A run is one colour, and that colour is its address in the shader, so
+ * anything in more than one colour is a picture that arrives coloured, in a
+ * white run: the weapon cluster (bottom right), the middle of the screen (the
+ * countdown, GO!, the respawn ring, the result) and the line under it. Their
+ * glyphs are tools/hud_art.py's, and the numbers below that place things inside
+ * them are that file's too. A name stays a run of its team's colour.
  */
 final class Hud {
     private static final int FEED_LINES = 3;
 
     private static final String[] FEED_SUFFIXES = {"", "_kr", "_kb", "_vr", "_vb"};
 
+    // ---- tools/hud_art.py's numbers ----------------------------------------------------
+    /** The weapon cluster: the grenade card, a gap, the ammo panel. */
+    private static final int CARD_W = 26;
+    private static final int CARD_GAP = 3;
+    private static final int PANEL_W = 74;
+    private static final int BAR_W = 62;
+    private static final int CARD_FRAMES = 19;
+    private static final double LOW_AMMO = 0.25;
+    private static final int START_RING_FRAMES = 10;
+    private static final int RESPAWN_RING_FRAMES = 30;
+    private static final int SPLAT_FADE_FRAMES = 5;
+    /** How long the paint stays on a splatted player's screen before it starts to fade, and each step of the fade. */
+    private static final int SPLAT_HOLD = 10;
+    private static final int SPLAT_STEP = 4;
+
     private final Game game;
     private final Scoreboard board;
     private final Objective tab;
+    /** What was last drawn for each player, so an unchanged HUD is not sent again. */
     private final Map<UUID, String> drawn = new HashMap<>();
+    /** Who has the HUD on screen: kept apart from {@link #drawn}, which is cleared to force a redraw. */
+    private final Set<UUID> shown = new HashSet<>();
 
     Hud(Game game) {
         this.game = game;
@@ -89,6 +111,7 @@ final class Hud {
         overlays().hide(p, hudId());
         for (String key : names()) overlays().set(p, key, null);
         drawn.remove(p.getUniqueId());
+        shown.remove(p.getUniqueId());
         board.resetScores(p.getName());
         for (org.bukkit.scoreboard.Team st : board.getTeams()) st.removeEntry(p.getName());
         p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
@@ -99,6 +122,7 @@ final class Hud {
 
     void close() {
         drawn.clear();
+        shown.clear();
     }
 
     /** Team colours on names (the player list, name tags) for everybody in the match. */
@@ -139,7 +163,11 @@ final class Hud {
                 Player p = gp.player();
                 if (p == null) continue;
                 if (game.phase == Game.Phase.WAITING) {
-                    if (drawn.remove(p.getUniqueId()) != null) overlays().hide(p, hudId());
+                    // Off, every time: the engine redraws a shown HUD on its own
+                    // every second and a half, so one left on would flash up
+                    // between the lobby's action bars.
+                    drawn.remove(p.getUniqueId());
+                    if (shown.remove(p.getUniqueId())) overlays().hide(p, hudId());
                     p.sendActionBar(messages().component("lobby-bar", "count", String.valueOf(game.size())));
                 } else {
                     drawHud(gp, p);
@@ -160,6 +188,7 @@ final class Hud {
         String signature = String.join("|", values.values());
         if (signature.equals(drawn.get(p.getUniqueId()))) return;
         drawn.put(p.getUniqueId(), signature);
+        shown.add(p.getUniqueId());
         Overlays overlays = overlays();
         for (Map.Entry<String, String> e : values.entrySet()) overlays.set(p, e.getKey(), e.getValue());
         // show() draws at once; the engine alone would get to it within a second and a half.
@@ -167,75 +196,44 @@ final class Hud {
     }
 
     private static List<String> names() {
-        List<String> out = new java.util.ArrayList<>(List.of("pb_red", "pb_blue", "pb_time", "pb_status", "pb_status_hot",
-                "pb_ammo", "pb_ammo_cap", "pb_ammo_n", "pb_ammo_max", "pb_gun", "pb_gun_hot", "pb_nade",
-                "pb_respawn", "pb_hit", "pb_xhair"));
+        List<String> out = new java.util.ArrayList<>(List.of("pb_red", "pb_blue", "pb_time", "pb_status",
+                "pb_weapon", "pb_gun", "pb_gun_hot", "pb_hit", "pb_xhair",
+                "pb_center", "pb_center2", "pb_name_r", "pb_name_b", "pb_splat_r", "pb_splat_b"));
         for (int k = 1; k <= FEED_LINES; k++) for (String s : FEED_SUFFIXES) out.add("pb_f" + k + s);
         return out;
     }
 
     private Map<String, String> values(GamePlayer gp, Player p) {
-        var s = game.settings();
+        Settings s = game.settings();
         Messages m = messages();
         Map<String, String> v = new LinkedHashMap<>();
         v.put("pb_red", digits(String.valueOf(game.kills(Team.RED))));
         v.put("pb_blue", digits(String.valueOf(game.kills(Team.BLUE))));
         v.put("pb_time", digits(game.clockText()));
 
-        // The line under the score: gold when it is good news.
-        String status = "";
-        String hot = "";
-        switch (game.phase) {
-            case FREEZE -> status = m.plain("hud-get-ready");
-            case ENDED -> {
-                if (game.winner() == null) status = m.plain("hud-draw");
-                else if (gp.team == game.winner()) hot = m.plain("hud-victory");
-                else status = m.plain("hud-defeat");
-            }
-            case LIVE -> {
-                if (!gp.alive) {
-                    status = gp.splattedBy == null ? "" : m.plain("hud-splatted-by", "player", gp.splattedBy);
-                } else if (gp.lastKill != null && game.now - gp.lastKillAt < s.killBannerTicks) {
-                    hot = m.plain("hud-splatted", "player", gp.lastKill);
-                } else if (game.now < gp.protectedUntil) {
-                    status = m.plain("hud-protected");
-                } else if (s.killLimit > 0) {
-                    status = m.plain("hud-first-to", "kills", String.valueOf(s.killLimit));
-                }
-            }
-            default -> {
-            }
-        }
-        v.put("pb_status", status);
-        v.put("pb_status_hot", hot);
+        boolean live = game.phase == Game.Phase.LIVE;
+        boolean armed = live && gp.alive;
 
-        // The marker, bottom right.
-        boolean armed = game.phase == Game.Phase.LIVE && gp.alive;
+        // The line under the score.
+        String status = "";
+        if (game.phase == Game.Phase.FREEZE) status = m.plain("hud-get-ready");
+        else if (armed && game.now < gp.protectedUntil) status = m.plain("hud-protected");
+        else if (armed && s.killLimit > 0) status = m.plain("hud-first-to", "kills", String.valueOf(s.killLimit));
+        v.put("pb_status", status);
+
+        // The marker, bottom right, and what it is called above it.
         boolean reloading = armed && gp.reloading > 0;
-        v.put("pb_ammo", armed ? digits(String.valueOf(gp.ammo)) : "");
-        v.put("pb_ammo_cap", armed ? "/ " + s.hopper : "");
-        int fill = reloading ? Math.round(s.hopper * (1f - gp.reloading / (float) s.reloadTicks)) : gp.ammo;
-        v.put("pb_ammo_n", armed ? String.valueOf(fill) : "0");
-        v.put("pb_ammo_max", String.valueOf(s.hopper));
+        v.put("pb_weapon", armed ? weapon(gp, s, reloading) : "");
         v.put("pb_gun", armed && !reloading ? m.plain("hud-marker", "skin", gp.team == null ? "" : Loadout.skinName(s, gp)) : "");
         v.put("pb_gun_hot", reloading ? m.plain("hud-reloading") : "");
-        // The grenade: its icon when it is ready, and the seconds left while it recharges.
-        long recharge = gp.grenadeReadyAt - game.now;
-        v.put("pb_nade", !armed ? "" : recharge > 0
-                ? icon("grenade_icon") + overlays().space(2) + ((recharge + 19) / 20)
-                : icon("grenade_icon") + overlays().space(4));
 
-        // The middle of the screen: the countdown while out; while in, the hit
-        // marker and the spread round the crosshair (the crosshair itself is the
-        // HUD's own, drawn over the game's). Down the sights there is no spread.
-        boolean out = game.phase == Game.Phase.LIVE && !gp.alive && gp.respawnAt > 0;
-        v.put("pb_respawn", out ? digits(String.valueOf(Math.max(1, (gp.respawnAt - game.now + 19) / 20))) : "");
-        v.put("pb_hit", armed && game.now < gp.hitUntil ? icon("hitmarker") : "");
-        // The crosshair is the HUD's own, a plus drawn over the game's (which is
-        // why it is there whenever the game's would be): from the hip it carries
-        // the spread, down the sights it is the plus alone.
+        // The crosshair is the HUD's own, a plus drawn over the game's: from the
+        // hip it carries the spread, down the sights it is the plus alone.
         int ticks = armed && !gp.aiming ? spreadTicks(game.combat.spreadDegrees(gp, p)) : 0;
-        v.put("pb_xhair", p.getGameMode() != org.bukkit.GameMode.SPECTATOR ? icon("xhair_" + ticks) : "");
+        v.put("pb_xhair", armed ? icon("xhair_" + ticks) : "");
+        v.put("pb_hit", armed && game.now < gp.hitUntil ? icon("hitmarker") : "");
+
+        middle(v, gp, s);
 
         int k = 1;
         for (Game.Kill kill : game.feed) {
@@ -245,6 +243,128 @@ final class Hud {
         }
         for (; k <= FEED_LINES; k++) for (String suffix : FEED_SUFFIXES) v.put("pb_f" + k + suffix, "");
         return v;
+    }
+
+    /**
+     * The middle of the screen: the paint on it, the picture in it, the line
+     * under that and a name. What each phase puts there:
+     *
+     * <ul>
+     *   <li>the countdown: a gold ring a second round, the number popping in,
+     *   and which team you are on;</li>
+     *   <li>going live: GO!, popping in;</li>
+     *   <li>splatted: the paint in your splatter's colour, fading, the respawn
+     *   ring round the seconds left, and who it was;</li>
+     *   <li>a splat of your own: SPLATTED and who, under the crosshair;</li>
+     *   <li>the end: VICTORY, DEFEAT or DRAW on a band, and the score.</li>
+     * </ul>
+     */
+    private void middle(Map<String, String> v, GamePlayer gp, Settings s) {
+        String center = "";
+        String center2 = "";
+        String name = "";
+        Team nameTeam = null;
+        String splat = "";
+        Team splatTeam = null;
+
+        switch (game.phase) {
+            case FREEZE -> {
+                int into = (s.freezeSeconds * 20 - game.timer) % 20;
+                int seconds = Math.max(1, (game.timer + 19) / 20);
+                String ring = icon("ring_start_" + Math.min(START_RING_FRAMES - 1, into / 2));
+                center = over(ring, lettering("white", into < 2 ? 4 : 3, String.valueOf(seconds)));
+                if (gp.team != null) {
+                    center2 = lettering("grey", 1, "YOUR TEAM") + overlays().space(6)
+                            + lettering(gp.team == Team.RED ? "red" : "blue", 2, gp.team == Team.RED ? "RED" : "BLUE");
+                }
+            }
+            case LIVE -> {
+                long sinceGo = game.now - game.liveAt;
+                if (sinceGo < 24) center = lettering("green", sinceGo < 2 ? 6 : sinceGo < 4 ? 5 : 4, "GO!");
+                if (!gp.alive) {
+                    long out = game.now - gp.splattedAt;
+                    int fade = out < SPLAT_HOLD ? 0 : (int) (1 + (out - SPLAT_HOLD) / SPLAT_STEP);
+                    if (fade < SPLAT_FADE_FRAMES && gp.splattedByTeam != null) {
+                        splat = icon("hud_splat_" + gp.splat + "_" + fade);
+                        splatTeam = gp.splattedByTeam;
+                    }
+                    if (gp.respawnAt > 0) {
+                        long left = Math.max(0, gp.respawnAt - game.now);
+                        int total = Math.max(1, s.respawnTicks);
+                        int frame = (int) Math.min(RESPAWN_RING_FRAMES - 1, (total - left) * RESPAWN_RING_FRAMES / total);
+                        center = over(icon("ring_respawn_" + Math.max(0, frame)),
+                                lettering("white", 2, String.valueOf(Math.max(1, (left + 19) / 20))));
+                    }
+                    if (gp.splattedBy != null) {
+                        center2 = lettering("grey", 1, "SPLATTED BY");
+                        name = gp.splattedBy;
+                        nameTeam = gp.splattedByTeam;
+                    }
+                } else if (gp.lastKill != null && game.now - gp.lastKillAt < s.killBannerTicks) {
+                    center2 = lettering("gold", 1, "SPLATTED");
+                    name = gp.lastKill;
+                    nameTeam = gp.lastKillTeam;
+                }
+            }
+            case ENDED -> {
+                long since = game.now - game.endedAt;
+                Team w = game.winner();
+                String look = w == null ? "draw" : gp.team == w ? "victory" : "defeat";
+                String sheet = w == null ? "grey" : gp.team == w ? "gold" : "red";
+                String word = look.toUpperCase();
+                String band = icon("band_" + look + "_0") + overlays().space(-1) + icon("band_" + look + "_1");
+                center = over(band, lettering(sheet, since < 2 ? 5 : since < 4 ? 4 : 3, word));
+                Overlays o = overlays();
+                center2 = lettering("red", 2, String.valueOf(game.kills(Team.RED))) + o.space(8)
+                        + lettering("grey", 2, "-") + o.space(8)
+                        + lettering("blue", 2, String.valueOf(game.kills(Team.BLUE)));
+            }
+            default -> {
+            }
+        }
+        v.put("pb_center", center);
+        v.put("pb_center2", center2);
+        v.put("pb_name_r", nameTeam == Team.RED ? name : "");
+        v.put("pb_name_b", nameTeam == Team.BLUE ? name : "");
+        v.put("pb_splat_r", splatTeam == Team.RED ? splat : "");
+        v.put("pb_splat_b", splatTeam == Team.BLUE ? splat : "");
+    }
+
+    /**
+     * The weapon cluster, one picture in one run: the grenade card (its can
+     * filling up as it recharges, gold when it is back) and the ammo panel (the
+     * bar at the ammo's length, red when it is low), with the count and the
+     * hopper's size drawn over the panel, right-aligned with a margin, between
+     * the panel's top and its bar. Every piece hangs from the run's line, so
+     * they all line up by construction.
+     */
+    private String weapon(GamePlayer gp, Settings s, boolean reloading) {
+        Overlays o = overlays();
+        String back = o.space(-1);
+        StringBuilder out = new StringBuilder();
+
+        int cooldown = Math.max(1, s.grenadeCooldownTicks);
+        long recharge = Math.max(0, gp.grenadeReadyAt - game.now);
+        int card = recharge <= 0 ? CARD_FRAMES - 1
+                : (int) Math.min(CARD_FRAMES - 2, (cooldown - recharge) * (CARD_FRAMES - 1) / cooldown);
+        out.append(icon("w_card_" + Math.max(0, card))).append(back).append(o.space(CARD_GAP));
+
+        int hopper = Math.max(1, s.hopper);
+        int shown = reloading ? Math.round(hopper * (1f - gp.reloading / (float) s.reloadTicks)) : gp.ammo;
+        shown = Math.max(0, Math.min(hopper, shown));
+        int level = Math.round(BAR_W * shown / (float) hopper);
+        boolean low = !reloading && shown <= hopper * LOW_AMMO;
+        out.append(icon((low ? "w_panel_low_" : "w_panel_") + level)).append(back);
+
+        String count = glyphs("w_digit_", String.valueOf(shown));
+        String cap = icon("w_small_slash") + glyphs("w_small_", String.valueOf(hopper));
+        int countW = o.width(count) - 1;
+        int capW = o.width(cap) - 1;
+        int capX = PANEL_W - 6 - capW;
+        int countX = capX - 3 - countW;
+        // From the panel's right edge back to the count, then on to the end again.
+        out.append(o.space(countX - PANEL_W)).append(count).append(o.space(2)).append(cap).append(o.space(5));
+        return out.toString();
     }
 
     /**
@@ -296,6 +416,40 @@ final class Hud {
         return degrees < 1.0 ? 1 : degrees < 2.4 ? 2 : 3;
     }
 
+    /**
+     * {@code top} drawn centred over {@code base}, the whole as wide as the
+     * wider of the two, so a run centred on its width centres both.
+     */
+    private String over(String base, String top) {
+        Overlays o = overlays();
+        int bw = o.width(base);
+        int tw = o.width(top);
+        if (tw <= bw) {
+            int back = bw - (bw - tw) / 2;
+            return base + o.space(-back) + top + o.space(back - tw);
+        }
+        int lead = (tw - bw) / 2;
+        return o.space(lead) + base + o.space(-(lead + bw)) + top;
+    }
+
+    /**
+     * Words in the HUD's own lettering ({@code t_<sheet><scale>_<char>}): the
+     * score digits' style, outlined, in a sheet per colour. A space is half a
+     * letter; a character the sheets do not have is left out.
+     */
+    private String lettering(String sheet, int scale, String text) {
+        StringBuilder out = new StringBuilder();
+        for (char c : text.toUpperCase().toCharArray()) {
+            if (c == ' ') {
+                out.append(overlays().space(5 * scale));
+                continue;
+            }
+            String id = c == '!' ? "bang" : c == '-' ? "dash" : String.valueOf(Character.toLowerCase(c));
+            out.append(icon("t_" + sheet + scale + "_" + id));
+        }
+        return out.toString();
+    }
+
     /** Numbers in the HUD's big digits. Anything else is left as it is. */
     private String digits(String text) {
         StringBuilder out = new StringBuilder();
@@ -304,6 +458,13 @@ final class Hud {
             else if (c == ':') out.append(icon("digit_colon"));
             else out.append(c);
         }
+        return out.toString();
+    }
+
+    /** {@code text}'s digits as the icons {@code prefix + digit}. */
+    private String glyphs(String prefix, String text) {
+        StringBuilder out = new StringBuilder();
+        for (char c : text.toCharArray()) out.append(icon(prefix + c));
         return out.toString();
     }
 

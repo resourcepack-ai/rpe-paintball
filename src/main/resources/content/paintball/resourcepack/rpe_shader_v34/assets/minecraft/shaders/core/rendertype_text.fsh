@@ -134,24 +134,6 @@ void scene_0(vec2 p, vec2 screen, out float d, out vec3 col, out float shapeAlph
     col = mix(col, vec3(0.051, 0.0667, 0.0902), step(d4, d));
     shapeAlpha = mix(shapeAlpha, 0.88, step(d4, d));
     d = opUnion(d, d4);
-
-    // roundedBox #6 (union)
-    float d5 = sdRoundedBox((p - (vec2(1.0, 1.0) * screen + vec2(-46.0, -21.0))), (vec2(38.0, 13.0)), (2.0));
-    col = mix(col, vec3(0.051, 0.0667, 0.0902), step(d5, d));
-    shapeAlpha = mix(shapeAlpha, 0.8, step(d5, d));
-    d = opUnion(d, d5);
-
-    // box #7 (union)
-    float d6 = sdBox((p - (vec2(1.0, 1.0) * screen + vec2(-46.0, -33.5))), (vec2(38.0, 0.5)));
-    col = mix(col, vec3(1.0, 1.0, 1.0), step(d6, d));
-    shapeAlpha = mix(shapeAlpha, 0.18, step(d6, d));
-    d = opUnion(d, d6);
-
-    // roundedBox #8 (union)
-    float d7 = sdRoundedBox((p - (vec2(1.0, 1.0) * screen + vec2(-101.0, -21.0))), (vec2(14.0, 13.0)), (2.0));
-    col = mix(col, vec3(0.051, 0.0667, 0.0902), step(d7, d));
-    shapeAlpha = mix(shapeAlpha, 0.8, step(d7, d));
-    d = opUnion(d, d7);
 }
 
 void dispatch(int id, vec2 cell, vec2 sub, out float d, out vec3 col, out float a) {
@@ -163,7 +145,7 @@ void dispatch(int id, vec2 cell, vec2 sub, out float d, out vec3 col, out float 
         vec2 stretchK = screen / vec2(640.0, 360.0);
         float stretchS = min(stretchK.x, stretchK.y);
         scene_0(rpeScreen.xy, screen, d, col, a);
-        float feather = max(max(max(max(max(max(max(max(1.0, 1.0), 1.0), 1.0), 1.0), 1.0), 1.0), 1.0), 1.0);
+        float feather = max(max(max(max(max(1.0, 1.0), 1.0), 1.0), 1.0), 1.0);
         a *= 1.0 - smoothstep(-feather * 0.5, feather * 0.5, d);
         return;
     }

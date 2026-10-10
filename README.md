@@ -28,10 +28,16 @@ installs it into `plugins/RPEngine/content/paintball/` on enable. Nothing on
 screen is drawn by this plugin:
 
 - **The HUD** is `huds/hud.json`, a full-screen shader object drawn in
-  ResourcePack AI Studio: the score strip (top centre), a Valorant-style kill
-  feed (top left: the killer's and victim's colours, the weapon), the marker's
-  ammo (bottom right), a hit marker and the respawn countdown. The plugin only
-  sets its values (`pb_red`, `pb_time`, `pb_f1`..., see `game/Hud.java`).
+  ResourcePack AI Studio, and it is the whole screen: there is not a title in
+  the game. The score strip (top centre), a Valorant-style kill feed (top left),
+  the weapon cluster (bottom right: the grenade card filling as it recharges,
+  the ammo panel and its bar), the crosshair and hit marker, and the middle of
+  the screen, which carries every moment of a match: the countdown ring, GO!,
+  the paint on a splatted player's screen and their respawn ring, SPLATTED and
+  who, and the result on its band with the score. The plugin only sets its
+  values (`pb_red`, `pb_weapon`, `pb_center`..., see `game/Hud.java`); the
+  pictures in them are `tools/hud_art.py`'s, which is why a word drawn in one
+  (VICTORY, GO!) is art rather than config.
 - **The scoreboard** is `dialogs/scoreboard.json`, a Studio dialog: both teams'
   tables with faces, kills, deaths and accuracy.
 - **The marker** is Studio's Tactical model in five colourways (Ember for red,
@@ -39,9 +45,12 @@ screen is drawn by this plugin:
   `models/marker_sights.json` down the sights instead (RP Engine's `first-person:`).
 - **The crosshair** is the HUD's own, a 2-pixel plus drawn over the game's 1-pixel
   one (the HUD is drawn after it), with spread ticks from the hip.
-- **The mask, balls, splats, grenade, HUD glyphs and sounds** are ordinary items,
-  icons and sounds. Item names and lore are in `items/*.yml`.
-- **Every word a player reads** is in `config.yml` under `messages:`.
+- **The mask, grenade and paintball** are Studio models too (`tools/src/`), fitted
+  and coloured per team by `tools/make_assets.py`; the sounds are Studio's. The
+  splats and the HUD's glyphs are drawn by the tools. Item names and lore are in
+  `items/*.yml`.
+- **Every word a player reads in chat, the player list and the HUD's text** is in
+  `config.yml` under `messages:`.
 
 `config.yml`'s `ui.hud` and `ui.scoreboard` point at other content ids to
 replace either; a replacement has to print the same values.
@@ -65,7 +74,7 @@ npm run deploy -- addon paintball --server-only                 # from the repo 
 The engine has to be built first (`rp-engine/build/libs`). The art:
 
 ```
-python tools/make_assets.py                 # models, textures, glyphs, sounds, item YAML
+python tools/make_assets.py                 # models, textures, glyphs and HUD art (hud_art.py), sounds, item YAML
 python tools/preview_display.py <model.json> <texture.png> out.png   # how an item is held
 ```
 

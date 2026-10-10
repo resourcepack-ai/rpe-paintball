@@ -59,6 +59,9 @@ public final class Game {
     /** Ticks left on the match clock while LIVE. */
     int clock;
     long now;
+    /** When the match went live and when it ended: the HUD's GO! and result are timed from these. */
+    long liveAt;
+    long endedAt;
     final EnumMap<Team, Integer> kills = new EnumMap<>(Team.class);
     /** The kill feed, newest first. */
     final Deque<Kill> feed = new ArrayDeque<>();
@@ -205,19 +208,17 @@ public final class Game {
             }
             case FREEZE -> {
                 timer--;
+                // The count itself is the HUD's; this is its sound.
                 if (timer > 0 && timer % 20 == 0) {
-                    int n = timer / 20;
-                    for (Player p : online()) {
-                        fx.title(p, messages().component("title-countdown", "seconds", String.valueOf(n)), Component.empty(), 0, 18, 2);
-                        fx.tick(p, n);
-                    }
+                    for (Player p : online()) fx.tick(p, timer / 20);
                 }
                 if (timer <= 0) goLive();
             }
             case LIVE -> tickLive();
             case ENDED -> {
                 timer--;
-                if (timer == settings().endSeconds * 20 - 30) {
+                // The result has the screen to itself for three seconds first.
+                if (timer == settings().endSeconds * 20 - 60) {
                     for (Player p : online()) plugin.scoreboard().open(p, this);
                 }
                 if (timer % 20 == 0 && timer > settings().endSeconds * 20 - 120 && winner != null) {
@@ -289,19 +290,18 @@ public final class Game {
             if (p == null) continue;
             spawn(gp, p, true);
             freeze(p);
-            fx.title(p, messages().component("brand"), messages().component("title-team",
-                    "colour", gp.team.color().asHexString(), "team", gp.team.display().toUpperCase()), 5, 40, 10);
+            fx.tick(p, timer / 20);
         }
         return true;
     }
 
     private void goLive() {
         phase = Phase.LIVE;
+        liveAt = now;
         for (GamePlayer gp : active()) {
             Player p = gp.player();
             if (p == null) continue;
             unfreeze(p);
-            fx.title(p, messages().component("title-go"), Component.empty(), 0, 15, 8);
             fx.whistle(p);
         }
     }
@@ -359,16 +359,20 @@ public final class Game {
         feed.addFirst(new Kill(shooter.name, shooter.team, victim.name, victim.team, weapon, now));
         while (feed.size() > 3) feed.removeLast();
         victim.splattedBy = shooter.name;
+        victim.splattedByTeam = shooter.team;
+        victim.splattedAt = now;
+        victim.splat = 1 + java.util.concurrent.ThreadLocalRandom.current().nextInt(3);
         shooter.lastKill = victim.name;
+        shooter.lastKillTeam = victim.team;
         shooter.lastKillAt = now;
         shooter.hitUntil = now + settings().hitMarkerTicks;
 
         Player vp = victim.player();
         Player sp = shooter.player();
-        fx.screenSplat(vp, shooter.team);
+        fx.splatted(vp);
         fx.hitConfirm(sp);
         if (vp != null) {
-            // The paint on their screen is the title; who did it is on the HUD.
+            // The paint on their screen and who did it are both the HUD's.
             aim(victim, vp, false);
             fx.knockedOut(vp);
             vp.getInventory().clear();
@@ -389,6 +393,7 @@ public final class Game {
         int blue = kills.get(Team.BLUE);
         winner = red == blue ? null : red > blue ? Team.RED : Team.BLUE;
         phase = Phase.ENDED;
+        endedAt = now;
         timer = settings().endSeconds * 20;
         for (GamePlayer gp : active()) {
             Player p = gp.player();
@@ -398,10 +403,8 @@ public final class Game {
             if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
             p.setGameMode(GameMode.ADVENTURE);
             p.getInventory().clear();
-            boolean won = winner != null && gp.team == winner;
-            Component title = messages().component(winner == null ? "title-draw" : won ? "title-victory" : "title-defeat");
-            fx.title(p, title, messages().component("title-score", "red", String.valueOf(red), "blue", String.valueOf(blue)), 5, 60, 15);
-            fx.fanfare(p, won);
+            // The result and the score are the HUD's.
+            fx.fanfare(p, winner != null && gp.team == winner);
         }
         hud.refreshScores();
     }
