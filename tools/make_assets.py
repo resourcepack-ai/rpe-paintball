@@ -6,7 +6,8 @@ Builds every asset in the paintball content folder from scratch:
 - the marker, the mask, the grenade and the paintball: models generated in ResourcePack AI
   Studio (tools/src), fitted, given namespaced textures and display transforms,
   and painted per skin or team from their own atlases;
-- the splats: model and textures made here;
+- the splats: Studio's (tools/src/splats), painted per team, and smoothed up to
+  the screen's size for the paint on a splatted player's screen;
 - the HUD glyphs (kill feed, crosshair, digits) and the mask's camera overlay;
 - the HUD's art (lettering, rings, the weapon cluster, the result band, the
   screen splat's fade): tools/hud_art.py;
@@ -380,45 +381,6 @@ def ball():
     save_json(model, "models", "ball.json")
 
 
-def blob_mask(seed, size=64):
-    rnd = random.Random(seed)
-    s = 4  # supersample
-    W = size * s
-    img = Image.new("L", (W, W), 0)
-    d = ImageDraw.Draw(img)
-    c = W / 2
-    core = W * rnd.uniform(0.21, 0.25)
-    d.ellipse([c - core, c - core * rnd.uniform(0.85, 1.0), c + core, c + core], fill=255)
-    for _ in range(rnd.randint(5, 8)):
-        a = rnd.uniform(0, math.tau)
-        r = core * rnd.uniform(0.55, 0.85)
-        dist = core * rnd.uniform(0.5, 0.9)
-        x, y = c + math.cos(a) * dist, c + math.sin(a) * dist
-        d.ellipse([x - r, y - r, x + r, y + r], fill=255)
-    for _ in range(rnd.randint(4, 7)):  # fingers flung outward
-        a = rnd.uniform(0, math.tau)
-        length = core * rnd.uniform(1.1, 1.75)
-        width = core * rnd.uniform(0.14, 0.26)
-        for i in range(24):
-            t = i / 23
-            x = c + math.cos(a) * length * t
-            y = c + math.sin(a) * length * t
-            r = width * (1 - t * 0.6)
-            d.ellipse([x - r, y - r, x + r, y + r], fill=255)
-        x, y = c + math.cos(a) * length, c + math.sin(a) * length
-        r = width * 1.1
-        d.ellipse([x - r, y - r, x + r, y + r], fill=255)
-    for _ in range(rnd.randint(8, 14)):  # loose droplets
-        a = rnd.uniform(0, math.tau)
-        dist = core * rnd.uniform(1.3, 1.9)
-        r = core * rnd.uniform(0.05, 0.13)
-        x, y = c + math.cos(a) * dist, c + math.sin(a) * dist
-        if 0 < x - r and x + r < W and 0 < y - r and y + r < W:
-            d.ellipse([x - r, y - r, x + r, y + r], fill=255)
-    img = img.filter(ImageFilter.GaussianBlur(s * 0.6))
-    return img.resize((size, size), Image.LANCZOS)
-
-
 def colour_blob(mask, col, gloss=True):
     size = mask.size[0]
     m = np.asarray(mask).astype(np.float32) / 255
@@ -438,11 +400,65 @@ def colour_blob(mask, col, gloss=True):
     return Image.fromarray(out, "RGBA")
 
 
+def studio_splat(n):
+    """One of the three splats Studio drew (tools/src/splats): grey paint, shaded, 64x64."""
+    return Image.open(os.path.join(SRC, "splats", f"splat_{n}.png")).convert("RGBA")
+
+
+def droplets(n, size, count, r_lo, r_hi, reach):
+    """Where paint flung off a splat lands: (x, y, radius) round the middle,
+    between `reach` (a share of half the size) and the edge. Seeded, so a rebuild
+    draws the same ones."""
+    rnd = random.Random(500 + n * 7 + size)
+    c = size / 2
+    out = []
+    for _ in range(count):
+        a = rnd.uniform(0, math.tau)
+        d = c * rnd.uniform(reach, 0.92)
+        r = rnd.uniform(r_lo, r_hi)
+        x, y = c + math.cos(a) * d, c + math.sin(a) * d
+        if r < x < size - r and r < y < size - r:
+            out.append((x, y, r))
+    return out
+
+
+def paint(img, col, n):
+    """A grey splat in a team's colour: Studio's shading stretched to the full
+    range, a darker rim, its brightest highlight left whiter, and droplets flung
+    round it as the hand-drawn ones had."""
+    out = img.copy()
+    px = out.load()
+    lums = sorted((r + g + b) / 765 for y in range(out.height) for x in range(out.width)
+                  for r, g, b, a in [px[x, y]] if a)
+    lo, hi = lums[0], lums[-1]
+    # The highlight is the brightest twentieth of the paint, however bright Studio drew the rest.
+    gloss = (lums[int(len(lums) * 0.95)] - lo) / max(1e-6, hi - lo)
+    w, h = out.size
+    inside = lambda x, y: 0 <= x < w and 0 <= y < h and px[x, y][3] > 0
+    rim = {(x, y) for y in range(h) for x in range(w) if px[x, y][3]
+           and not all(inside(x + dx, y + dy) for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)))}
+    for y in range(h):
+        for x in range(w):
+            r, g, b, a = px[x, y]
+            if a == 0:
+                continue
+            t = ((r + g + b) / 765 - lo) / max(1e-6, hi - lo)
+            c = shade(col, (0.74 + 0.36 * t) * (0.82 if (x, y) in rim else 1))
+            if t > gloss and t > 0.5:
+                c = mix(c, (255, 255, 255), 0.4)
+            px[x, y] = c + (255,)
+    d = ImageDraw.Draw(out)
+    for x, y, r in droplets(n, w, 12, 0.6, 1.8, 0.72):
+        if not inside(int(x), int(y)):
+            d.ellipse([x - r, y - r, x + r, y + r], fill=shade(col, 0.9) + (255,))
+    return out
+
+
 def splats():
     for n in (1, 2, 3):
-        mask = blob_mask(100 + n)
+        art = studio_splat(n)
         for team, col in TEAMS.items():
-            colour_blob(mask, col).save(path("textures", "item", f"splat_{team}_{n}.png"))
+            paint(art, col, n).save(path("textures", "item", f"splat_{team}_{n}.png"))
     # Flat, both sides, through the middle of the model so it sits on the point it is placed at.
     model = {
         "textures": {"splat": "paintball:item/splat_red_1", "particle": "paintball:item/splat_red_1"},
@@ -498,9 +514,16 @@ def grenade():
 # ---------------------------------------------------------------------------
 
 def screen_splats():
-    """White (shaded grey) splats; the title's text colour paints them the shooter's colour."""
+    """The paint on a splatted player's screen: Studio's splats, their outlines
+    smoothed up to the screen's size, glossed, with drips running off the
+    bottom. White, shaded grey: the HUD run's colour paints it the shooter's."""
     for n in (1, 2, 3):
-        mask = blob_mask(300 + n, size=256)
+        alpha = studio_splat(n).split()[3]
+        big = alpha.resize((256, 256), Image.BICUBIC).filter(ImageFilter.GaussianBlur(3)).point(lambda v: 255 if v > 128 else 0)
+        bd = ImageDraw.Draw(big)
+        for x, y, r in droplets(n, 256, 14, 2.5, 7, 0.74):
+            bd.ellipse([x - r, y - r, x + r, y + r], fill=255)
+        mask = big.filter(ImageFilter.GaussianBlur(1.2))
         img = colour_blob(mask, (255, 255, 255), gloss=True)
         # Drips running down from the bottom edge of the splat.
         d = ImageDraw.Draw(img)
