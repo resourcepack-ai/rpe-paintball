@@ -320,15 +320,26 @@ def mask_model():
 
 
 def mask_overlay():
-    """Drawn over the wearer's whole view, like a carved pumpkin: the goggle frame round the edges."""
+    """Drawn over the wearer's whole view, like a carved pumpkin: the goggle frame round the edges.
+
+    Studio drew the goggles (tools/src/goggles.png) the other way round from an
+    overlay: the lens as a dark shape, the nose bridge rising into it in grey.
+    So its lens, the near-black part, is the hole here, smoothed up to the
+    overlay's size, and everything else (the bridge, the lens's rim, the
+    outside) is the frame."""
     w, h = 512, 256
     img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
-    d = ImageDraw.Draw(img)
-    # Frame: dark rubber everywhere outside a wide rounded lens, fading to clear.
-    frame = Image.new("L", (w, h), 255)
-    fd = ImageDraw.Draw(frame)
-    fd.rounded_rectangle([20, 12, w - 20, h - 18], radius=70, fill=0)
-    frame = frame.filter(ImageFilter.GaussianBlur(9))
+    art = Image.open(os.path.join(SRC, "goggles.png")).convert("RGBA")
+    lens = Image.new("L", art.size, 0)
+    ap, lp = art.load(), lens.load()
+    for y in range(art.height):
+        for x in range(art.width):
+            r, g, b, a = ap[x, y]
+            if a and r + g + b < 60:
+                lp[x, y] = 255
+    lens = lens.resize((w, h), Image.BICUBIC).filter(ImageFilter.GaussianBlur(4)).point(lambda v: 255 if v > 128 else 0)
+    # Frame: dark rubber everywhere outside the lens, fading to clear.
+    frame = lens.point(lambda v: 255 - v).filter(ImageFilter.GaussianBlur(9))
     dark = Image.new("RGBA", (w, h), (10, 11, 14, 255))
     img = Image.composite(dark, img, frame.point(lambda v: int(v * 0.92)))
     # A faint tint and a reflection streak on the lens.
@@ -339,12 +350,6 @@ def mask_overlay():
     sd.polygon([(60, 30), (110, 30), (40, 120), (20, 120)], fill=(255, 255, 255, 16))
     streak = streak.filter(ImageFilter.GaussianBlur(4))
     img = Image.alpha_composite(img, streak)
-    # The nose bridge dips in at the bottom middle.
-    bridge = Image.new("L", (w, h), 0)
-    bd = ImageDraw.Draw(bridge)
-    bd.ellipse([w // 2 - 40, h - 40, w // 2 + 40, h + 40], fill=255)
-    bridge = bridge.filter(ImageFilter.GaussianBlur(8))
-    img = Image.composite(Image.new("RGBA", (w, h), (10, 11, 14, 235)), img, bridge)
     img.save(path("textures", "misc", "mask_overlay.png"))
 
 
