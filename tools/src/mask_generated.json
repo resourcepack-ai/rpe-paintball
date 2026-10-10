@@ -1,0 +1,1108 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "atlas": "minecraft:block/pb_mask_item_atlas",
+    "particle": "minecraft:block/pb_mask_item_atlas"
+  },
+  "elements": [
+    {
+      "from": [
+        4,
+        11,
+        4
+      ],
+      "to": [
+        12,
+        12,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            6,
+            12.5,
+            6.5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            8.5,
+            6,
+            12.5,
+            6.5
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            8,
+            7.5,
+            11.5,
+            8
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            8,
+            7.5,
+            11.5,
+            8
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            0,
+            0,
+            4,
+            3.5
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            4,
+            0,
+            8,
+            3.5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "crown"
+    },
+    {
+      "from": [
+        5.5,
+        0,
+        13
+      ],
+      "to": [
+        10.5,
+        5,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            11.5,
+            0,
+            14,
+            2.5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            0,
+            3.5,
+            2.5,
+            6
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            5.5,
+            3.5,
+            6,
+            6
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            5.5,
+            3.5,
+            6,
+            6
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            0,
+            8,
+            2.5,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            2.5,
+            8,
+            5,
+            8.5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "mouth_guard"
+    },
+    {
+      "from": [
+        12,
+        2,
+        9
+      ],
+      "to": [
+        13,
+        7,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.5,
+            3.5,
+            6,
+            6
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            2.5,
+            3.5,
+            3.5,
+            6
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            3.5,
+            3.5,
+            4.5,
+            6
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            8,
+            6,
+            8.5,
+            7
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            8,
+            6,
+            8.5,
+            7
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "cheek_side"
+    },
+    {
+      "from": [
+        11.5,
+        1,
+        11
+      ],
+      "to": [
+        13.5,
+        7,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            0,
+            9,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            9,
+            0,
+            10,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            10,
+            0,
+            10.5,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            10.5,
+            0,
+            11,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            5,
+            8,
+            6,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            6,
+            8,
+            7,
+            8.5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "cheek_front"
+    },
+    {
+      "from": [
+        12,
+        5,
+        13
+      ],
+      "to": [
+        14,
+        8,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            3.5,
+            15,
+            5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            15,
+            3.5,
+            16,
+            5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "lens_side_frame",
+      "rotation": {
+        "origin": [
+          12,
+          6.5,
+          13
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        4,
+        8,
+        12
+      ],
+      "to": [
+        12,
+        9,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            7,
+            4,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            4,
+            7,
+            8,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            7,
+            8,
+            7.5,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            7,
+            8,
+            7.5,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            8,
+            7,
+            12,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            0,
+            7,
+            4,
+            7.5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "lens_brow_frame"
+    },
+    {
+      "from": [
+        12,
+        7,
+        2
+      ],
+      "to": [
+        13,
+        8,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            11.5,
+            7.5,
+            14.5,
+            8
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            11.5,
+            7.5,
+            14.5,
+            8
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            11,
+            0,
+            11.5,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            11,
+            0,
+            11.5,
+            3
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "strap_right"
+    },
+    {
+      "from": [
+        3,
+        7,
+        2
+      ],
+      "to": [
+        4,
+        8,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            11.5,
+            7.5,
+            14.5,
+            8
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            11.5,
+            7.5,
+            14.5,
+            8
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            11,
+            0,
+            11.5,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            11,
+            0,
+            11.5,
+            3
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "strap_left"
+    },
+    {
+      "from": [
+        4,
+        7,
+        2
+      ],
+      "to": [
+        12,
+        8,
+        3
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            12,
+            7,
+            16,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            0,
+            7.5,
+            4,
+            8
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            0,
+            7.5,
+            4,
+            8
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            0,
+            7.5,
+            4,
+            8
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "strap_rear"
+    },
+    {
+      "from": [
+        4,
+        5,
+        13
+      ],
+      "to": [
+        12,
+        8,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            6,
+            3.5,
+            10,
+            5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            10,
+            3.5,
+            14,
+            5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "eye_lens"
+    },
+    {
+      "from": [
+        3,
+        2,
+        9
+      ],
+      "to": [
+        4,
+        7,
+        11
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.5,
+            3.5,
+            6,
+            6
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            3.5,
+            3.5,
+            4.5,
+            6
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            2.5,
+            3.5,
+            3.5,
+            6
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            8,
+            6,
+            8.5,
+            7
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            8,
+            6,
+            8.5,
+            7
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "cheek_side_copy"
+    },
+    {
+      "from": [
+        2.5,
+        1,
+        11
+      ],
+      "to": [
+        4.5,
+        7,
+        12
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            0,
+            9,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            9,
+            0,
+            10,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            10.5,
+            0,
+            11,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            10,
+            0,
+            10.5,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            5,
+            8,
+            6,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            6,
+            8,
+            7,
+            8.5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "cheek_front_copy"
+    },
+    {
+      "from": [
+        2,
+        5,
+        13
+      ],
+      "to": [
+        4,
+        8,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            14,
+            3.5,
+            15,
+            5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            15,
+            3.5,
+            16,
+            5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "lens_side_frame_copy",
+      "rotation": {
+        "origin": [
+          4,
+          6.5,
+          13
+        ],
+        "axis": "y",
+        "angle": -45
+      }
+    },
+    {
+      "from": [
+        10.5,
+        0,
+        14
+      ],
+      "to": [
+        12.5,
+        5,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4.5,
+            3.5,
+            5.5,
+            6
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            4.5,
+            3.5,
+            5.5,
+            6
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "mouth_return_right",
+      "rotation": {
+        "origin": [
+          10.5,
+          2.5,
+          14
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "from": [
+        3.5,
+        0,
+        14
+      ],
+      "to": [
+        5.5,
+        5,
+        14
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            4.5,
+            3.5,
+            5.5,
+            6
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            4.5,
+            3.5,
+            5.5,
+            6
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "mouth_return_left",
+      "rotation": {
+        "origin": [
+          5.5,
+          2.5,
+          14
+        ],
+        "axis": "y",
+        "angle": -45
+      }
+    },
+    {
+      "from": [
+        4,
+        10,
+        11
+      ],
+      "to": [
+        12,
+        11,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8.5,
+            6,
+            12.5,
+            6.5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            4,
+            7.5,
+            8,
+            8
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            6,
+            8,
+            7,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            6,
+            8,
+            7,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            0,
+            6,
+            4,
+            7
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            4,
+            6,
+            8,
+            7
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "front_cap_facet",
+      "rotation": {
+        "origin": [
+          8,
+          11,
+          11
+        ],
+        "axis": "x",
+        "angle": 22.5
+      }
+    },
+    {
+      "from": [
+        12,
+        7,
+        8
+      ],
+      "to": [
+        13,
+        8,
+        9
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "strap_buckle_right"
+    },
+    {
+      "from": [
+        3,
+        7,
+        8
+      ],
+      "to": [
+        4,
+        8,
+        9
+      ],
+      "faces": {
+        "south": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            7.5,
+            8,
+            8,
+            8.5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "name": "strap_buckle_left"
+    }
+  ],
+  "groups": [
+    {
+      "name": "mask",
+      "origin": [
+        8,
+        7,
+        7
+      ],
+      "children": [
+        0,
+        1,
+        5,
+        9,
+        13,
+        14,
+        15
+      ],
+      "parent": -1
+    },
+    {
+      "name": "cheek_right",
+      "origin": [
+        12,
+        7,
+        10
+      ],
+      "children": [
+        2,
+        3,
+        4
+      ],
+      "parent": -1
+    },
+    {
+      "name": "back_strap",
+      "origin": [
+        8,
+        7,
+        3
+      ],
+      "children": [
+        6,
+        7,
+        8,
+        16,
+        17
+      ],
+      "parent": -1
+    },
+    {
+      "name": "cheek_left",
+      "origin": [
+        4,
+        7,
+        10
+      ],
+      "children": [
+        10,
+        11,
+        12
+      ],
+      "parent": -1
+    }
+  ]
+}

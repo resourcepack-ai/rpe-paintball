@@ -3,11 +3,12 @@ Builds every asset in the paintball content folder from scratch:
 
   python tools/make_assets.py
 
-- the marker: the model the workbench builder generated (tools/src), given a
-  namespaced texture and display transforms, and five skins painted from its atlas;
-- the mask, the paintball, the splats and the grenade: models and textures made here;
+- the marker, the mask, the grenade and the paintball: models generated in ResourcePack AI
+  Studio (tools/src), fitted, given namespaced textures and display transforms,
+  and painted per skin or team from their own atlases;
+- the splats: model and textures made here;
 - the HUD glyphs (screen splats, ammo pip, grenade icon) and the mask's camera overlay;
-- the sounds, synthesised and written as Ogg Vorbis.
+- the sounds: generated in Studio (tools/src/sounds), trimmed and levelled.
 
 Deterministic: every random draw is seeded, so a re-run writes the same files.
 """
@@ -173,91 +174,130 @@ def aim_transform(sight, distance, scale):
 
 
 # ---------------------------------------------------------------------------
-# The mask: built here, around the head (the head fills 1.6..14.4 of the model)
+# Studio's models in team colours
 # ---------------------------------------------------------------------------
 
-def mask_texture(team):
-    col = TEAMS[team]
-    img = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
-    d = img.load()
-    # shell 0..16 x 0..16: the team colour, lit from the top left
-    for y in range(16):
-        for x in range(16):
-            k = 1.08 - (x + y) / 60
-            if (x + y) % 7 == 0:
-                k -= 0.04
-            d[x, y] = shade(col, k) + (255,)
-    for x in range(16):
-        d[x, 0] = shade(col, 1.25) + (255,)
-        d[x, 15] = shade(col, 0.7) + (255,)
-    # trim 16..24 x 0..8: near-black rubber
-    for y in range(8):
-        for x in range(16, 24):
-            d[x, y] = (30, 32, 38, 255) if (x + y) % 3 else (40, 43, 50, 255)
-    # lens 16..32 x 8..16: smoked, with a highlight streak
-    for y in range(8, 16):
-        for x in range(16, 32):
-            t = (y - 8) / 8
-            base = mix((70, 92, 120), (14, 18, 28), t)
-            if 2 <= (x - 16) - (y - 8) <= 3:
-                base = mix(base, (220, 235, 255), 0.55)
-            d[x, y] = base + (255,)
-    # vents 0..16 x 16..24: the shell with dark slots
-    for y in range(16, 24):
-        for x in range(16):
-            slot = (y - 16) % 2 == 1 and 2 <= x <= 13
-            d[x, y] = ((22, 24, 28, 255) if slot else shade(col, 0.95 - (y - 16) / 40) + (255,))
-    # strap 16..32 x 16..20
-    for y in range(16, 20):
-        for x in range(16, 32):
-            d[x, y] = (24, 26, 30, 255) if (x // 2) % 2 else (36, 38, 44, 255)
-    img.save(path("textures", "item", f"mask_{team}.png"))
+def team_recolour(atlas, team, ref):
+    """A Studio atlas's reds in a team's colour: `ref`, the atlas's own main red,
+    becomes the team colour exactly, and every other red keeps its shading
+    relative to it, highlights included. Greys, blacks and whites are left alone."""
+    th, ts, tv = colorsys.rgb_to_hsv(*(c / 255 for c in TEAMS[team]))
+    _, rs, rv = colorsys.rgb_to_hsv(*(c / 255 for c in ref))
+    out = atlas.copy()
+    px = out.load()
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if a == 0:
+                continue
+            h, sat, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            if sat < 0.12 or 15 < h * 360 < 330:  # a pink highlight is a red too
+                continue
+            nr, ng, nb = colorsys.hsv_to_rgb(th, min(1, ts * sat / rs), min(1, tv * v / rv))
+            px[x, y] = (round(nr * 255), round(ng * 255), round(nb * 255), a)
+    return out
 
 
-def box(name, frm, to, tex):
-    """An element whose six faces all map onto one atlas region (u0, v0, u1, v1), in 0..16."""
-    faces = {}
-    for f in ("north", "south", "east", "west", "up", "down"):
-        region = tex.get(f, tex["all"]) if isinstance(tex, dict) else tex
-        faces[f] = {"uv": list(region), "texture": "#mask"}
-    return {"name": name, "from": frm, "to": to, "faces": faces}
+def studio_model(name, key):
+    """A model generated in Studio (tools/src/<name>_generated.json): its elements, every face on texture `key`."""
+    model = json.load(open(os.path.join(SRC, f"{name}_generated.json"), encoding="utf-8"))
+    for e in model["elements"]:
+        for f in e["faces"].values():
+            f["texture"] = "#" + key
+    return model["elements"]
 
 
-SHELL = (0, 0, 8, 8)
-TRIM = (8, 0, 12, 4)
-LENS = (8, 4, 16, 8)
-VENT = (0, 8, 8, 12)
-STRAP = (8, 8, 16, 10)
+def turned(display):
+    """Display transforms for a model whose front is +z rather than the game's -z (north)."""
+    out = {}
+    for ctx, t in display.items():
+        t = dict(t)
+        rx, ry, rz = t.get("rotation", [0, 0, 0])
+        assert rz == 0, "a half turn about y only commutes past a rotation with no z"
+        t["rotation"] = [rx, (ry + 180) % 360, rz]
+        out[ctx] = t
+    return out
+
+
+# ---------------------------------------------------------------------------
+# The mask: Studio's, fitted round the head
+# ---------------------------------------------------------------------------
+#
+# On the head the model's 16 units are 10 of the player's pixels, so the head is
+# 1.6..14.4 and the skin's outer (hat) layer, half a pixel proud of it, is
+# 0.8..15.2. Everything that faces out is kept outside that box, or a skin's hat
+# pixels poke through the mask (or flicker against a face that lies exactly on
+# them). Studio drew the mask at about three quarters of a head, its front +z.
+
+MASK_RED = (197, 45, 61)  # the generated atlas's shell red, which becomes each team's colour
+MASK_SCALE = 1.37
+MASK_CLEAR = 15.5         # the hat layer and 0.3 of air
+MASK_FRONT = 0.4          # depth per Studio unit across the front stack: cheek fronts, lens, mouth guard
 
 
 def mask_model():
-    # On the head the model's 16 units are 10 of the player's pixels, so the
-    # head is 1.6..14.4 and the skin's outer (hat) layer, half a pixel proud of
-    # it, is 0.8..15.2. Everything that faces out is kept at least 0.3 outside
-    # that box, or a skin's hat pixels poke through the mask (or flicker against
-    # a face that lies exactly on them).
-    e = [
-        box("lens", [3, 7.5, 0.4], [13, 10.5, 1.6], {"all": TRIM, "north": LENS}),
-        box("frame_top", [2, 10.5, 0.2], [14, 11.5, 1.8], TRIM),
-        box("frame_bottom", [2, 6.5, 0.2], [14, 7.5, 1.8], TRIM),
-        box("frame_left", [2, 7.5, 0.2], [3, 10.5, 1.8], TRIM),
-        box("frame_right", [13, 7.5, 0.2], [14, 10.5, 1.8], TRIM),
-        box("forehead", [2, 11.5, 0.5], [14, 14.6, 2.2], SHELL),
-        box("crown", [2.5, 14.6, 0.5], [13.5, 15.5, 7], SHELL),
-        box("mouth", [3.5, 1.6, 0.0], [12.5, 6.5, 1.6], {"all": SHELL, "north": VENT}),
-        box("chin", [4.5, 0.5, 0.5], [11.5, 1.6, 4.5], SHELL),
-        box("cheek_left", [0.5, 2, 0.5], [2.4, 11.5, 7.5], SHELL),
-        box("cheek_right", [13.6, 2, 0.5], [15.5, 11.5, 7.5], SHELL),
-        box("vent_left", [0.1, 5, 3], [0.5, 8, 6], TRIM),
-        box("vent_right", [15.5, 5, 3], [15.9, 8, 6], TRIM),
-        box("strap_left", [0.35, 8, 7.5], [0.5, 10, 15.65], STRAP),
-        box("strap_right", [15.5, 8, 7.5], [15.65, 10, 15.65], STRAP),
-        box("strap_back", [0.35, 8, 15.5], [15.65, 10, 15.65], STRAP),
-    ]
+    def fz(z):  # the cheek fronts' back plane (Studio's z = 11) sits on the clearance
+        return MASK_CLEAR + (z - 11) * (MASK_FRONT if z > 11 else MASK_SCALE)
+
+    def fit(p):
+        x, y, z = p
+        return [8 + (x - 8) * MASK_SCALE, 0.5 + y * MASK_SCALE, fz(z)]
+
+    els = studio_model("mask", "mask")
+    for e in els:
+        a, b = fit(e["from"]), fit(e["to"])
+        e["from"] = [round(min(a[i], b[i]), 3) for i in range(3)]
+        e["to"] = [round(max(a[i], b[i]), 3) for i in range(3)]
+        if e.get("rotation"):
+            e["rotation"]["origin"] = [round(v, 3) for v in fit(e["rotation"]["origin"])]
+    by = {e["name"]: e for e in els}
+
+    def span(name, axis, lo, hi):
+        by[name]["from"][axis], by[name]["to"][axis] = round(lo, 3), round(hi, 3)
+
+    def shift(name, d):
+        e = by[name]
+        for i in range(3):
+            e["from"][i] = round(e["from"][i] + d[i], 3)
+            e["to"][i] = round(e["to"][i] + d[i], 3)
+            if e.get("rotation"):
+                e["rotation"]["origin"][i] = round(e["rotation"]["origin"][i] + d[i], 3)
+
+    X, Y, Z = 0, 1, 2
+    # The straps run round the outside of the hat layer, thin, the buckles on them.
+    for side, (x0, x1) in (("left", (0.2, 0.5)), ("right", (15.5, 15.8))):
+        span(f"strap_{side}", X, x0, x1)
+        span(f"strap_{side}", Z, 0.2, 7.1)
+        span(f"strap_buckle_{side}", X, x0 - 0.15 if side == "left" else x0, x1 if side == "left" else x1 + 0.15)
+        span(f"strap_buckle_{side}", Z, 7.1, 8.5)
+    span("strap_rear", X, 0.2, 15.8)
+    span("strap_rear", Z, 0.2, 0.5)
+    # The cheek guards reach back to the middle of the head, on the outside of the hat.
+    span("cheek_side", X, 15.5, 16.4)
+    span("cheek_side_copy", X, -0.4, 0.5)
+    for name in ("cheek_side", "cheek_side_copy"):
+        span(name, Z, 8.5, MASK_CLEAR)
+        span(name, Y, by["cheek_front"]["from"][Y], by["strap_left"]["to"][Y])
+    # The crown sits on the hair, as far into it as the hat layer allows a top to.
+    span("crown", Y, 14.6, 15.5)
+    # Studio's slanted cap becomes the forehead shell: straight, from the brow
+    # frame up to the crown, faced with the crown's own red.
+    fc = by["front_cap_facet"]
+    fc.pop("rotation", None)
+    fc["from"] = [by["lens_brow_frame"]["from"][X], by["lens_brow_frame"]["to"][Y], MASK_CLEAR]
+    fc["to"] = [by["lens_brow_frame"]["to"][X], 15.5, by["cheek_front"]["to"][Z]]
+    fc["faces"]["south"] = {"uv": [0, 0, 4, 3.5], "texture": "#mask"}
+    # The goggle's wrap-round sides clear the hat at their back edges.
+    shift("lens_side_frame", (0.35, 0, 0.25))
+    shift("lens_side_frame_copy", (-0.35, 0, 0.25))
+    # The mouth guard's angled returns, as deep as the guard now stands off the face.
+    by["mouth_return_right"]["to"][X] = round(by["mouth_return_right"]["from"][X] + 1.1, 3)
+    by["mouth_return_left"]["from"][X] = round(by["mouth_return_left"]["to"][X] - 1.1, 3)
+
     model = {
         "textures": {"mask": "paintball:item/mask_red", "particle": "paintball:item/mask_red"},
-        "elements": e,
-        "display": {
+        "elements": els,
+        "display": turned({
             "head": {"rotation": [0, 0, 0], "translation": [0, 0, 0], "scale": [1, 1, 1]},
             "gui": {"rotation": [15, 160, 0], "translation": [0, 0, 0], "scale": [0.85, 0.85, 0.85]},
             "ground": {"rotation": [0, 0, 0], "translation": [0, 2, 0], "scale": [0.4, 0.4, 0.4]},
@@ -266,11 +306,12 @@ def mask_model():
             "thirdperson_lefthand": {"rotation": [75, 180, 0], "translation": [0, 2.5, 0], "scale": [0.4, 0.4, 0.4]},
             "firstperson_righthand": {"rotation": [0, 160, 0], "translation": [0, 0, 0], "scale": [0.45, 0.45, 0.45]},
             "firstperson_lefthand": {"rotation": [0, 200, 0], "translation": [0, 0, 0], "scale": [0.45, 0.45, 0.45]},
-        },
+        }),
     }
     save_json(model, "models", "mask.json")
-    for t in TEAMS:
-        mask_texture(t)
+    atlas = Image.open(os.path.join(SRC, "mask_atlas.png")).convert("RGBA")
+    for team in TEAMS:
+        team_recolour(atlas, team, MASK_RED).save(path("textures", "item", f"mask_{team}.png"))
 
 
 def mask_overlay():
@@ -306,26 +347,30 @@ def mask_overlay():
 # Balls, splats, grenade
 # ---------------------------------------------------------------------------
 
+BALL_RED = (236, 47, 67)  # the generated atlas's main red
+BALL_SCALE = 1 / 3        # Studio drew it twelve pixels across; a ball in flight is four
+
+
 def ball():
-    for team, col in TEAMS.items():
-        img = Image.new("RGBA", (16, 16))
-        d = img.load()
-        for y in range(16):
-            for x in range(16):
-                r = math.hypot(x - 5.5, y - 5.5) / 14
-                k = 1.35 - r * 0.9
-                d[x, y] = shade(mix(col, (255, 255, 255), max(0, 0.35 - r)), k) + (255,)
-        img.save(path("textures", "item", f"ball_{team}.png"))
-    full = [0, 0, 16, 16]
-    faces = {f: {"uv": full, "texture": "#ball"} for f in ("north", "south", "east", "west", "up", "down")}
+    """Studio's paintball, scaled down about its middle: it flies drawn at the model's own size."""
+    els = studio_model("ball", "ball")
+    lo = [min(min(e["from"][i], e["to"][i]) for e in els) for i in range(3)]
+    hi = [max(max(e["from"][i], e["to"][i]) for e in els) for i in range(3)]
+    mid = [(lo[i] + hi[i]) / 2 for i in range(3)]
+
+    def fit(p):
+        return [round(8 + (p[i] - mid[i]) * BALL_SCALE, 3) for i in range(3)]
+
+    for e in els:
+        e["from"], e["to"] = fit(e["from"]), fit(e["to"])
+        if e.get("rotation"):
+            e["rotation"]["origin"] = fit(e["rotation"]["origin"])
+    atlas = Image.open(os.path.join(SRC, "ball_atlas.png")).convert("RGBA")
+    for team in TEAMS:
+        team_recolour(atlas, team, BALL_RED).save(path("textures", "item", f"ball_{team}.png"))
     model = {
         "textures": {"ball": "paintball:item/ball_red", "particle": "paintball:item/ball_red"},
-        "elements": [
-            {"from": [6.5, 6.5, 6.5], "to": [9.5, 9.5, 9.5], "faces": faces, "shade": False},
-            {"from": [7, 6, 7], "to": [9, 10, 9], "faces": faces, "shade": False},
-            {"from": [6, 7, 7], "to": [10, 9, 9], "faces": faces, "shade": False},
-            {"from": [7, 7, 6], "to": [9, 9, 10], "faces": faces, "shade": False},
-        ],
+        "elements": els,
         "display": {"gui": {"rotation": [30, 45, 0], "scale": [2.5, 2.5, 2.5]}},
     }
     save_json(model, "models", "ball.json")
@@ -407,46 +452,41 @@ def splats():
     save_json(model, "models", "splat.json")
 
 
+GRENADE_RED = (207, 48, 64)  # the generated atlas's can red
+GRENADE_SCALE = 0.68         # Studio's can is ten pixels across; in flight it is drawn at the model's own size
+
+
 def grenade():
-    for team, col in TEAMS.items():
-        img = Image.new("RGBA", (16, 16))
-        d = img.load()
-        for y in range(16):
-            for x in range(16):
-                if y < 3:
-                    c = (200, 205, 212) if (x + y) % 2 else (180, 186, 194)  # lid
-                elif 7 <= y <= 9:
-                    c = (240, 240, 240)  # label band
-                else:
-                    c = shade(col, 1.1 - y / 40)
-                if x in (0, 15):
-                    c = shade(c, 0.8)
-                d[x, y] = c + (255,)
-        img.save(path("textures", "item", f"grenade_{team}.png"))
-    side = lambda v0, v1: [0, v0, 16, v1]
-    def el(frm, to, v0, v1, top=(0, 0, 16, 3)):
-        faces = {f: {"uv": side(v0, v1), "texture": "#g"} for f in ("north", "south", "east", "west")}
-        faces["up"] = {"uv": list(top), "texture": "#g"}
-        faces["down"] = {"uv": [0, 13, 16, 16], "texture": "#g"}
-        return {"from": frm, "to": to, "faces": faces}
+    """Studio's paint grenade, scaled down about the middle of the can, which it spins round in flight."""
+    els = studio_model("grenade", "g")
+    lo = [min(min(e["from"][i], e["to"][i]) for e in els) for i in range(3)]
+    hi = [max(max(e["from"][i], e["to"][i]) for e in els) for i in range(3)]
+    mid = [(lo[i] + hi[i]) / 2 for i in range(3)]
+
+    def fit(p):
+        return [round(8 + (p[i] - mid[i]) * GRENADE_SCALE, 3) for i in range(3)]
+
+    for e in els:
+        e["from"], e["to"] = fit(e["from"]), fit(e["to"])
+        if e.get("rotation"):
+            e["rotation"]["origin"] = fit(e["rotation"]["origin"])
     model = {
         "textures": {"g": "paintball:item/grenade_red", "particle": "paintball:item/grenade_red"},
-        "elements": [
-            el([5.5, 3, 5.5], [10.5, 10, 10.5], 3, 16),
-            el([6, 10, 6], [10, 11.5, 10], 0, 3),
-            el([7.25, 11.5, 7.25], [8.75, 12.5, 8.75], 0, 3),
-        ],
+        "elements": els,
         "display": {
             "thirdperson_righthand": {"rotation": [0, 0, 0], "translation": [0, 2, 1], "scale": [0.55, 0.55, 0.55]},
             "thirdperson_lefthand": {"rotation": [0, 0, 0], "translation": [0, 2, 1], "scale": [0.55, 0.55, 0.55]},
             "firstperson_righthand": {"rotation": [0, -20, 0], "translation": [1, 2, 0], "scale": [0.6, 0.6, 0.6]},
             "firstperson_lefthand": {"rotation": [0, 20, 0], "translation": [-1, 2, 0], "scale": [0.6, 0.6, 0.6]},
-            "gui": {"rotation": [25, 45, 0], "translation": [0, 0.5, 0], "scale": [1.1, 1.1, 1.1]},
+            "gui": {"rotation": [25, 45, 0], "translation": [0, 0, 0], "scale": [1.3, 1.3, 1.3]},
             "ground": {"scale": [0.4, 0.4, 0.4]},
-            "fixed": {"scale": [0.8, 0.8, 0.8]},
+            "fixed": {"scale": [0.9, 0.9, 0.9]},
         },
     }
     save_json(model, "models", "grenade.json")
+    atlas = Image.open(os.path.join(SRC, "grenade_atlas.png")).convert("RGBA")
+    for team in TEAMS:
+        team_recolour(atlas, team, GRENADE_RED).save(path("textures", "item", f"grenade_{team}.png"))
 
 
 # ---------------------------------------------------------------------------
@@ -666,32 +706,10 @@ def crosshair(gap):
 # Sounds
 # ---------------------------------------------------------------------------
 
-SR = 44100
-
-
-def env(n, attack, decay_shape):
-    t = np.arange(n) / SR
-    a = np.clip(t / max(attack, 1e-4), 0, 1)
-    return a * decay_shape(t)
-
-
-def lowpass(x, cutoff):
-    # one-pole, run forwards and backwards for zero phase
-    a = math.exp(-2 * math.pi * cutoff / SR)
-    y = np.zeros_like(x)
-    acc = 0.0
-    for i in range(len(x)):
-        acc = (1 - a) * x[i] + a * acc
-        y[i] = acc
-    acc = 0.0
-    for i in range(len(x) - 1, -1, -1):
-        acc = (1 - a) * y[i] + a * acc
-        y[i] = acc
-    return y
-
-
-def highpass(x, cutoff):
-    return x - lowpass(x, cutoff)
+SOUNDS = [("shot", "player", "Paintball fired"), ("splat", "player", "Paint splats"),
+          ("burst", "player", "Paint grenade bursts"), ("hit", "player", "Hit confirmed"),
+          ("empty", "player", "Hopper empty"), ("reload", "player", "Hopper reloads"),
+          ("whistle", "master", "Referee whistle")]
 
 
 def norm(x, peak=0.9):
@@ -699,81 +717,24 @@ def norm(x, peak=0.9):
     return x if m == 0 else x / m * peak
 
 
-def write(name, x):
-    sf.write(path("sounds", f"{name}.ogg"), norm(x).astype(np.float32), SR, format="OGG", subtype="VORBIS")
-
-
 def sounds():
-    rng = np.random.default_rng(7)
-    # shot: a pneumatic "thup": a click, a short band of air, and a low knock
-    n = int(SR * 0.22)
-    t = np.arange(n) / SR
-    noise = rng.standard_normal(n)
-    air = highpass(lowpass(noise, 3800), 500) * np.exp(-t * 38)
-    knock = np.sin(2 * math.pi * (180 * t - 260 * t * t)) * np.exp(-t * 45)
-    click = np.zeros(n)
-    click[:60] = np.hanning(120)[60:] * 1.0
-    write("shot", 0.9 * air + 0.8 * knock + 0.4 * click)
-
-    # splat: a wet slap, a burst of low noise with a few droplet ticks after it
-    n = int(SR * 0.32)
-    t = np.arange(n) / SR
-    noise = rng.standard_normal(n)
-    slap = lowpass(noise, 1400) * np.exp(-t * 26)
-    body = np.sin(2 * math.pi * 120 * t) * np.exp(-t * 30) * 0.5
-    drops = np.zeros(n)
-    for k in range(5):
-        at = int(SR * (0.04 + 0.05 * k + rng.uniform(0, 0.02)))
-        f = rng.uniform(900, 1800)
-        m = min(n - at, int(SR * 0.03))
-        tt = np.arange(m) / SR
-        drops[at:at + m] += np.sin(2 * math.pi * f * tt * (1 + tt * 8)) * np.exp(-tt * 140) * 0.25
-    write("splat", slap + body + drops)
-
-    # burst: the grenade, a bigger, longer splat with a thump
-    n = int(SR * 0.7)
-    t = np.arange(n) / SR
-    noise = rng.standard_normal(n)
-    boom = lowpass(noise, 900) * np.exp(-t * 7)
-    thump = np.sin(2 * math.pi * (70 * t - 30 * t * t)) * np.exp(-t * 9)
-    hiss = highpass(noise, 2500) * np.exp(-t * 14) * 0.25
-    write("burst", boom + thump * 1.2 + hiss)
-
-    # hit: the confirm ping, two quick bright notes
-    n = int(SR * 0.18)
-    t = np.arange(n) / SR
-    tone = np.where(t < 0.06, np.sin(2 * math.pi * 1568 * t), np.sin(2 * math.pi * 2093 * t))
-    write("hit", tone * np.exp(-((t % 0.06) * 30)) * np.where(t < 0.06, 1, np.exp(-(t - 0.06) * 18)))
-
-    # empty: a dry trigger click
-    n = int(SR * 0.08)
-    t = np.arange(n) / SR
-    write("empty", highpass(rng.standard_normal(n), 2000) * np.exp(-t * 120) + 0.4 * np.sin(2 * math.pi * 2400 * t) * np.exp(-t * 90))
-
-    # reload: balls rattling into the hopper, then the lid snapping shut
-    n = int(SR * 1.1)
-    t = np.arange(n) / SR
-    x = np.zeros(n)
-    for _ in range(26):
-        at = int(SR * rng.uniform(0.02, 0.8))
-        m = min(n - at, int(SR * 0.02))
-        tt = np.arange(m) / SR
-        f = rng.uniform(1800, 3800)
-        x[at:at + m] += np.sin(2 * math.pi * f * tt) * np.exp(-tt * 260) * rng.uniform(0.3, 0.8)
-    at = int(SR * 0.92)
-    m = n - at
-    tt = np.arange(m) / SR
-    x[at:] += highpass(rng.standard_normal(m), 1200) * np.exp(-tt * 80) * 1.2
-    write("reload", x)
-
-    # whistle: the referee's pea whistle, a trilled 2.9 kHz
-    n = int(SR * 0.75)
-    t = np.arange(n) / SR
-    trill = 1 + 0.035 * np.sign(np.sin(2 * math.pi * 28 * t))
-    phase = np.cumsum(2 * math.pi * 2900 * trill / SR)
-    shape = np.clip(t / 0.02, 0, 1) * np.clip((0.75 - t) / 0.08, 0, 1)
-    breath = highpass(rng.standard_normal(n), 3000) * 0.08
-    write("whistle", (np.sin(phase) + 0.25 * np.sin(2 * phase) + breath) * shape)
+    """Studio's sounds (tools/src/sounds), cut to start on their first sound and
+    end on their last, faded over the cut, and levelled to one peak. A shot
+    that starts a quarter of a second late reads as lag, not as a sound."""
+    for name, _, _ in SOUNDS:
+        x, sr = sf.read(os.path.join(SRC, "sounds", f"{name}.ogg"))
+        if x.ndim > 1:
+            x = x.mean(axis=1)
+        # Loudness in 5ms windows: a stray sample is not where a sound starts.
+        w = int(sr * 0.005)
+        rms = np.array([np.sqrt(np.mean(x[i:i + w] ** 2)) for i in range(0, len(x) - w + 1, w)])
+        start = np.nonzero(rms > rms.max() * 0.08)[0][0] * w
+        end = (np.nonzero(rms > rms.max() * 0.02)[0][-1] + 1) * w
+        x = x[max(0, start - int(sr * 0.003)):min(len(x), end + int(sr * 0.03))].copy()
+        fade = min(len(x), int(sr * 0.03))
+        x[-fade:] *= np.linspace(1, 0, fade)
+        # 0.8 rather than full scale: Vorbis overshoots a peak it is handed.
+        sf.write(path("sounds", f"{name}.ogg"), norm(x, 0.8).astype(np.float32), sr, format="OGG", subtype="VORBIS")
 
 
 # ---------------------------------------------------------------------------
@@ -842,11 +803,8 @@ def definitions():
         icons += [f"xhair_{n}:", f"  file: xhair_{n}", f"  height: {2 * R + 1}", f"  ascent: {R + 4}", ""]
     write_text("\n".join(icons), "fonts", "icons.yml")
 
-    snd = ["# Synthesised by tools/make_assets.py.", ""]
-    for name, cat, sub in [("shot", "player", "Paintball fired"), ("splat", "player", "Paint splats"),
-                           ("burst", "player", "Paint grenade bursts"), ("hit", "player", "Hit confirmed"),
-                           ("empty", "player", "Hopper empty"), ("reload", "player", "Hopper reloads"),
-                           ("whistle", "master", "Referee whistle")]:
+    snd = ["# Generated in ResourcePack AI Studio; trimmed and levelled by tools/make_assets.py.", ""]
+    for name, cat, sub in SOUNDS:
         snd += [f"{name}:", f"  file: {name}", f"  category: {cat}", f'  subtitle: "{sub}"', ""]
     write_text("\n".join(snd), "sounds", "sounds.yml")
 
