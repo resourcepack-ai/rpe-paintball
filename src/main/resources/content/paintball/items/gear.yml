@@ -19,7 +19,8 @@ grenade_red:
   material: PAPER
   name: "&c&lPaint Grenade"
   lore:
-    - "&7Right-click to throw. Bursts after a second and a half."
+    - "&7Right-click to throw. It bursts a moment later,"
+    - "&7then recharges before you can throw again."
   model:
     parent: paintball:grenade
     textures: {g: "paintball:item/grenade_red", particle: "paintball:item/grenade_red"}
@@ -63,7 +64,8 @@ grenade_blue:
   material: PAPER
   name: "&9&lPaint Grenade"
   lore:
-    - "&7Right-click to throw. Bursts after a second and a half."
+    - "&7Right-click to throw. It bursts a moment later,"
+    - "&7then recharges before you can throw again."
   model:
     parent: paintball:grenade
     textures: {g: "paintball:item/grenade_blue", particle: "paintball:item/grenade_blue"}

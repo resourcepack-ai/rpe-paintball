@@ -140,12 +140,22 @@ public final class PaintLayer {
         double radius = size * PAINT_RADIUS;
         double[] lo = new double[2];
         double[] hi = new double[2];
-        for (int i = 0; i < 2; i++) {
-            double[] range = extent(block, side, axes[i]);
-            lo[i] = range[0];
-            hi[i] = range[1];
-            radius = Math.min(radius, (hi[i] - lo[i]) / 2);
+        if (full(block)) {
+            for (int i = 0; i < 2; i++) {
+                double[] range = extent(block, side, axes[i]);
+                lo[i] = range[0];
+                hi[i] = range[1];
+            }
+        } else {
+            // Stairs, slabs, anything made of boxes: the face of the box that
+            // was hit, less whatever sits on it, and nothing past it.
+            double[] rect = faceOfHit(block, side, at);
+            lo[0] = rect[0];
+            hi[0] = rect[1];
+            lo[1] = rect[2];
+            hi[1] = rect[3];
         }
+        for (int i = 0; i < 2; i++) radius = Math.min(radius, (hi[i] - lo[i]) / 2);
         double[] wanted = {axes[0].get(at), axes[1].get(at)};
         // The scans above follow the two lines through the block that was hit;
         // the corners between them (an L-shaped edge, a hole) are checked here,
@@ -189,7 +199,6 @@ public final class PaintLayer {
         BoundingBox box = block.getBoundingBox();
         double lo = axis.min(box);
         double hi = axis.max(box);
-        if (!full(block)) return new double[]{lo, hi};
         for (int dir = -1; dir <= 1; dir += 2) {
             for (int k = 1; k <= REACH; k++) {
                 Block next = axis.step(block, dir * k);
@@ -201,14 +210,77 @@ public final class PaintLayer {
         return new double[]{lo, hi};
     }
 
+    /**
+     * The face a ball landed on, on a block made of more than one box, as
+     * {lo, hi} along each of the face's two axes: the box whose face the hit is
+     * on, trimmed back from any box of the same block sitting on that face (a
+     * stair's upper step on its lower one), to the side the hit is on.
+     */
+    private static double[] faceOfHit(Block block, BlockFace side, Location at) {
+        Axis[] axes = Axis.of(side);
+        Axis normal = Axis.normalOf(side);
+        boolean outwards = side == BlockFace.UP || side == BlockFace.SOUTH || side == BlockFace.EAST;
+        List<BoundingBox> boxes = boxes(block);
+        BoundingBox hit = null;
+        for (BoundingBox b : boxes) {
+            double plane = outwards ? normal.max(b) : normal.min(b);
+            if (Math.abs(plane - normal.get(at)) > 0.02) continue;
+            if (axes[0].get(at) < axes[0].min(b) - 0.02 || axes[0].get(at) > axes[0].max(b) + 0.02) continue;
+            if (axes[1].get(at) < axes[1].min(b) - 0.02 || axes[1].get(at) > axes[1].max(b) + 0.02) continue;
+            hit = b;
+            break;
+        }
+        if (hit == null) hit = block.getBoundingBox();
+        double plane = outwards ? normal.max(hit) : normal.min(hit);
+        double lo0 = axes[0].min(hit), hi0 = axes[0].max(hit), lo1 = axes[1].min(hit), hi1 = axes[1].max(hit);
+        double p0 = axes[0].get(at), p1 = axes[1].get(at);
+        for (BoundingBox b : boxes) {
+            if (b == hit) continue;
+            double touches = outwards ? normal.min(b) : normal.max(b);
+            if (Math.abs(touches - plane) > 1e-3) continue;
+            double bl0 = axes[0].min(b), bh0 = axes[0].max(b), bl1 = axes[1].min(b), bh1 = axes[1].max(b);
+            if (bh0 <= lo0 || bl0 >= hi0 || bh1 <= lo1 || bl1 >= hi1) continue;
+            if (bl0 <= lo0 + 1e-3 && bh0 >= hi0 - 1e-3) {
+                if (p1 < bl1) hi1 = Math.min(hi1, bl1);
+                else lo1 = Math.max(lo1, bh1);
+            } else if (bl1 <= lo1 + 1e-3 && bh1 >= hi1 - 1e-3) {
+                if (p0 < bl0) hi0 = Math.min(hi0, bl0);
+                else lo0 = Math.max(lo0, bh0);
+            }
+        }
+        return new double[]{lo0, Math.max(lo0, hi0), lo1, Math.max(lo1, hi1)};
+    }
+
+    /** A block's collision boxes, in world coordinates. */
+    private static List<BoundingBox> boxes(Block block) {
+        List<BoundingBox> out = new ArrayList<>();
+        for (BoundingBox b : block.getCollisionShape().getBoundingBoxes()) {
+            // Relative to the block, as Bukkit hands them out; shifted unless already placed.
+            out.add(b.getMaxX() <= 1.5 && b.getMaxY() <= 1.5 && b.getMaxZ() <= 1.5
+                    ? b.clone().shift(block.getX(), block.getY(), block.getZ()) : b.clone());
+        }
+        return out;
+    }
+
+    /** One whole cube of collision: what a splat may spread across into its neighbours. */
     private static boolean full(Block b) {
-        BoundingBox box = b.getBoundingBox();
+        var shape = b.getCollisionShape().getBoundingBoxes();
+        if (shape.size() != 1) return false;
+        BoundingBox box = shape.iterator().next();
         return box.getWidthX() > 0.999 && box.getHeight() > 0.999 && box.getWidthZ() > 0.999;
     }
 
     /** One of the two directions across a face. */
     private enum Axis {
         X, Y, Z;
+
+        static Axis normalOf(BlockFace side) {
+            return switch (side) {
+                case UP, DOWN -> Y;
+                case NORTH, SOUTH -> Z;
+                default -> X;
+            };
+        }
 
         static Axis[] of(BlockFace side) {
             return switch (side) {

@@ -19,7 +19,8 @@ public final class GamePlayer {
     /** Ticks of reloading still to go; 0 when the hopper is not being filled. */
     int reloading;
     long nextShot;
-    int grenades;
+    /** The tick the grenade is back; until then it is recharging. */
+    long grenadeReadyAt;
     long protectedUntil;
     /** The tick they come back, or 0 while they are in. */
     long respawnAt;
@@ -79,6 +80,7 @@ public final class GamePlayer {
         lastKillAt = 0;
         hitUntil = 0;
         aiming = false;
+        grenadeReadyAt = 0;
     }
 
     /** Valorant orders a team by combat score; here that is kills, then fewer deaths, then hits. */

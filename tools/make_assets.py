@@ -231,23 +231,28 @@ STRAP = (8, 8, 16, 10)
 
 
 def mask_model():
+    # On the head the model's 16 units are 10 of the player's pixels, so the
+    # head is 1.6..14.4 and the skin's outer (hat) layer, half a pixel proud of
+    # it, is 0.8..15.2. Everything that faces out is kept at least 0.3 outside
+    # that box, or a skin's hat pixels poke through the mask (or flicker against
+    # a face that lies exactly on them).
     e = [
-        box("lens", [3, 7.5, 0.6], [13, 10.5, 1.6], {"all": TRIM, "north": LENS}),
-        box("frame_top", [2, 10.5, 0.4], [14, 11.5, 1.8], TRIM),
-        box("frame_bottom", [2, 6.5, 0.4], [14, 7.5, 1.8], TRIM),
-        box("frame_left", [2, 7.5, 0.4], [3, 10.5, 1.8], TRIM),
-        box("frame_right", [13, 7.5, 0.4], [14, 10.5, 1.8], TRIM),
-        box("forehead", [2, 11.5, 0.8], [14, 14.6, 2.2], SHELL),
-        box("crown", [2.5, 14.6, 1.0], [13.5, 15.4, 7], SHELL),
-        box("mouth", [3.5, 1.6, 0.2], [12.5, 6.5, 1.6], {"all": SHELL, "north": VENT}),
-        box("chin", [4.5, 0.9, 0.8], [11.5, 1.6, 4.5], SHELL),
-        box("cheek_left", [0.9, 2, 1.0], [2.4, 11.5, 7.5], SHELL),
-        box("cheek_right", [13.6, 2, 1.0], [15.1, 11.5, 7.5], SHELL),
-        box("vent_left", [0.5, 5, 3], [0.9, 8, 6], TRIM),
-        box("vent_right", [15.1, 5, 3], [15.5, 8, 6], TRIM),
-        box("strap_left", [1.0, 8, 7.5], [1.5, 10, 15.0], STRAP),
-        box("strap_right", [14.5, 8, 7.5], [15.0, 10, 15.0], STRAP),
-        box("strap_back", [1.0, 8, 14.5], [15.0, 10, 15.0], STRAP),
+        box("lens", [3, 7.5, 0.4], [13, 10.5, 1.6], {"all": TRIM, "north": LENS}),
+        box("frame_top", [2, 10.5, 0.2], [14, 11.5, 1.8], TRIM),
+        box("frame_bottom", [2, 6.5, 0.2], [14, 7.5, 1.8], TRIM),
+        box("frame_left", [2, 7.5, 0.2], [3, 10.5, 1.8], TRIM),
+        box("frame_right", [13, 7.5, 0.2], [14, 10.5, 1.8], TRIM),
+        box("forehead", [2, 11.5, 0.5], [14, 14.6, 2.2], SHELL),
+        box("crown", [2.5, 14.6, 0.5], [13.5, 15.5, 7], SHELL),
+        box("mouth", [3.5, 1.6, 0.0], [12.5, 6.5, 1.6], {"all": SHELL, "north": VENT}),
+        box("chin", [4.5, 0.5, 0.5], [11.5, 1.6, 4.5], SHELL),
+        box("cheek_left", [0.5, 2, 0.5], [2.4, 11.5, 7.5], SHELL),
+        box("cheek_right", [13.6, 2, 0.5], [15.5, 11.5, 7.5], SHELL),
+        box("vent_left", [0.1, 5, 3], [0.5, 8, 6], TRIM),
+        box("vent_right", [15.5, 5, 3], [15.9, 8, 6], TRIM),
+        box("strap_left", [0.35, 8, 7.5], [0.5, 10, 15.65], STRAP),
+        box("strap_right", [15.5, 8, 7.5], [15.65, 10, 15.65], STRAP),
+        box("strap_back", [0.35, 8, 15.5], [15.65, 10, 15.65], STRAP),
     ]
     model = {
         "textures": {"mask": "paintball:item/mask_red", "particle": "paintball:item/mask_red"},
@@ -802,7 +807,7 @@ def definitions():
         lines += [f"ball_{team}:", "  material: PAPER", f'  name: "&f{nice} Paintball"', "  model:", "    parent: paintball:ball",
                   f"    textures: {{ball: \"paintball:item/ball_{team}\", particle: \"paintball:item/ball_{team}\"}}", ""]
         lines += [f"grenade_{team}:", "  material: PAPER", f'  name: "&{code}&lPaint Grenade"',
-                  "  lore:", '    - "&7Right-click to throw. Bursts after a second and a half."',
+                  "  lore:", '    - "&7Right-click to throw. It bursts a moment later,"', '    - "&7then recharges before you can throw again."',
                   "  model:", "    parent: paintball:grenade",
                   f"    textures: {{g: \"paintball:item/grenade_{team}\", particle: \"paintball:item/grenade_{team}\"}}", ""]
         for n in (1, 2, 3):

@@ -313,7 +313,6 @@ public final class Game {
         gp.respawnAt = 0;
         gp.ammo = s.hopper;
         gp.reloading = 0;
-        gp.grenades = s.grenadesPerLife;
         gp.protectedUntil = first ? 0 : now + s.protectionTicks;
         aim(gp, p, false);
         Location at = first ? slotFor(gp) : spawnFor(gp);
@@ -322,7 +321,9 @@ public final class Game {
         p.teleport(at);
         gp.lastInside = at;
         PlayerSnapshot.reset(p);
-        Loadout.equip(content, p, gp);
+        Loadout.equip(content, s, p, gp);
+        // The grenade keeps recharging through a death: dying is not a way to get it back sooner.
+        if (gp.grenadeReadyAt > now) p.setCooldown(Loadout.GRENADE_COOLDOWN, (int) (gp.grenadeReadyAt - now));
         if (!first) fx.respawned(p);
     }
 
@@ -360,7 +361,7 @@ public final class Game {
         victim.splattedBy = shooter.name;
         shooter.lastKill = victim.name;
         shooter.lastKillAt = now;
-        shooter.hitUntil = now + 6;
+        shooter.hitUntil = now + settings().hitMarkerTicks;
 
         Player vp = victim.player();
         Player sp = shooter.player();
@@ -482,10 +483,12 @@ public final class Game {
     /** Throws a grenade for a player, if they have one. */
     public void throwGrenade(Player p) {
         GamePlayer gp = players.get(p.getUniqueId());
-        if (gp == null || phase != Phase.LIVE || !gp.alive || gp.grenades <= 0) return;
-        gp.grenades--;
+        if (gp == null || phase != Phase.LIVE || !gp.alive || now < gp.grenadeReadyAt) return;
+        // The grenade stays in the hotbar and recharges, greyed out by the game's own cooldown sweep.
+        int cooldown = settings().grenadeCooldownTicks;
+        gp.grenadeReadyAt = now + cooldown;
         combat.throwGrenade(gp, p);
-        Loadout.grenades(content, p, gp);
+        if (cooldown > 0) p.setCooldown(Loadout.GRENADE_COOLDOWN, cooldown);
     }
 
     /** A left click with the marker: up to the sights, or back down. */
@@ -519,7 +522,7 @@ public final class Game {
             if (!Loadout.isMarker(content, inv.getItem(slot)) || gp.team == null) continue;
             boolean aimed = on && slot == held;
             if (Loadout.isAimed(content, inv.getItem(slot)) != aimed) {
-                inv.setItem(slot, Loadout.marker(content, Loadout.skin(gp.team), aimed));
+                inv.setItem(slot, Loadout.marker(content, Loadout.skin(settings(), gp.team), aimed));
             }
         }
         AttributeInstance speed = p.getAttribute(Attribute.MOVEMENT_SPEED);

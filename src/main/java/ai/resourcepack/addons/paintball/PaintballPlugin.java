@@ -63,6 +63,7 @@ public final class PaintballPlugin extends JavaPlugin {
         Loadout.init(this);
 
         saveDefaultConfig();
+        addNewOptions();
         settings = new Settings(getConfig());
         messages = new Messages(getConfig());
         getDataFolder().mkdirs();
@@ -108,11 +109,22 @@ public final class PaintballPlugin extends JavaPlugin {
     /** Re-reads config.yml, and arenas.yml too unless a match is using them. Answers whether arenas were read. */
     public boolean reloadSettings() {
         reloadConfig();
+        addNewOptions();
         settings = new Settings(getConfig());
         messages = new Messages(getConfig());
         if (!games.games().isEmpty()) return false;
         arenas.load();
         return true;
+    }
+
+    /**
+     * Writes any option the server's config.yml does not have yet (one a newer
+     * build added) into it, with its default, so every option there is can be
+     * found in the file. Nothing already there is touched.
+     */
+    private void addNewOptions() {
+        getConfig().options().copyDefaults(true);
+        saveConfig();
     }
 
     public Content content() {

@@ -8,7 +8,6 @@ kill-limit: 0
 freeze-seconds: 3
 respawn-seconds: 3
 spawn-protection-seconds: 1.5
-grenades-per-life: 1
 # How long the final scoreboard stays up before everybody is back in the lobby.
 end-seconds: 12
 
@@ -33,6 +32,9 @@ marker:
   lifetime-ticks: 60
 
 grenade:
+  # The grenade stays in your hotbar and is greyed out for this long after a
+  # throw. Dying does not bring it back sooner. 0 for no wait at all.
+  cooldown-seconds: 15
   fuse-ticks: 30
   throw-speed: 1.1
   radius: 3.5
@@ -40,6 +42,21 @@ grenade:
 paint:
   # The most splats one match keeps on the walls; the oldest go first.
   max-decals: 1500
+
+# Which marker each team carries: ember, tide, toxic, sunset or gold.
+teams:
+  red:
+    marker: ember
+  blue:
+    marker: tide
+
+hud:
+  # How long a splat stays in the kill feed (top left).
+  kill-feed-seconds: 8
+  # How long "SPLATTED <name>" stays up for whoever did it.
+  kill-banner-seconds: 2.5
+  # How long the hit marker shows round the crosshair, in ticks (20 a second).
+  hit-marker-ticks: 6
 
 # The HUD and the scoreboard are RP Engine content: this plugin installs them
 # into plugins/RPEngine/content/paintball/ (huds/hud.json and

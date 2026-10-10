@@ -9,7 +9,7 @@ public final class Settings {
     public final int freezeSeconds;
     public final int respawnTicks;
     public final int protectionTicks;
-    public final int grenadesPerLife;
+    public final int grenadeCooldownTicks;
     public final int endSeconds;
 
     public final int fireIntervalTicks;
@@ -31,6 +31,14 @@ public final class Settings {
 
     public final int maxDecals;
 
+    /** Each team's marker. */
+    public final Skin redSkin;
+    public final Skin blueSkin;
+
+    public final int feedTicks;
+    public final int killBannerTicks;
+    public final int hitMarkerTicks;
+
     public final String hudId;
     public final String scoreboardId;
 
@@ -40,7 +48,7 @@ public final class Settings {
         freezeSeconds = Math.max(1, c.getInt("freeze-seconds", 3));
         respawnTicks = (int) Math.round(Math.max(0.5, c.getDouble("respawn-seconds", 3)) * 20);
         protectionTicks = (int) Math.round(Math.max(0, c.getDouble("spawn-protection-seconds", 1.5)) * 20);
-        grenadesPerLife = Math.max(0, c.getInt("grenades-per-life", 1));
+        grenadeCooldownTicks = (int) Math.round(Math.max(0, c.getDouble("grenade.cooldown-seconds", 15)) * 20);
         endSeconds = Math.max(3, c.getInt("end-seconds", 12));
 
         fireIntervalTicks = Math.max(1, c.getInt("marker.fire-interval-ticks", 3));
@@ -61,6 +69,13 @@ public final class Settings {
         grenadeRadius = c.getDouble("grenade.radius", 3.5);
 
         maxDecals = Math.max(50, c.getInt("paint.max-decals", 1500));
+
+        redSkin = Skin.parse(c.getString("teams.red.marker", "ember"));
+        blueSkin = Skin.parse(c.getString("teams.blue.marker", "tide"));
+
+        feedTicks = (int) Math.round(Math.max(1, c.getDouble("hud.kill-feed-seconds", 8)) * 20);
+        killBannerTicks = (int) Math.round(Math.max(0, c.getDouble("hud.kill-banner-seconds", 2.5)) * 20);
+        hitMarkerTicks = Math.max(0, c.getInt("hud.hit-marker-ticks", 6));
 
         hudId = c.getString("ui.hud", "paintball:hud").trim();
         scoreboardId = c.getString("ui.scoreboard", "paintball:scoreboard").trim();

@@ -42,11 +42,7 @@ import java.util.UUID;
  * empty), laid out against each other with the engine's own measurements.
  */
 final class Hud {
-    /** How long a kill stays in the feed. */
-    private static final int FEED_TICKS = 8 * 20;
     private static final int FEED_LINES = 3;
-    /** How long "SPLATTED x" stays up for whoever did it. */
-    private static final int KILL_BANNER_TICKS = 50;
 
     private static final String[] FEED_SUFFIXES = {"", "_kr", "_kb", "_vr", "_vb"};
 
@@ -199,7 +195,7 @@ final class Hud {
             case LIVE -> {
                 if (!gp.alive) {
                     status = gp.splattedBy == null ? "" : m.plain("hud-splatted-by", "player", gp.splattedBy);
-                } else if (gp.lastKill != null && game.now - gp.lastKillAt < KILL_BANNER_TICKS) {
+                } else if (gp.lastKill != null && game.now - gp.lastKillAt < s.killBannerTicks) {
                     hot = m.plain("hud-splatted", "player", gp.lastKill);
                 } else if (game.now < gp.protectedUntil) {
                     status = m.plain("hud-protected");
@@ -221,9 +217,13 @@ final class Hud {
         int fill = reloading ? Math.round(s.hopper * (1f - gp.reloading / (float) s.reloadTicks)) : gp.ammo;
         v.put("pb_ammo_n", armed ? String.valueOf(fill) : "0");
         v.put("pb_ammo_max", String.valueOf(s.hopper));
-        v.put("pb_gun", armed && !reloading ? m.plain("hud-marker", "skin", gp.team == null ? "" : Loadout.skinName(gp)) : "");
+        v.put("pb_gun", armed && !reloading ? m.plain("hud-marker", "skin", gp.team == null ? "" : Loadout.skinName(s, gp)) : "");
         v.put("pb_gun_hot", reloading ? m.plain("hud-reloading") : "");
-        v.put("pb_nade", armed ? icon("grenade_icon") + overlays().space(2) + gp.grenades : "");
+        // The grenade: its icon when it is ready, and the seconds left while it recharges.
+        long recharge = gp.grenadeReadyAt - game.now;
+        v.put("pb_nade", !armed ? "" : recharge > 0
+                ? icon("grenade_icon") + overlays().space(2) + ((recharge + 19) / 20)
+                : icon("grenade_icon") + overlays().space(4));
 
         // The middle of the screen: the countdown while out; while in, the hit
         // marker and the spread round the crosshair (the crosshair itself is the
@@ -239,7 +239,7 @@ final class Hud {
 
         int k = 1;
         for (Game.Kill kill : game.feed) {
-            if (k > FEED_LINES || game.now - kill.at() > FEED_TICKS) break;
+            if (k > FEED_LINES || game.now - kill.at() > s.feedTicks) break;
             boolean mine = gp.name.equals(kill.killer()) || gp.name.equals(kill.victim());
             feedLine(v, k++, kill, mine);
         }

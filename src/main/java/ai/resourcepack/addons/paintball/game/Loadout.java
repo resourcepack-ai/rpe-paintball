@@ -12,6 +12,7 @@ import io.papermc.paper.datacomponent.item.DyedItemColor;
 import io.papermc.paper.datacomponent.item.Equippable;
 import io.papermc.paper.datacomponent.item.SwingAnimation;
 import io.papermc.paper.datacomponent.item.TooltipDisplay;
+import io.papermc.paper.datacomponent.item.UseCooldown;
 import io.papermc.paper.datacomponent.item.UseEffects;
 import io.papermc.paper.datacomponent.item.consumable.ItemUseAnimation;
 import net.kyori.adventure.key.Key;
@@ -41,9 +42,12 @@ public final class Loadout {
     }
 
     /** Each team carries its own colourway of the one marker model. */
-    static Skin skin(Team team) {
-        return team == Team.BLUE ? Skin.TIDE : Skin.EMBER;
+    static Skin skin(ai.resourcepack.addons.paintball.Settings s, Team team) {
+        return team == Team.BLUE ? s.blueSkin : s.redSkin;
     }
+
+    /** The grenade's cooldown group: its recharge greys out the grenade and nothing else (the marker is paper too). */
+    public static final Key GRENADE_COOLDOWN = Key.key("paintball", "grenade");
 
     public static boolean isMarker(Content content, ItemStack stack) {
         String id = content.idOf(stack);
@@ -127,18 +131,21 @@ public final class Loadout {
         return item;
     }
 
-    static ItemStack grenade(Content content, Team team, int count) {
+    @SuppressWarnings("UnstableApiUsage")
+    static ItemStack grenade(Content content, Team team, int cooldownTicks) {
         ItemStack item = content.item("grenade_" + team.id());
-        item.setAmount(Math.max(1, count));
+        item.setData(DataComponentTypes.MAX_STACK_SIZE, 1);
+        item.setData(DataComponentTypes.USE_COOLDOWN, UseCooldown.useCooldown(Math.max(0.05f, cooldownTicks / 20f))
+                .cooldownGroup(GRENADE_COOLDOWN).build());
         return item;
     }
 
     /** Dresses a player for the match: marker in hand, grenade beside it, team mask and suit. */
-    static void equip(Content content, Player p, GamePlayer gp) {
+    static void equip(Content content, ai.resourcepack.addons.paintball.Settings s, Player p, GamePlayer gp) {
         PlayerInventory inv = p.getInventory();
         inv.clear();
-        inv.setItem(0, marker(content, skin(gp.team)));
-        if (gp.grenades > 0) inv.setItem(1, grenade(content, gp.team, gp.grenades));
+        inv.setItem(0, marker(content, skin(s, gp.team)));
+        inv.setItem(1, grenade(content, gp.team, s.grenadeCooldownTicks));
         inv.setHelmet(mask(content, gp.team));
         inv.setChestplate(armour(Material.LEATHER_CHESTPLATE, gp.team));
         inv.setLeggings(armour(Material.LEATHER_LEGGINGS, gp.team));
@@ -146,9 +153,6 @@ public final class Loadout {
         inv.setHeldItemSlot(0);
     }
 
-    static void grenades(Content content, Player p, GamePlayer gp) {
-        p.getInventory().setItem(1, gp.grenades > 0 ? grenade(content, gp.team, gp.grenades) : null);
-    }
 
     // ---- the lobby -----------------------------------------------------------------
 
@@ -156,8 +160,8 @@ public final class Loadout {
     public static final String SCOREBOARD = "scoreboard";
 
     /** The marker's name in the HUD, from its skin. */
-    static String skinName(GamePlayer gp) {
-        return skin(gp.team).display().toUpperCase();
+    static String skinName(ai.resourcepack.addons.paintball.Settings s, GamePlayer gp) {
+        return skin(s, gp.team).display().toUpperCase();
     }
 
     /** In the lobby: the marker to look at, the last scoreboard, and the way out. */
