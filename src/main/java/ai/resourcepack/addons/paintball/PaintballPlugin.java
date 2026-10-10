@@ -42,6 +42,29 @@ public final class PaintballPlugin extends JavaPlugin {
     /** Ticks since enable: Spigot has no current-tick counter of its own. */
     private long ticks;
 
+    /** The oldest engine with everything this plugin calls (the HUD's json: overlays, Overlays.width and space). */
+    static final String MIN_ENGINE = "0.2.3";
+
+    /**
+     * Whether version {@code have} is {@code need} or newer, compared number by
+     * number ("0.10.0" is newer than "0.9.4"); anything after a dash, as in
+     * "0.2.3-SNAPSHOT", is ignored, and a version that is not numbers passes.
+     */
+    static boolean atLeast(String have, String need) {
+        String[] a = have.split("-", 2)[0].split("\\.");
+        String[] b = need.split("\\.");
+        try {
+            for (int i = 0; i < Math.max(a.length, b.length); i++) {
+                int x = i < a.length ? Integer.parseInt(a[i].trim()) : 0;
+                int y = i < b.length ? Integer.parseInt(b[i].trim()) : 0;
+                if (x != y) return x > y;
+            }
+            return true;
+        } catch (NumberFormatException e) {
+            return true;
+        }
+    }
+
     @Override
     public void onEnable() {
         Plugin found = getServer().getPluginManager().getPlugin("RPEngine");
@@ -51,6 +74,15 @@ public final class PaintballPlugin extends JavaPlugin {
             return;
         }
         engine = rp;
+        String have = rp.getDescription().getVersion();
+        if (!atLeast(have, MIN_ENGINE)) {
+            // Said plainly and stopped here: an older engine lacks the HUD calls
+            // this plugin makes, and would otherwise fail mid-match instead.
+            getLogger().severe("Paintball needs RP Engine " + MIN_ENGINE + " or newer, and this server has " + have
+                    + ". Update it from https://resourcepack.ai/rp-engine and restart. Disabling.");
+            getServer().getPluginManager().disablePlugin(this);
+            return;
+        }
         try {
             if (AddonContent.install(this, engine, Content.NS)) {
                 getLogger().info("Installed the paintball content into RP Engine; reloading it once.");
