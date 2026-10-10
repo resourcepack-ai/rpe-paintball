@@ -274,7 +274,7 @@ final class Hud {
                 String ring = icon("ring_start_" + Math.min(START_RING_FRAMES - 1, into / 2));
                 center = over(ring, lettering("white", into < 2 ? 4 : 3, String.valueOf(seconds)));
                 if (gp.team != null) {
-                    center2 = lettering("grey", 1, "YOUR TEAM") + overlays().space(6)
+                    center2 = lettering("grey", 1, "YOU'RE TEAM") + overlays().space(6)
                             + lettering(gp.team == Team.RED ? "red" : "blue", 2, gp.team == Team.RED ? "RED" : "BLUE");
                 }
             }
@@ -442,6 +442,12 @@ final class Hud {
         for (char c : text.toUpperCase().toCharArray()) {
             if (c == ' ') {
                 out.append(overlays().space(5 * scale));
+                continue;
+            }
+            if (c == '\'') {
+                // A narrow mark in a full-width cell: drawn closer to its neighbours.
+                out.append(overlays().space(-2 * scale)).append(icon("t_" + sheet + scale + "_apos"))
+                        .append(overlays().space(-2 * scale));
                 continue;
             }
             String id = c == '!' ? "bang" : c == '-' ? "dash" : String.valueOf(Character.toLowerCase(c));

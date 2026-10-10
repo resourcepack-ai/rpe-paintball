@@ -430,6 +430,12 @@ t_white2_dash:
   height: 26
   ascent: 16
 
+t_white2_apos:
+  file: type_white
+  grid: { rows: 6, columns: 7, cell: 39 }
+  height: 26
+  ascent: 16
+
 t_white3_0:
   file: type_white
   grid: { rows: 6, columns: 7, cell: 1 }
@@ -655,6 +661,12 @@ t_white3_bang:
 t_white3_dash:
   file: type_white
   grid: { rows: 6, columns: 7, cell: 38 }
+  height: 39
+  ascent: 22
+
+t_white3_apos:
+  file: type_white
+  grid: { rows: 6, columns: 7, cell: 39 }
   height: 39
   ascent: 22
 
@@ -886,6 +898,12 @@ t_white4_dash:
   height: 52
   ascent: 29
 
+t_white4_apos:
+  file: type_white
+  grid: { rows: 6, columns: 7, cell: 39 }
+  height: 52
+  ascent: 29
+
 t_grey1_0:
   file: type_grey
   grid: { rows: 6, columns: 7, cell: 1 }
@@ -1111,6 +1129,12 @@ t_grey1_bang:
 t_grey1_dash:
   file: type_grey
   grid: { rows: 6, columns: 7, cell: 38 }
+  height: 13
+  ascent: 9
+
+t_grey1_apos:
+  file: type_grey
+  grid: { rows: 6, columns: 7, cell: 39 }
   height: 13
   ascent: 9
 
@@ -1342,6 +1366,12 @@ t_grey2_dash:
   height: 26
   ascent: 16
 
+t_grey2_apos:
+  file: type_grey
+  grid: { rows: 6, columns: 7, cell: 39 }
+  height: 26
+  ascent: 16
+
 t_grey3_0:
   file: type_grey
   grid: { rows: 6, columns: 7, cell: 1 }
@@ -1567,6 +1597,12 @@ t_grey3_bang:
 t_grey3_dash:
   file: type_grey
   grid: { rows: 6, columns: 7, cell: 38 }
+  height: 39
+  ascent: 22
+
+t_grey3_apos:
+  file: type_grey
+  grid: { rows: 6, columns: 7, cell: 39 }
   height: 39
   ascent: 22
 
@@ -1798,6 +1834,12 @@ t_grey4_dash:
   height: 52
   ascent: 29
 
+t_grey4_apos:
+  file: type_grey
+  grid: { rows: 6, columns: 7, cell: 39 }
+  height: 52
+  ascent: 29
+
 t_grey5_0:
   file: type_grey
   grid: { rows: 6, columns: 7, cell: 1 }
@@ -2023,6 +2065,12 @@ t_grey5_bang:
 t_grey5_dash:
   file: type_grey
   grid: { rows: 6, columns: 7, cell: 38 }
+  height: 65
+  ascent: 35
+
+t_grey5_apos:
+  file: type_grey
+  grid: { rows: 6, columns: 7, cell: 39 }
   height: 65
   ascent: 35
 
@@ -2254,6 +2302,12 @@ t_gold1_dash:
   height: 13
   ascent: 9
 
+t_gold1_apos:
+  file: type_gold
+  grid: { rows: 6, columns: 7, cell: 39 }
+  height: 13
+  ascent: 9
+
 t_gold3_0:
   file: type_gold
   grid: { rows: 6, columns: 7, cell: 1 }
@@ -2479,6 +2533,12 @@ t_gold3_bang:
 t_gold3_dash:
   file: type_gold
   grid: { rows: 6, columns: 7, cell: 38 }
+  height: 39
+  ascent: 22
+
+t_gold3_apos:
+  file: type_gold
+  grid: { rows: 6, columns: 7, cell: 39 }
   height: 39
   ascent: 22
 
@@ -2710,6 +2770,12 @@ t_gold4_dash:
   height: 52
   ascent: 29
 
+t_gold4_apos:
+  file: type_gold
+  grid: { rows: 6, columns: 7, cell: 39 }
+  height: 52
+  ascent: 29
+
 t_gold5_0:
   file: type_gold
   grid: { rows: 6, columns: 7, cell: 1 }
@@ -2935,6 +3001,12 @@ t_gold5_bang:
 t_gold5_dash:
   file: type_gold
   grid: { rows: 6, columns: 7, cell: 38 }
+  height: 65
+  ascent: 35
+
+t_gold5_apos:
+  file: type_gold
+  grid: { rows: 6, columns: 7, cell: 39 }
   height: 65
   ascent: 35
 
@@ -3166,6 +3238,12 @@ t_green4_dash:
   height: 52
   ascent: 29
 
+t_green4_apos:
+  file: type_green
+  grid: { rows: 6, columns: 7, cell: 39 }
+  height: 52
+  ascent: 29
+
 t_green5_0:
   file: type_green
   grid: { rows: 6, columns: 7, cell: 1 }
@@ -3391,6 +3469,12 @@ t_green5_bang:
 t_green5_dash:
   file: type_green
   grid: { rows: 6, columns: 7, cell: 38 }
+  height: 65
+  ascent: 35
+
+t_green5_apos:
+  file: type_green
+  grid: { rows: 6, columns: 7, cell: 39 }
   height: 65
   ascent: 35
 
@@ -3622,6 +3706,12 @@ t_green6_dash:
   height: 78
   ascent: 42
 
+t_green6_apos:
+  file: type_green
+  grid: { rows: 6, columns: 7, cell: 39 }
+  height: 78
+  ascent: 42
+
 t_red2_0:
   file: type_red
   grid: { rows: 6, columns: 7, cell: 1 }
@@ -3847,6 +3937,12 @@ t_red2_bang:
 t_red2_dash:
   file: type_red
   grid: { rows: 6, columns: 7, cell: 38 }
+  height: 26
+  ascent: 16
+
+t_red2_apos:
+  file: type_red
+  grid: { rows: 6, columns: 7, cell: 39 }
   height: 26
   ascent: 16
 
@@ -4078,6 +4174,12 @@ t_red3_dash:
   height: 39
   ascent: 22
 
+t_red3_apos:
+  file: type_red
+  grid: { rows: 6, columns: 7, cell: 39 }
+  height: 39
+  ascent: 22
+
 t_red4_0:
   file: type_red
   grid: { rows: 6, columns: 7, cell: 1 }
@@ -4303,6 +4405,12 @@ t_red4_bang:
 t_red4_dash:
   file: type_red
   grid: { rows: 6, columns: 7, cell: 38 }
+  height: 52
+  ascent: 29
+
+t_red4_apos:
+  file: type_red
+  grid: { rows: 6, columns: 7, cell: 39 }
   height: 52
   ascent: 29
 
@@ -4534,6 +4642,12 @@ t_red5_dash:
   height: 65
   ascent: 35
 
+t_red5_apos:
+  file: type_red
+  grid: { rows: 6, columns: 7, cell: 39 }
+  height: 65
+  ascent: 35
+
 t_blue2_0:
   file: type_blue
   grid: { rows: 6, columns: 7, cell: 1 }
@@ -4759,6 +4873,12 @@ t_blue2_bang:
 t_blue2_dash:
   file: type_blue
   grid: { rows: 6, columns: 7, cell: 38 }
+  height: 26
+  ascent: 16
+
+t_blue2_apos:
+  file: type_blue
+  grid: { rows: 6, columns: 7, cell: 39 }
   height: 26
   ascent: 16
 

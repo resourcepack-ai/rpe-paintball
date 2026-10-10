@@ -85,11 +85,12 @@ CAPS = {
     "Z": ["#######", ".....##", ".....##", "....##.", "...##..", "..##...", ".##....", "##.....", "##.....", "##.....", "#######"],
     "!": ["..###.."] * 7 + ["......."] * 2 + ["..###.."] * 2,
     "-": ["......."] * 4 + [".#####.", ".#####."] + ["......."] * 5,
+    "'": ["..###..", "..###..", "...##..", "..##..."] + ["......."] * 7,
 }
 
 # Every character a lettering sheet holds, in sheet order. The plugin names a
 # glyph by character, so this string is the whole contract with it.
-CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!-"
+CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ!-'"
 CELL_W, CELL_H = 9, 13
 
 
@@ -138,7 +139,7 @@ LETTERING = {
 
 
 def char_id(ch):
-    return {"!": "bang", "-": "dash"}.get(ch, ch.lower())
+    return {"!": "bang", "-": "dash", "'": "apos"}.get(ch, ch.lower())
 
 
 def centred_ascent(h):

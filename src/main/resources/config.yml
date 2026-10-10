@@ -69,7 +69,7 @@ ui:
 # Everything a player reads. MiniMessage; {prefix} is the prefix below, and the
 # other {names} are filled in by the plugin.
 messages:
-  prefix: "<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold> <#5F6368>▏</#5F6368><#E8EAED>"
+  prefix: "<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold> <#5F6368>▏</#5F6368> <#E8EAED>"
 
   joined-lobby: "{prefix}<#5BE37D>+</#5BE37D> <white>{player}</white> joined the lobby <#9AA0A6>({count})"
   joined-team: "{prefix}<white>{player}</white> joined <{colour}>{team}</{colour}>."

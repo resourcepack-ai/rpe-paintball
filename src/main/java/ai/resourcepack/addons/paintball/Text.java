@@ -40,11 +40,11 @@ public final class Text {
 
     /** A chat line: the brand, a thin divider and the message in the body colour. */
     public static Component msg(String miniMessage, TagResolver... resolvers) {
-        return mm(BRAND + " <#5F6368>▏</#5F6368><#E8EAED>" + miniMessage, resolvers);
+        return mm(BRAND + " <#5F6368>▏</#5F6368> <#E8EAED>" + miniMessage, resolvers);
     }
 
     public static Component error(String miniMessage, TagResolver... resolvers) {
-        return mm(BRAND + " <#5F6368>▏</#5F6368><#FF5C5C>" + miniMessage, resolvers);
+        return mm(BRAND + " <#5F6368>▏</#5F6368> <#FF5C5C>" + miniMessage, resolvers);
     }
 
     public static Component plain(String text, TextColor color) {
