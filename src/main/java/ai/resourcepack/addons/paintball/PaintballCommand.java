@@ -23,9 +23,13 @@ import java.util.Locale;
  * {@code /paintball}, alias {@code /pb}.
  *
  * <pre>
- * /pb join | team | leave | scoreboard    everybody
- * /pb start | stop | reload | as | arena  ops
+ * /pb join | team | leave | scoreboard    everybody (paintball.play)
+ * /pb start | stop | reload | as | arena  ops (paintball.admin)
  * </pre>
+ *
+ * <p>Each subcommand checks its own node ({@link Perms}); the two parents
+ * above are only what grants them by default. {@code /pb leave} checks
+ * nothing, so a player can always get out.
  */
 public final class PaintballCommand implements TabExecutor {
     private final PaintballPlugin plugin;
@@ -37,9 +41,9 @@ public final class PaintballCommand implements TabExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         String sub = args.length == 0 ? "join" : args[0].toLowerCase(Locale.ROOT);
-        boolean admin = sender.hasPermission("paintball.admin");
         switch (sub) {
             case "join", "play" -> {
+                if (!sender.hasPermission(Perms.JOIN)) return deny(sender, Perms.JOIN);
                 Player p = player(sender);
                 if (p == null) return true;
                 Arena a = args.length > 1 ? plugin.arenas().get(args[1]) : plugin.games().defaultArena();
@@ -52,6 +56,7 @@ public final class PaintballCommand implements TabExecutor {
                 else plugin.games().leave(p);
             }
             case "team", "pick" -> {
+                if (!sender.hasPermission(Perms.TEAM)) return deny(sender, Perms.TEAM);
                 Player p = player(sender);
                 if (p == null) return true;
                 Game g = plugin.games().of(p);
@@ -66,6 +71,7 @@ public final class PaintballCommand implements TabExecutor {
                 }
             }
             case "scoreboard", "sb", "score", "top" -> {
+                if (!sender.hasPermission(Perms.SCOREBOARD)) return deny(sender, Perms.SCOREBOARD);
                 Player p = player(sender);
                 if (p == null) return true;
                 Game g = plugin.games().of(p);
@@ -73,7 +79,7 @@ public final class PaintballCommand implements TabExecutor {
                 else plugin.scoreboard().open(p, g);
             }
             case "start" -> {
-                if (!admin) return deny(sender);
+                if (!sender.hasPermission(Perms.START)) return deny(sender, Perms.START);
                 Game g = gameFor(sender, args.length > 1 ? args[1] : null, true);
                 if (g == null) return true;
                 if (g.live()) {
@@ -83,14 +89,15 @@ public final class PaintballCommand implements TabExecutor {
                 }
             }
             case "stop", "end" -> {
-                if (!admin) return deny(sender);
+                if (!sender.hasPermission(Perms.STOP)) return deny(sender, Perms.STOP);
                 Game g = gameFor(sender, args.length > 1 ? args[1] : null, false);
                 if (g == null) Text.send(sender, Text.error("Nobody is playing."));
                 else g.stop();
             }
             case "as" -> {
-                // For NPCs and anything else that runs console commands: /pb as <player> join
-                if (!admin) return deny(sender);
+                // For NPCs and anything else that runs console commands: /pb as <player> join.
+                // What they run is checked against THEIR permissions, not the sender's.
+                if (!sender.hasPermission(Perms.AS)) return deny(sender, Perms.AS);
                 Player target = args.length > 2 ? Bukkit.getPlayerExact(args[1]) : null;
                 if (target == null) {
                     Text.send(sender, Text.error("/pb as <online player> <what they run>"));
@@ -99,15 +106,12 @@ public final class PaintballCommand implements TabExecutor {
                 return onCommand(target, command, label, Arrays.copyOfRange(args, 2, args.length));
             }
             case "reload" -> {
-                if (!admin) return deny(sender);
+                if (!sender.hasPermission(Perms.RELOAD)) return deny(sender, Perms.RELOAD);
                 Text.send(sender, plugin.reloadSettings() ? Text.msg("Reloaded config.yml and arenas.yml.")
                         : Text.msg("Reloaded config.yml. arenas.yml is left alone while somebody is playing."));
             }
-            case "arena" -> {
-                if (!admin) return deny(sender);
-                arena(sender, Arrays.copyOfRange(args, 1, args.length));
-            }
-            default -> help(sender, admin);
+            case "arena" -> arena(sender, Arrays.copyOfRange(args, 1, args.length));
+            default -> help(sender);
         }
         return true;
     }
@@ -140,7 +144,21 @@ public final class PaintballCommand implements TabExecutor {
 
     // ---- arenas --------------------------------------------------------------------
 
+    /** The node an arena subcommand needs: generate and delete have their own, the rest is setup. */
+    private static String arenaPermission(String op) {
+        return switch (op.toLowerCase(Locale.ROOT)) {
+            case "generate" -> Perms.ARENA_GENERATE;
+            case "delete", "remove" -> Perms.ARENA_DELETE;
+            default -> Perms.ARENA;
+        };
+    }
+
     private void arena(CommandSender sender, String[] a) {
+        String need = arenaPermission(a.length == 0 ? "list" : a[0]);
+        if (!sender.hasPermission(need)) {
+            deny(sender, need);
+            return;
+        }
         if (a.length == 0 || a[0].equalsIgnoreCase("list")) {
             if (plugin.arenas().all().isEmpty()) {
                 Text.send(sender, Text.msg("No arenas yet. <white>/pb arena generate <id> confirm</white> builds one where you stand."));
@@ -286,42 +304,81 @@ public final class PaintballCommand implements TabExecutor {
         return p;
     }
 
-    private static boolean deny(CommandSender sender) {
-        Text.send(sender, Text.error("You can't do that."));
+    private static boolean deny(CommandSender sender, String node) {
+        Text.send(sender, Text.error("You need <white>" + node + "</white> for that."));
         return true;
     }
 
-    private static void help(CommandSender s, boolean admin) {
-        Text.send(s, Text.msg("<white>/pb join</white> <#9AA0A6>·</#9AA0A6> <white>/pb team <red|blue|auto></white> <#9AA0A6>·</#9AA0A6> <white>/pb leave</white> <#9AA0A6>·</#9AA0A6> <white>/pb scoreboard</white> <#9AA0A6>(or F in a match)"));
-        if (admin) {
-            Text.send(s, Text.msg("<white>/pb start</white> <#9AA0A6>(works alone) ·</#9AA0A6> <white>/pb stop</white> <#9AA0A6>·</#9AA0A6> <white>/pb reload</white> <#9AA0A6>·</#9AA0A6> <white>/pb as <player> ...</white>"));
-            Text.send(s, Text.msg("<white>/pb arena</white> <#9AA0A6>list · generate <id> confirm · create · setwaiting · addspawn · clearspawns · wand · setbounds · enable · disable · tp · name · delete"));
+    private static final String DOT = " <#9AA0A6>·</#9AA0A6> ";
+
+    /** The help a sender is shown: only the commands they may run. */
+    private static void help(CommandSender s) {
+        List<String> play = new ArrayList<>();
+        if (s.hasPermission(Perms.JOIN)) play.add("<white>/pb join</white>");
+        if (s.hasPermission(Perms.TEAM)) play.add("<white>/pb team <red|blue|auto></white>");
+        play.add("<white>/pb leave</white>");
+        if (s.hasPermission(Perms.SCOREBOARD)) play.add("<white>/pb scoreboard</white> <#9AA0A6>(or F in a match)");
+        Text.send(s, Text.msg(String.join(DOT, play)));
+        List<String> staff = new ArrayList<>();
+        if (s.hasPermission(Perms.START)) staff.add("<white>/pb start</white> <#9AA0A6>(works alone)</#9AA0A6>");
+        if (s.hasPermission(Perms.STOP)) staff.add("<white>/pb stop</white>");
+        if (s.hasPermission(Perms.RELOAD)) staff.add("<white>/pb reload</white>");
+        if (s.hasPermission(Perms.AS)) staff.add("<white>/pb as <player> ...</white>");
+        if (!staff.isEmpty()) Text.send(s, Text.msg(String.join(DOT, staff)));
+        List<String> arena = arenaSubcommands(s);
+        if (!arena.isEmpty()) {
+            List<String> shown = new ArrayList<>();
+            for (String op : arena) shown.add(op.equals("generate") ? "generate <id> confirm" : op);
+            Text.send(s, Text.msg("<white>/pb arena</white> <#9AA0A6>" + String.join(" · ", shown)));
         }
+    }
+
+    private static final List<String> ARENA_SUBCOMMANDS = List.of("list", "generate", "create", "setwaiting", "addspawn",
+            "clearspawns", "wand", "setbounds", "enable", "disable", "tp", "name", "delete");
+
+    /** The arena subcommands a sender may run, in the order help and tab-completion show them. */
+    private static List<String> arenaSubcommands(CommandSender s) {
+        List<String> out = new ArrayList<>();
+        for (String op : ARENA_SUBCOMMANDS) {
+            if (s.hasPermission(arenaPermission(op))) out.add(op);
+        }
+        return out;
     }
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
-        boolean admin = sender.hasPermission("paintball.admin");
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
-            out.addAll(List.of("join", "team", "leave", "scoreboard"));
-            if (admin) out.addAll(List.of("start", "stop", "arena", "reload", "as"));
+            if (sender.hasPermission(Perms.JOIN)) out.add("join");
+            if (sender.hasPermission(Perms.TEAM)) out.add("team");
+            out.add("leave");
+            if (sender.hasPermission(Perms.SCOREBOARD)) out.add("scoreboard");
+            if (sender.hasPermission(Perms.START)) out.add("start");
+            if (sender.hasPermission(Perms.STOP)) out.add("stop");
+            if (!arenaSubcommands(sender).isEmpty()) out.add("arena");
+            if (sender.hasPermission(Perms.RELOAD)) out.add("reload");
+            if (sender.hasPermission(Perms.AS)) out.add("as");
         } else if (args.length == 2) {
-            switch (args[0].toLowerCase(Locale.ROOT)) {
-                case "join", "start", "stop" -> plugin.arenas().all().forEach(a -> out.add(a.id()));
-                case "team", "pick" -> out.addAll(List.of("red", "blue", "auto"));
-                case "arena" -> {
-                    if (admin) out.addAll(List.of("list", "generate", "create", "setwaiting", "addspawn", "clearspawns",
-                            "wand", "setbounds", "enable", "disable", "tp", "name", "delete"));
+            String sub = args[0].toLowerCase(Locale.ROOT);
+            switch (sub) {
+                case "join", "start", "stop" -> {
+                    String need = sub.equals("join") ? Perms.JOIN : sub.equals("start") ? Perms.START : Perms.STOP;
+                    if (sender.hasPermission(need)) plugin.arenas().all().forEach(a -> out.add(a.id()));
                 }
-                case "as" -> Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
+                case "team", "pick" -> {
+                    if (sender.hasPermission(Perms.TEAM)) out.addAll(List.of("red", "blue", "auto"));
+                }
+                case "arena" -> out.addAll(arenaSubcommands(sender));
+                case "as" -> {
+                    if (sender.hasPermission(Perms.AS)) Bukkit.getOnlinePlayers().forEach(p -> out.add(p.getName()));
+                }
                 default -> {
                 }
             }
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("arena") && admin
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("arena") && sender.hasPermission(arenaPermission(args[1]))
                 && !List.of("list", "wand", "create", "generate").contains(args[1].toLowerCase(Locale.ROOT))) {
             plugin.arenas().all().forEach(a -> out.add(a.id()));
-        } else if (args.length == 4 && args[0].equalsIgnoreCase("arena")) {
+        } else if (args.length == 4 && args[0].equalsIgnoreCase("arena") && sender.hasPermission(Perms.ARENA)) {
             String op = args[1].toLowerCase(Locale.ROOT);
             if (op.equals("addspawn") || op.equals("clearspawns")) out.addAll(List.of("red", "blue"));
         }

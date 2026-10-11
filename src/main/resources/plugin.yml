@@ -11,17 +11,66 @@ softdepend: [Multiverse-Core]
 
 commands:
   paintball:
-    description: Paintball - join, leave, the scoreboard; ops start and stop matches and build arenas.
-    usage: /<command> [join|team|leave|scoreboard|start|stop|arena|reload]
+    description: Paintball - join, leave, the scoreboard; staff start and stop matches and build arenas.
+    usage: /<command> [join|team|leave|scoreboard|start|stop|arena|reload|as]
     aliases: [pb]
-    permission: paintball.play
+    # No command-level permission: every subcommand checks its own node below,
+    # and /pb leave needs none, so nobody can be stuck in a match.
 
+# One node per subcommand. paintball.play and paintball.admin are convenience
+# parents: they grant everything under them, and nothing checks them directly.
 permissions:
   paintball.play:
-    description: Join, leave and see the scoreboard.
+    description: Everything a player does - join, pick a team, the scoreboard. A parent; nothing checks it.
+    default: true
+    children:
+      paintball.join: true
+      paintball.team: true
+      paintball.scoreboard: true
+  paintball.join:
+    description: /pb join - into an arena's lobby.
+    default: true
+  paintball.team:
+    description: /pb team, and the red and blue items in the lobby's hotbar.
+    default: true
+  paintball.scoreboard:
+    description: /pb scoreboard, F during a match, and the lobby's scoreboard item.
     default: true
   paintball.admin:
-    description: Start and stop matches, set up arenas, reload.
+    description: Every staff node - start, stop, reload, /pb as, arenas, the command bypass. A parent; nothing checks it.
+    default: op
+    children:
+      paintball.start: true
+      paintball.stop: true
+      paintball.reload: true
+      paintball.as: true
+      paintball.arena: true
+      paintball.arena.generate: true
+      paintball.arena.delete: true
+      paintball.bypass.commands: true
+  paintball.start:
+    description: /pb start - start a match now (it joins you first if you are not in).
+    default: op
+  paintball.stop:
+    description: /pb stop - end a match, or empty a lobby.
+    default: op
+  paintball.reload:
+    description: /pb reload - re-read config.yml and arenas.yml.
+    default: op
+  paintball.as:
+    description: /pb as <player> ... - run a subcommand as somebody else (for NPCs and console). Checked against THEIR permissions.
+    default: op
+  paintball.arena:
+    description: /pb arena setup - list, create, setwaiting, addspawn, clearspawns, wand and setbounds, enable, disable, tp, name.
+    default: op
+  paintball.arena.generate:
+    description: /pb arena generate - build a whole field, replacing every block in a 31x13x57 box.
+    default: op
+  paintball.arena.delete:
+    description: /pb arena delete - remove an arena, ending its match.
+    default: op
+  paintball.bypass.commands:
+    description: Run any command during a match, not only the few a player may (/pb, /msg, /r, /me, /list...).
     default: op
   paintball.update:
     description: Be told when a newer Paintball is on SpigotMC.

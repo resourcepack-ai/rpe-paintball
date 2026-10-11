@@ -1,5 +1,6 @@
 package ai.resourcepack.addons.paintball.game;
 
+import ai.resourcepack.addons.paintball.Perms;
 import ai.resourcepack.addons.paintball.Content;
 import ai.resourcepack.addons.paintball.PaintballPlugin;
 import ai.resourcepack.addons.paintball.Settings;
@@ -159,7 +160,7 @@ public final class Game {
         } else {
             toLobby(p, gp);
             broadcast(messages().component("joined-lobby", "player", p.getName(), "count", String.valueOf(size())));
-            Text.send(p, messages().component(p.hasPermission("paintball.admin") ? "start-hint-op" : "start-hint"));
+            Text.send(p, messages().component(p.hasPermission(Perms.START) ? "start-hint-op" : "start-hint"));
         }
     }
 

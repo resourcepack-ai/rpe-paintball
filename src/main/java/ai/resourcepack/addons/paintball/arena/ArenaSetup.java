@@ -1,5 +1,6 @@
 package ai.resourcepack.addons.paintball.arena;
 
+import ai.resourcepack.addons.paintball.Perms;
 import ai.resourcepack.addons.paintball.Team;
 import ai.resourcepack.addons.paintball.Text;
 import ai.resourcepack.addons.paintball.game.GameManager;
@@ -164,7 +165,7 @@ public final class ArenaSetup implements Listener {
     public void onWand(PlayerInteractEvent e) {
         if (e.getHand() != EquipmentSlot.HAND || e.getItem() == null || !e.getItem().hasItemMeta()) return;
         if (!e.getItem().getItemMeta().getPersistentDataContainer().has(wandKey)) return;
-        if (!e.getPlayer().hasPermission("paintball.admin")) return;
+        if (!e.getPlayer().hasPermission(Perms.ARENA)) return;
         Block b = e.getClickedBlock();
         if (b == null) return;
         int i;

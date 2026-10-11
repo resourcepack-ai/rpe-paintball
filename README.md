@@ -37,8 +37,8 @@ worlds is found.
 |---|---|
 | `/pb join` | Into the lobby (the waiting box over the field) |
 | `/pb team red\|blue\|auto` | The side you'd like, from the next match; the red and blue items in the lobby's hotbar do the same. Picks are kept within one player of even: whoever picked a crowded side last is moved, and told |
-| `/pb start` | Op: starts the match now, even if you're alone (it joins you first) |
-| `/pb stop` | Op: ends the match (scoreboard, then back to the lobby); in the lobby, sends everybody home |
+| `/pb start` | Staff: starts the match now, even if you're alone (it joins you first) |
+| `/pb stop` | Staff: ends the match (scoreboard, then back to the lobby); in the lobby, sends everybody home |
 | `/pb leave` | Out, with your inventory and position back |
 | **F** or `/pb scoreboard` | The match scoreboard |
 | **Tab** | The live player list: score and clock on top, each player's kills / deaths |
@@ -51,7 +51,7 @@ the crosshair; from the hip it strays by the spread the crosshair's ticks show.
 `/pb as <player> <subcommand>` runs a subcommand for somebody else, for NPCs and
 anything else that can only run console commands.
 
-## Arenas (op)
+## Arenas (staff)
 
 `/pb arena generate <id> confirm [name]` builds a speedball field where you stand and
 sets it up. From the console: `/pb arena generate <id> at <world> <x> <y> <z> [name]`.
@@ -70,11 +70,33 @@ on start.
 `update-check: true` tells the console, and anybody with `paintball.update`, when
 a newer Paintball is on SpigotMC. Set it to `false` to turn that off.
 
+## Permissions
+
+One node per command, so you can hand out exactly what somebody needs (a
+referee who can start and stop matches but not touch arenas, say).
+`paintball.play` and `paintball.admin` are only shorthand: each grants every
+node listed under it, and nothing checks them directly, so a setup that grants
+either one keeps working. `/pb leave` needs no permission at all, so nobody
+can be stuck in a match.
+
 | Permission | Default | |
 |---|---|---|
-| `paintball.play` | everyone | Join, leave, pick a team, the scoreboard |
-| `paintball.admin` | op | Start and stop matches, arenas, reload, `/pb as` |
-| `paintball.update` | op | Told when a newer version is out |
+| `paintball.play` | everyone | All three below |
+| `paintball.join` | everyone | `/pb join` |
+| `paintball.team` | everyone | `/pb team`, and the red and blue items in the lobby |
+| `paintball.scoreboard` | everyone | `/pb scoreboard`, F in a match, and the lobby's scoreboard item |
+| `paintball.admin` | op | Every node below |
+| `paintball.start` | op | `/pb start`; also changes the lobby's "waiting for an op" hint to "start whenever you like" |
+| `paintball.stop` | op | `/pb stop` |
+| `paintball.reload` | op | `/pb reload` |
+| `paintball.as` | op | `/pb as <player> ...`; what they run is checked against *their* permissions |
+| `paintball.arena` | op | Arena setup: `/pb arena list`, `create`, `setwaiting`, `addspawn`, `clearspawns`, `wand` (and using the wand), `setbounds`, `enable`, `disable`, `tp`, `name` |
+| `paintball.arena.generate` | op | `/pb arena generate`, which replaces every block in a 31 × 13 × 57 box |
+| `paintball.arena.delete` | op | `/pb arena delete`, which also ends that arena's match |
+| `paintball.bypass.commands` | op | Run any command during a match. Without it a player in a match may only use `/pb`, `/msg`, `/tell`, `/w`, `/r`, `/reply`, `/me` and `/list` |
+| `paintball.update` | op | Told when a newer version is out (not part of `paintball.admin`) |
+
+`/pb help` and tab-completion only offer what you may run.
 
 ## Everything you see is RP Engine content
 

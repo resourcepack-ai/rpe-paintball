@@ -1,5 +1,6 @@
 package ai.resourcepack.addons.paintball.game;
 
+import ai.resourcepack.addons.paintball.Perms;
 import ai.resourcepack.addons.paintball.Text;
 import ai.resourcepack.addons.paintball.Content;
 import ai.resourcepack.addons.paintball.PaintballPlugin;
@@ -122,7 +123,7 @@ public final class GameListener implements Listener {
         Game g = games.of(e.getPlayer());
         if (g == null) return;
         e.setCancelled(true);
-        plugin.scoreboard().open(e.getPlayer(), g);
+        if (e.getPlayer().hasPermission(Perms.SCOREBOARD)) plugin.scoreboard().open(e.getPlayer(), g);
     }
 
     @EventHandler
@@ -149,10 +150,16 @@ public final class GameListener implements Listener {
             e.setCancelled(true);
             if (!right) return;
             switch (lobby) {
-                case Loadout.SCOREBOARD -> plugin.scoreboard().open(p, g);
+                case Loadout.SCOREBOARD -> {
+                    if (p.hasPermission(Perms.SCOREBOARD)) plugin.scoreboard().open(p, g);
+                }
                 case Loadout.LEAVE -> games.leave(p);
-                case Loadout.PICK_RED -> g.pick(p, ai.resourcepack.addons.paintball.Team.RED, true);
-                case Loadout.PICK_BLUE -> g.pick(p, ai.resourcepack.addons.paintball.Team.BLUE, true);
+                case Loadout.PICK_RED -> {
+                    if (p.hasPermission(Perms.TEAM)) g.pick(p, ai.resourcepack.addons.paintball.Team.RED, true);
+                }
+                case Loadout.PICK_BLUE -> {
+                    if (p.hasPermission(Perms.TEAM)) g.pick(p, ai.resourcepack.addons.paintball.Team.BLUE, true);
+                }
                 default -> {
                 }
             }
@@ -208,7 +215,7 @@ public final class GameListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onCommand(PlayerCommandPreprocessEvent e) {
         Player p = e.getPlayer();
-        if (!games.playing(p) || p.hasPermission("paintball.admin")) return;
+        if (!games.playing(p) || p.hasPermission(Perms.BYPASS_COMMANDS)) return;
         String label = e.getMessage().substring(1).split(" ", 2)[0].toLowerCase();
         int colon = label.indexOf(':');
         if (colon >= 0) label = label.substring(colon + 1);

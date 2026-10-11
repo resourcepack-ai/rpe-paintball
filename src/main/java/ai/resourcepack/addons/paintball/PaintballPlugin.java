@@ -135,7 +135,7 @@ public final class PaintballPlugin extends JavaPlugin {
 
         updates = UpdateCheck.spigot(this, SPIGOT_RESOURCE)
                 .name("Paintball")
-                .permission("paintball.update")
+                .permission(Perms.UPDATE)
                 .enabledWhen(() -> getConfig().getBoolean("update-check", true))
                 .player(this::tellUpdate)
                 .start();
