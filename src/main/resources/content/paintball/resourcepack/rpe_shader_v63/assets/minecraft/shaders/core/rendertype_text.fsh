@@ -92,7 +92,7 @@ vec2 rotate2d(vec2 p, float degrees) {
 // ---- Paintball HUD (signature 0, full screen) ----
 // Drawn at rpeScreen: the fragment's own position in GUI pixels, which the
 // vertex shader interpolates across the glyph it stretched over the screen.
-// No texel lookup and no canvas to clip to. See SHADERS-FULLSCREEN.md.
+// No texel lookup and no canvas to clip to.
 
 // d: distance to the composed surface. col: its colour at this fragment.
 void scene_0(vec2 p, vec2 screen, out float d, out vec3 col, out float shapeAlpha) {

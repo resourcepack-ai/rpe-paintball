@@ -23,7 +23,7 @@ uniform sampler2D Sampler0;
 void rpe_vertex_main() {
     // Un-multiplied, for the gate. See patch.ts.
     rawColor = Color;
-    // Zero unless a full-screen glyph's own branch sets it. See SHADERS-FULLSCREEN.md.
+    // Zero unless a full-screen glyph's own branch sets it.
     rpeScreen = vec4(0.0);
     gl_Position = ProjMat * ModelViewMat * vec4(Position, 1.0);
 
@@ -472,8 +472,7 @@ if (mark.r == 240 && mark.g == 0 && mark.b == 240) {
     }
     }
     // A live player head in a dialog: the game's 8x8 face, scaled from its
-    // top-left to the size and dropped to the place its colour says. See
-    // lib/dialogs/head-shader.ts.
+    // top-left to the size and dropped to the place its colour says.
     if (abs(ProjMat[3][3] - 1.0) < 0.001) {
         ivec3 rpeHead = ivec3(floor(Color.rgb * 255.0 + 0.5));
         vec2 rpeEighths = UV0 * 8.0;
