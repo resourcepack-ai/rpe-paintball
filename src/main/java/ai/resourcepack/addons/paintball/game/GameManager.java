@@ -1,7 +1,7 @@
 package ai.resourcepack.addons.paintball.game;
 
 import ai.resourcepack.addons.paintball.PaintballPlugin;
-import ai.resourcepack.addons.paintball.Text;
+import ai.resourcepack.addons.paintball.text.Text;
 import ai.resourcepack.addons.paintball.arena.Arena;
 import org.bukkit.entity.Player;
 

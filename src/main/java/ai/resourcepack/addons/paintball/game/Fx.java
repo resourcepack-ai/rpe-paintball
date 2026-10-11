@@ -1,7 +1,7 @@
 package ai.resourcepack.addons.paintball.game;
 
-import ai.resourcepack.addons.paintball.Content;
-import ai.resourcepack.addons.paintball.Team;
+import ai.resourcepack.addons.paintball.content.Content;
+import ai.resourcepack.addons.paintball.team.Team;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;

@@ -1,5 +1,6 @@
-package ai.resourcepack.addons.paintball;
+package ai.resourcepack.addons.paintball.config;
 
+import ai.resourcepack.addons.paintball.text.Text;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.configuration.ConfigurationSection;

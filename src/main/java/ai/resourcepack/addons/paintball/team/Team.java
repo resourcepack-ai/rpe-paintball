@@ -1,4 +1,4 @@
-package ai.resourcepack.addons.paintball;
+package ai.resourcepack.addons.paintball.team;
 
 import net.kyori.adventure.bossbar.BossBar;
 import net.kyori.adventure.text.format.TextColor;

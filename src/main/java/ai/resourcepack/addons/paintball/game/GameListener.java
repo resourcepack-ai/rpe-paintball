@@ -1,8 +1,8 @@
 package ai.resourcepack.addons.paintball.game;
 
-import ai.resourcepack.addons.paintball.Perms;
-import ai.resourcepack.addons.paintball.Text;
-import ai.resourcepack.addons.paintball.Content;
+import ai.resourcepack.addons.paintball.command.Perms;
+import ai.resourcepack.addons.paintball.text.Text;
+import ai.resourcepack.addons.paintball.content.Content;
 import ai.resourcepack.addons.paintball.PaintballPlugin;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -155,10 +155,10 @@ public final class GameListener implements Listener {
                 }
                 case Loadout.LEAVE -> games.leave(p);
                 case Loadout.PICK_RED -> {
-                    if (p.hasPermission(Perms.TEAM)) g.pick(p, ai.resourcepack.addons.paintball.Team.RED, true);
+                    if (p.hasPermission(Perms.TEAM)) g.pick(p, ai.resourcepack.addons.paintball.team.Team.RED, true);
                 }
                 case Loadout.PICK_BLUE -> {
-                    if (p.hasPermission(Perms.TEAM)) g.pick(p, ai.resourcepack.addons.paintball.Team.BLUE, true);
+                    if (p.hasPermission(Perms.TEAM)) g.pick(p, ai.resourcepack.addons.paintball.team.Team.BLUE, true);
                 }
                 default -> {
                 }

@@ -1,4 +1,4 @@
-package ai.resourcepack.addons.paintball;
+package ai.resourcepack.addons.paintball.content;
 
 import ai.resourcepack.engine.RPEnginePlugin;
 import ai.resourcepack.engine.api.ContentId;

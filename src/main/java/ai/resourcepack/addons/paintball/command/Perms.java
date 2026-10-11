@@ -1,4 +1,4 @@
-package ai.resourcepack.addons.paintball;
+package ai.resourcepack.addons.paintball.command;
 
 import java.util.List;
 

@@ -2,8 +2,8 @@ package ai.resourcepack.addons.paintball.ui;
 
 import ai.resourcepack.engine.api.Dialogs;
 import ai.resourcepack.addons.paintball.PaintballPlugin;
-import ai.resourcepack.addons.paintball.Team;
-import ai.resourcepack.addons.paintball.Text;
+import ai.resourcepack.addons.paintball.team.Team;
+import ai.resourcepack.addons.paintball.text.Text;
 import ai.resourcepack.addons.paintball.game.Game;
 import ai.resourcepack.addons.paintball.game.GamePlayer;
 import org.bukkit.entity.Player;

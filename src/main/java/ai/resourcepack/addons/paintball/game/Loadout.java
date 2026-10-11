@@ -1,10 +1,10 @@
 package ai.resourcepack.addons.paintball.game;
 
-import ai.resourcepack.addons.paintball.Content;
-import ai.resourcepack.addons.paintball.Messages;
-import ai.resourcepack.addons.paintball.Skin;
-import ai.resourcepack.addons.paintball.Team;
-import ai.resourcepack.addons.paintball.Text;
+import ai.resourcepack.addons.paintball.content.Content;
+import ai.resourcepack.addons.paintball.config.Messages;
+import ai.resourcepack.addons.paintball.team.Skin;
+import ai.resourcepack.addons.paintball.team.Team;
+import ai.resourcepack.addons.paintball.text.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -34,7 +34,7 @@ public final class Loadout {
     }
 
     /** Each team carries its own colourway of the one marker model. */
-    static Skin skin(ai.resourcepack.addons.paintball.Settings s, Team team) {
+    static Skin skin(ai.resourcepack.addons.paintball.config.Settings s, Team team) {
         return team == Team.BLUE ? s.blueSkin : s.redSkin;
     }
 
@@ -173,7 +173,7 @@ public final class Loadout {
     }
 
     /** Dresses a player for the match: marker in hand, grenade beside it, team mask and suit. */
-    static void equip(Content content, ai.resourcepack.addons.paintball.Settings s, Player p, GamePlayer gp) {
+    static void equip(Content content, ai.resourcepack.addons.paintball.config.Settings s, Player p, GamePlayer gp) {
         PlayerInventory inv = p.getInventory();
         inv.clear();
         inv.setItem(0, marker(content, skin(s, gp.team)));
@@ -194,7 +194,7 @@ public final class Loadout {
     public static final String PICK_BLUE = "pick_blue";
 
     /** The marker's name in the HUD, from its skin. */
-    static String skinName(ai.resourcepack.addons.paintball.Settings s, GamePlayer gp) {
+    static String skinName(ai.resourcepack.addons.paintball.config.Settings s, GamePlayer gp) {
         return skin(s, gp.team).display().toUpperCase();
     }
 

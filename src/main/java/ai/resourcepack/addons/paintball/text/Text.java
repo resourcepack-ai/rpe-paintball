@@ -1,4 +1,4 @@
-package ai.resourcepack.addons.paintball;
+package ai.resourcepack.addons.paintball.text;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.KeybindComponent;

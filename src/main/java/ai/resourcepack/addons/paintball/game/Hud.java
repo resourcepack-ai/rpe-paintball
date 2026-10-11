@@ -1,9 +1,9 @@
 package ai.resourcepack.addons.paintball.game;
 
-import ai.resourcepack.addons.paintball.Messages;
-import ai.resourcepack.addons.paintball.Settings;
-import ai.resourcepack.addons.paintball.Team;
-import ai.resourcepack.addons.paintball.Text;
+import ai.resourcepack.addons.paintball.config.Messages;
+import ai.resourcepack.addons.paintball.config.Settings;
+import ai.resourcepack.addons.paintball.team.Team;
+import ai.resourcepack.addons.paintball.text.Text;
 import ai.resourcepack.engine.api.Overlays;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.TextDecoration;

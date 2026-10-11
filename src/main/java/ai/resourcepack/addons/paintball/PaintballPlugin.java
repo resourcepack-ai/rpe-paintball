@@ -1,14 +1,20 @@
 package ai.resourcepack.addons.paintball;
 
-import ai.resourcepack.engine.RPEnginePlugin;
-import ai.resourcepack.engine.api.AddonContent;
 import ai.resourcepack.addons.paintball.arena.ArenaSetup;
 import ai.resourcepack.addons.paintball.arena.ArenaStore;
+import ai.resourcepack.addons.paintball.command.PaintballCommand;
+import ai.resourcepack.addons.paintball.command.Perms;
+import ai.resourcepack.addons.paintball.config.Messages;
+import ai.resourcepack.addons.paintball.config.Settings;
+import ai.resourcepack.addons.paintball.content.Content;
 import ai.resourcepack.addons.paintball.game.GameListener;
 import ai.resourcepack.addons.paintball.game.GameManager;
 import ai.resourcepack.addons.paintball.game.Loadout;
 import ai.resourcepack.addons.paintball.game.PlayerSnapshot;
+import ai.resourcepack.addons.paintball.text.Text;
 import ai.resourcepack.addons.paintball.ui.Scoreboard;
+import ai.resourcepack.engine.RPEnginePlugin;
+import ai.resourcepack.engine.api.AddonContent;
 import ai.resourcepack.common.update.UpdateCheck;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;

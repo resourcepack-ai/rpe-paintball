@@ -1,8 +1,8 @@
 package ai.resourcepack.addons.paintball.arena;
 
-import ai.resourcepack.addons.paintball.Perms;
-import ai.resourcepack.addons.paintball.Team;
-import ai.resourcepack.addons.paintball.Text;
+import ai.resourcepack.addons.paintball.command.Perms;
+import ai.resourcepack.addons.paintball.team.Team;
+import ai.resourcepack.addons.paintball.text.Text;
 import ai.resourcepack.addons.paintball.game.GameManager;
 import org.bukkit.Location;
 import org.bukkit.Material;

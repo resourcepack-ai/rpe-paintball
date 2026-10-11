@@ -1,11 +1,11 @@
 package ai.resourcepack.addons.paintball.game;
 
-import ai.resourcepack.addons.paintball.Perms;
-import ai.resourcepack.addons.paintball.Content;
+import ai.resourcepack.addons.paintball.command.Perms;
+import ai.resourcepack.addons.paintball.content.Content;
 import ai.resourcepack.addons.paintball.PaintballPlugin;
-import ai.resourcepack.addons.paintball.Settings;
-import ai.resourcepack.addons.paintball.Team;
-import ai.resourcepack.addons.paintball.Text;
+import ai.resourcepack.addons.paintball.config.Settings;
+import ai.resourcepack.addons.paintball.team.Team;
+import ai.resourcepack.addons.paintball.text.Text;
 import ai.resourcepack.addons.paintball.arena.Arena;
 import ai.resourcepack.addons.paintball.paint.PaintLayer;
 import net.kyori.adventure.text.Component;
@@ -92,7 +92,7 @@ public final class Game {
         return plugin.settings();
     }
 
-    ai.resourcepack.addons.paintball.Messages messages() {
+    ai.resourcepack.addons.paintball.config.Messages messages() {
         return plugin.messages();
     }
 

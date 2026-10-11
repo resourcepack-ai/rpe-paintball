@@ -1,6 +1,6 @@
 package ai.resourcepack.addons.paintball.arena;
 
-import ai.resourcepack.addons.paintball.Team;
+import ai.resourcepack.addons.paintball.team.Team;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;

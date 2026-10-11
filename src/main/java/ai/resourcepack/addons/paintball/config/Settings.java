@@ -1,5 +1,6 @@
-package ai.resourcepack.addons.paintball;
+package ai.resourcepack.addons.paintball.config;
 
+import ai.resourcepack.addons.paintball.team.Skin;
 import org.bukkit.configuration.file.FileConfiguration;
 
 /** config.yml, read once into fields so the hot paths never touch YAML. */

@@ -1,10 +1,13 @@
-package ai.resourcepack.addons.paintball;
+package ai.resourcepack.addons.paintball.command;
 
+import ai.resourcepack.addons.paintball.PaintballPlugin;
 import ai.resourcepack.addons.paintball.arena.Arena;
 import ai.resourcepack.addons.paintball.arena.ArenaSetup;
 import ai.resourcepack.addons.paintball.arena.ArenaStore;
 import ai.resourcepack.addons.paintball.arena.FieldBuilder;
 import ai.resourcepack.addons.paintball.game.Game;
+import ai.resourcepack.addons.paintball.team.Team;
+import ai.resourcepack.addons.paintball.text.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
