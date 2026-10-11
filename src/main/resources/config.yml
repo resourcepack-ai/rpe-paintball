@@ -82,6 +82,8 @@ messages:
   already-in: "{prefix}<#FF5C5C>You're already in. <white>/pb leave</white> to go."
   no-arena: "{prefix}<#FF5C5C>There's no arena yet. An op can build one with <white>/pb arena generate <id></white>."
   arena-not-ready: "{prefix}<#FF5C5C>{arena} isn't set up: it needs {missing}."
+  # A disabled arena (/pb arena disable): nobody can join it or start a match on it.
+  arena-closed: "{prefix}<#FF5C5C>{arena} is closed."
   not-during-match: "{prefix}<#FF5C5C>Not during a match. <white>/pb leave</white> to go."
   restored: "{prefix}Your last match was cut short, so you've got your things back."
   match-stopped: "{prefix}The match was stopped."

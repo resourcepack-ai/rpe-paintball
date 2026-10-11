@@ -47,7 +47,9 @@ repositories {
 // compile against is the first of:
 //   1. ENGINE_JAR, the path to any RP Engine jar;
 //   2. an engine built beside this project, in ../../rp-engine/build/libs
-//      (-PengineDir=<dir> looks somewhere else);
+//      (-PengineDir=<dir> looks somewhere else): the newest version there, as
+//      every build leaves its jar behind and two engines on one classpath
+//      would be whichever the file system listed first;
 //   3. the released RP Engine this addon needs, downloaded once from
 //      cdn.resourcepack.ai into .gradle/rp-engine/ and checked against its SHA-256.
 // The released one is ENGINE_VERSION, the oldest engine the plugin runs on
@@ -58,7 +60,21 @@ def ENGINE_URL = "https://cdn.resourcepack.ai/RPEngine-${ENGINE_VERSION}.jar"
 
 def engineEnv = System.getenv('ENGINE_JAR')
 def engineDir = file(findProperty('engineDir') ?: '../../rp-engine/build/libs')
-def engineBuilt = fileTree(dir: engineDir, include: 'rp-engine-*.jar', exclude: '*-sources.jar')
+// rp-engine-<version>.jar -> [major, minor, patch...]; null for anything else (-sources and the like).
+def engineVersion = { File f ->
+    def m = f.name =~ /^rp-engine-(\d+(?:\.\d+)*)\.jar$/
+    m.matches() ? m.group(1).tokenize('.').collect { it as int } : null
+}
+def newerFirst = { File a, File b ->
+    def x = engineVersion(a)
+    def y = engineVersion(b)
+    for (int i = 0; i < Math.max(x.size(), y.size()); i++) {
+        int c = (i < x.size() ? x[i] : 0) <=> (i < y.size() ? y[i] : 0)
+        if (c != 0) return -c
+    }
+    return 0
+}
+def engineBuilt = ((engineDir.listFiles() ?: []) as List<File>).findAll { engineVersion(it) != null }.sort(newerFirst).take(1)
 def engineDownloaded = file(".gradle/rp-engine/RPEngine-${ENGINE_VERSION}.jar")
 
 def downloadEngine = tasks.register('downloadEngine') {
@@ -86,8 +102,8 @@ def downloadEngine = tasks.register('downloadEngine') {
 
 def engineJar = engineEnv
         ? files(engineEnv)
-        : !engineBuilt.files.isEmpty()
-            ? engineBuilt
+        : !engineBuilt.isEmpty()
+            ? files(engineBuilt)
             : files(engineDownloaded).builtBy(downloadEngine)
 
 dependencies {

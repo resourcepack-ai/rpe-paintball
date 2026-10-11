@@ -34,7 +34,7 @@ permissions:
     description: /pb team, and the red and blue items in the lobby's hotbar.
     default: true
   paintball.scoreboard:
-    description: /pb scoreboard, F during a match, and the lobby's scoreboard item.
+    description: /pb scoreboard, F while in a match or its lobby, and the lobby's scoreboard item.
     default: true
   paintball.admin:
     description: Every staff node - start, stop, reload, /pb as, arenas, the command bypass. A parent; nothing checks it.
@@ -64,7 +64,7 @@ permissions:
     description: /pb arena setup - list, create, setwaiting, addspawn, clearspawns, wand and setbounds, enable, disable, tp, name.
     default: op
   paintball.arena.generate:
-    description: /pb arena generate - build a whole field, replacing every block in a 31x13x57 box.
+    description: /pb arena generate - build a whole field, replacing every block in a 31x14x57 box (two below your feet to eleven above) and building a glass waiting box over it, up to 17 above.
     default: op
   paintball.arena.delete:
     description: /pb arena delete - remove an arena, ending its match.

@@ -138,12 +138,13 @@ public final class ArenaSetup implements Listener {
                 Text.send(p, Text.error(a.name() + " still needs " + String.join(", ", missing) + "."));
                 return;
             }
-        } else if (!idle(p, a)) {
-            return;
         }
         a.enabled(on);
         store.save();
         Text.send(p, Text.msg(a.name() + " is " + (on ? "<#5BE37D>open</#5BE37D>. Players can <white>/pb join</white>." : "<#FF5C5C>closed</#FF5C5C>.")));
+        // Closed means closed: its lobby goes home, and a match on it ends as
+        // /pb stop ends one, then everybody goes home. Same as /pb arena delete.
+        if (!on) games.shut(a);
     }
 
     // ---- the bounds wand -------------------------------------------------------------

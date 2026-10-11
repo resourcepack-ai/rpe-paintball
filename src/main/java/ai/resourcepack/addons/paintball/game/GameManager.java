@@ -57,6 +57,12 @@ public final class GameManager {
             Text.send(p, plugin.messages().component("no-arena"));
             return false;
         }
+        // Every way into an arena comes through here (/pb join <id>, /pb start,
+        // /pb as), so this is what keeps a disabled arena closed.
+        if (!arena.enabled()) {
+            Text.send(p, plugin.messages().component("arena-closed", "arena", arena.name()));
+            return false;
+        }
         if (!arena.missing().isEmpty()) {
             Text.send(p, plugin.messages().component("arena-not-ready", "arena", arena.name(), "missing", String.join(", ", arena.missing())));
             return false;
@@ -70,6 +76,17 @@ public final class GameManager {
     public void leave(Player p) {
         Game g = byPlayer.remove(p.getUniqueId());
         if (g != null) g.leave(p);
+    }
+
+    /**
+     * An arena has been disabled or deleted: its lobby is sent home now, and a
+     * match on it is ended the way {@code /pb stop} ends one (the result, the
+     * scoreboard), after which everybody goes home rather than back to a lobby
+     * nobody can play in.
+     */
+    public void shut(Arena arena) {
+        Game g = existing(arena.id());
+        if (g != null) g.stop();
     }
 
     /** Forgets a player without telling the game: the game is sending them home itself. */

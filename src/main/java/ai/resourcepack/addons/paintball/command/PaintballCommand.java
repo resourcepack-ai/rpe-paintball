@@ -85,7 +85,9 @@ public final class PaintballCommand implements TabExecutor {
                 if (!sender.hasPermission(Perms.START)) return deny(sender, Perms.START);
                 Game g = gameFor(sender, args.length > 1 ? args[1] : null, true);
                 if (g == null) return true;
-                if (g.live()) {
+                if (!g.arena().enabled()) {
+                    Text.send(sender, plugin.messages().component("arena-closed", "arena", g.arena().name()));
+                } else if (g.live()) {
                     Text.send(sender, Text.error("A match is already on."));
                 } else if (g.start()) {
                     Text.send(sender, Text.msg("Match on " + g.arena().name() + " starting."));
@@ -135,6 +137,11 @@ public final class PaintballCommand implements TabExecutor {
         if (arena == null) arena = plugin.games().defaultArena();
         if (arena == null) {
             Text.send(sender, Text.error("There's no arena yet: <white>/pb arena generate <id> confirm</white> builds one where you stand."));
+            return null;
+        }
+        if (joinSelf && !arena.enabled()) {
+            // Starting is joining: a disabled arena takes neither, whoever asks.
+            Text.send(sender, plugin.messages().component("arena-closed", "arena", arena.name()));
             return null;
         }
         if (joinSelf && self != null && !plugin.games().playing(self)) {
@@ -202,7 +209,8 @@ public final class PaintballCommand implements TabExecutor {
             case "generate" -> {
                 // It replaces every block in a big box, so it asks once.
                 if (rest == null || !rest.toLowerCase(Locale.ROOT).startsWith("confirm")) {
-                    Text.send(p, Text.msg("This builds a speedball field centred on you and replaces every block in a 31 × 13 × 57 box."));
+                    Text.send(p, Text.msg("This builds a speedball field centred on you. It replaces every block in a 31 × 14 × 57 box, "
+                            + "from two below your feet to eleven above, and builds a glass waiting box over the middle, up to 17 above."));
                     Text.send(p, Text.msg("Best in an empty world (<white>/mv create paintball2 normal --world-type flat</white>). "
                             + "Run <white>/pb arena generate " + id + " confirm [name]</white> to build it."));
                     return;
@@ -227,9 +235,8 @@ public final class PaintballCommand implements TabExecutor {
                 }
                 switch (op) {
                     case "delete", "remove" -> {
-                        Game g = plugin.games().existing(arena.id());
-                        if (g != null) g.stop();
                         plugin.arenas().remove(arena.id());
+                        plugin.games().shut(arena);
                         Text.send(p, Text.msg("Deleted " + arena.name() + "."));
                     }
                     case "setwaiting", "waiting", "setlobby" -> setup.setWaiting(p, arena);
@@ -320,7 +327,7 @@ public final class PaintballCommand implements TabExecutor {
         if (s.hasPermission(Perms.JOIN)) play.add("<white>/pb join</white>");
         if (s.hasPermission(Perms.TEAM)) play.add("<white>/pb team <red|blue|auto></white>");
         play.add("<white>/pb leave</white>");
-        if (s.hasPermission(Perms.SCOREBOARD)) play.add("<white>/pb scoreboard</white> <#9AA0A6>(or F in a match)");
+        if (s.hasPermission(Perms.SCOREBOARD)) play.add("<white>/pb scoreboard</white> <#9AA0A6>(or F in a match or its lobby)");
         Text.send(s, Text.msg(String.join(DOT, play)));
         List<String> staff = new ArrayList<>();
         if (s.hasPermission(Perms.START)) staff.add("<white>/pb start</white> <#9AA0A6>(works alone)</#9AA0A6>");
@@ -366,7 +373,10 @@ public final class PaintballCommand implements TabExecutor {
             switch (sub) {
                 case "join", "start", "stop" -> {
                     String need = sub.equals("join") ? Perms.JOIN : sub.equals("start") ? Perms.START : Perms.STOP;
-                    if (sender.hasPermission(need)) plugin.arenas().all().forEach(a -> out.add(a.id()));
+                    // A closed arena can be stopped but not joined or started, so only stop offers it.
+                    if (sender.hasPermission(need)) {
+                        for (Arena a : plugin.arenas().all()) if (a.enabled() || sub.equals("stop")) out.add(a.id());
+                    }
                 }
                 case "team", "pick" -> {
                     if (sender.hasPermission(Perms.TEAM)) out.addAll(List.of("red", "blue", "auto"));

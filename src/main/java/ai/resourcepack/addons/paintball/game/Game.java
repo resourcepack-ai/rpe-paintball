@@ -286,7 +286,7 @@ public final class Game {
                         if (w != null) fx.firework(w.getLocation().add(0, 1, 0), winner);
                     }
                 }
-                if (timer <= 0) backToLobby();
+                if (timer <= 0 && !backToLobby()) return;
             }
         }
         hud.tick();
@@ -323,8 +323,8 @@ public final class Game {
 
     /** Deals the teams and starts the countdown. Works with one player: they play against nobody. */
     public boolean start() {
-        if (live() || size() == 0) return false;
-        if (phase == Phase.ENDED) backToLobby();
+        if (live() || size() == 0 || !open()) return false;
+        if (phase == Phase.ENDED && !backToLobby()) return false;
         players.values().removeIf(gp -> gp.left);
         List<GamePlayer> list = new ArrayList<>(active());
         List<GamePlayer> moved = deal(list);
@@ -471,8 +471,25 @@ public final class Game {
         hud.refreshScores();
     }
 
-    /** The scoreboard has been up long enough: everybody back to the lobby, paint off the walls. */
-    private void backToLobby() {
+    /**
+     * Whether this arena can still be played: enabled, and still the arena of
+     * that id (not deleted or replaced since this game began).
+     */
+    boolean open() {
+        return arena.enabled() && plugin.arenas().get(arena.id()) == arena;
+    }
+
+    /**
+     * The scoreboard has been up long enough: everybody back to the lobby, paint
+     * off the walls. If the arena was closed or deleted meanwhile, everybody goes
+     * home instead, and this answers false: the game is over.
+     */
+    private boolean backToLobby() {
+        if (!open()) {
+            broadcast(messages().component("closed"));
+            close();
+            return false;
+        }
         phase = Phase.WAITING;
         combat.clear();
         paint.clear();
@@ -482,6 +499,7 @@ public final class Game {
             if (p != null) toLobby(p, gp);
         }
         hud.refreshTeams();
+        return true;
     }
 
     /** Sends everybody home: {@code /pb stop} in the lobby, the last player leaving, or the plugin going down. */

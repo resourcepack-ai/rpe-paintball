@@ -59,6 +59,13 @@ By hand: `create`, `setwaiting`, `addspawn <red|blue>`, `wand` + `setbounds`, `e
 `/pb arena list` shows every arena and what it still needs; `/pb help` lists the
 rest (`disable`, `clearspawns`, `tp`, `name`, `delete`).
 
+`/pb arena disable <id>` closes an arena until `enable` opens it again: nobody
+can join it or start a match on it, however they ask (`/pb join <id>`,
+`/pb start <id>`, `/pb as`). Its lobby is sent home, and a match being played on
+it ends the way `/pb stop` ends one (the result, the scoreboard), after which
+everybody goes home rather than back to the lobby. `/pb arena delete` does the
+same. Staff can still `tp` to a closed arena and change it.
+
 ## Configuration
 
 `plugins/RPEPaintball/config.yml` has the numbers (match length, kill limit,
@@ -84,15 +91,15 @@ can be stuck in a match.
 | `paintball.play` | everyone | All three below |
 | `paintball.join` | everyone | `/pb join` |
 | `paintball.team` | everyone | `/pb team`, and the red and blue items in the lobby |
-| `paintball.scoreboard` | everyone | `/pb scoreboard`, F in a match, and the lobby's scoreboard item |
+| `paintball.scoreboard` | everyone | `/pb scoreboard`, F in a match or its lobby, and the lobby's scoreboard item |
 | `paintball.admin` | op | Every node below |
 | `paintball.start` | op | `/pb start`; also changes the lobby's "waiting for an op" hint to "start whenever you like" |
 | `paintball.stop` | op | `/pb stop` |
 | `paintball.reload` | op | `/pb reload` |
 | `paintball.as` | op | `/pb as <player> ...`; what they run is checked against *their* permissions |
 | `paintball.arena` | op | Arena setup: `/pb arena list`, `create`, `setwaiting`, `addspawn`, `clearspawns`, `wand` (and using the wand), `setbounds`, `enable`, `disable`, `tp`, `name` |
-| `paintball.arena.generate` | op | `/pb arena generate`, which replaces every block in a 31 × 13 × 57 box |
-| `paintball.arena.delete` | op | `/pb arena delete`, which also ends that arena's match |
+| `paintball.arena.generate` | op | `/pb arena generate`, which replaces every block in a 31 × 14 × 57 box (two below your feet to eleven above) and builds a glass waiting box over the middle, up to 17 above |
+| `paintball.arena.delete` | op | `/pb arena delete`, which also ends that arena's match and sends its players home |
 | `paintball.bypass.commands` | op | Run any command during a match. Without it a player in a match may only use `/pb`, `/msg`, `/tell`, `/w`, `/r`, `/reply`, `/me` and `/list` |
 | `paintball.update` | op | Told when a newer version is out (not part of `paintball.admin`) |
 
@@ -147,7 +154,8 @@ RP Engine is compile-only (the server already has it). The build uses, in order:
 
 1. `ENGINE_JAR`, if set: the path to any RP Engine jar.
 2. An engine built beside this project, in `../../rp-engine/build/libs`
-   (`-PengineDir=<dir>` looks somewhere else).
+   (`-PengineDir=<dir>` looks somewhere else). If several versions are there,
+   the newest.
 3. Otherwise RP Engine 0.2.3, the oldest version Paintball runs on, downloaded
    once from `https://cdn.resourcepack.ai/RPEngine-0.2.3.jar` into
    `.gradle/rp-engine/` and checked against its SHA-256. Versioned engine jars
