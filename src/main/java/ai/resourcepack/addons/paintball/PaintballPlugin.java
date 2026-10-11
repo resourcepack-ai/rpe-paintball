@@ -9,9 +9,14 @@ import ai.resourcepack.addons.paintball.game.GameManager;
 import ai.resourcepack.addons.paintball.game.Loadout;
 import ai.resourcepack.addons.paintball.game.PlayerSnapshot;
 import ai.resourcepack.addons.paintball.ui.Scoreboard;
+import ai.resourcepack.common.update.UpdateCheck;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
 import org.bukkit.command.PluginCommand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.World;
@@ -41,6 +46,11 @@ public final class PaintballPlugin extends JavaPlugin {
     private Scoreboard scoreboard;
     /** Ticks since enable: Spigot has no current-tick counter of its own. */
     private long ticks;
+
+    /** This plugin's SpigotMC resource id: the number in its page's URL. */
+    private static final int SPIGOT_RESOURCE = 139542;
+
+    private UpdateCheck updates;
 
     /** The oldest engine with everything this plugin calls (the HUD's json: overlays, Overlays.width and space). */
     static final String MIN_ENGINE = "0.2.3";
@@ -122,6 +132,25 @@ public final class PaintballPlugin extends JavaPlugin {
             games.tick();
         }, 1L, 1L);
         getLogger().info("Paintball is ready: " + arenas.all().size() + " arena(s). /pb join, then an op runs /pb start.");
+
+        updates = UpdateCheck.spigot(this, SPIGOT_RESOURCE)
+                .name("Paintball")
+                .permission("paintball.update")
+                .enabledWhen(() -> getConfig().getBoolean("update-check", true))
+                .player(this::tellUpdate)
+                .start();
+    }
+
+    /** The nudge: the sentence, then the link as one clickable piece. */
+    private void tellUpdate(Player player, UpdateCheck.Update update) {
+        BaseComponent line = Text.bungee(messages.component("update",
+                "latest", update.latest(), "running", update.running()));
+        BaseComponent link = Text.bungee(messages.component("update-link"));
+        link.setClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, update.url()));
+        link.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,
+                new net.md_5.bungee.api.chat.hover.content.Text(update.url())));
+        // A deserialised component's extras can't be added to, so both go in a fresh one.
+        player.spigot().sendMessage(new net.md_5.bungee.api.chat.TextComponent(line, link));
     }
 
     @Override

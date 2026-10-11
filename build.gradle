@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'ai.resourcepack.addons'
-version = '0.4.1'
+version = '0.4.2'
 
 java {
     toolchain {
@@ -28,6 +28,19 @@ tasks.withType(JavaCompile).configureEach {
 repositories {
     mavenCentral()
     maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    // ai.resourcepack:common, our own shared plugin library. Exclusive: the
+    // ai.resourcepack group is looked for here and nowhere else, so a
+    // look-alike published to Central or any repository above cannot stand in
+    // for it. (A checkout with ../plugin-common builds it from source instead;
+    // see settings.gradle.)
+    exclusiveContent {
+        forRepository {
+            maven { url = 'https://repo.resourcepack.ai' }
+        }
+        filter {
+            includeGroup 'ai.resourcepack'
+        }
+    }
 }
 
 // The engine's jar, built beside this project. compileOnly, because the
@@ -50,6 +63,10 @@ dependencies {
     }
     implementation('net.kyori:adventure-text-serializer-legacy:4.26.1')
     implementation('net.kyori:adventure-text-serializer-plain:4.26.1')
+
+    // The small library every ResourcePack AI plugin shades in (the update
+    // check, for one), relocated below so it never meets the engine's copy.
+    implementation 'ai.resourcepack:common:0.2.1'
 }
 
 tasks.register('checkEngineJar') {
@@ -75,6 +92,7 @@ shadowJar {
     archiveBaseName.set('RPE-paintball')
     archiveClassifier.set('')
     relocate 'net.kyori', 'ai.resourcepack.addons.paintball.libs.kyori'
+    relocate 'ai.resourcepack.common', 'ai.resourcepack.addons.paintball.libs.common'
     dependencies {
         exclude(dependency('org.jetbrains:annotations'))
         exclude(dependency('org.jspecify:jspecify'))

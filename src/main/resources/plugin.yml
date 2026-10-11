@@ -23,3 +23,6 @@ permissions:
   paintball.admin:
     description: Start and stop matches, set up arenas, reload.
     default: op
+  paintball.update:
+    description: Be told when a newer Paintball is on SpigotMC.
+    default: op

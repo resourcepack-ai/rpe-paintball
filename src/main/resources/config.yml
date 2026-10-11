@@ -58,6 +58,9 @@ hud:
   # How long the hit marker shows round the crosshair, in ticks (20 a second).
   hit-marker-ticks: 6
 
+# Tells you in the console, and ops in chat, when a newer Paintball is on SpigotMC.
+update-check: true
+
 # The HUD and the scoreboard are RP Engine content: this plugin installs them
 # into plugins/RPEngine/content/paintball/ (huds/hud.json and
 # dialogs/scoreboard.json, both drawn in ResourcePack AI Studio). Point these at
@@ -123,3 +126,8 @@ messages:
   item-leave: "<bold><#FFD23F>Leave"
   item-leave-lore: "<#9AA0A6>Back to where you were"
   item-use: "<#5F6368>Right-click"
+
+  # Told to ops when a newer version is on SpigotMC. {latest} is the new
+  # version, {running} this one's. The link opens the SpigotMC page.
+  update: "{prefix}Paintball <white>{latest}</white> is out <#9AA0A6>(you have {running}).</#9AA0A6> "
+  update-link: "<#FFD23F><underlined>Get it on SpigotMC"
