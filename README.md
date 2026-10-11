@@ -1,9 +1,35 @@
 # Paintball
 
-5v5 paintball on RP Engine. One mode: a hit splats you, you're back in three
-seconds, and the team with more kills when the clock runs out wins.
+5v5 paintball for Minecraft servers, built on
+[RP Engine](https://github.com/resourcepack-ai/rp-engine). One mode: a hit
+splats you, you're back in three seconds, and the team with more kills when the
+clock runs out wins.
 
-Spigot or Paper, 1.21.11 or newer, with RP Engine 0.2.3 or newer.
+It is an RP Engine addon, and it uses nothing but the engine's public API
+(`ai.resourcepack.engine.api`). Everything a player sees, from the marker in
+their hand to the whole HUD, is ordinary RP Engine content shipped inside the
+jar, so it doubles as a worked example of an addon.
+
+## Requirements
+
+- **Spigot or Paper, 1.21.11 or newer**, on Java 21. The marker needs item
+  components 1.21.11 added (hold to fire, no swing, no reach).
+- **[RP Engine](https://resourcepack.ai/rp-engine) 0.2.3 or newer.** Paintball
+  checks the engine's version as it starts, and on anything older says so in
+  the console and disables itself.
+
+## Installing
+
+1. Put `RPEngine.jar` and `RPE-paintball-<version>.jar` in `plugins/` and start
+   the server.
+2. Paintball installs its content into `plugins/RPEngine/content/paintball/` and
+   reloads the engine once, so the resource pack the engine serves now carries
+   it.
+3. As an op, stand somewhere flat and run `/pb arena generate main confirm`.
+4. `/pb join`, then `/pb start`. Alone is fine.
+
+If you run Multiverse-Core, Paintball loads after it, so an arena in one of its
+worlds is found.
 
 ## Playing
 
@@ -22,6 +48,34 @@ slower, no spread), Q reloads (it also reloads itself when empty), right-click t
 grenade to throw it. Every ball is fired so that, drop and all, it lands exactly on
 the crosshair; from the hip it strays by the spread the crosshair's ticks show.
 
+`/pb as <player> <subcommand>` runs a subcommand for somebody else, for NPCs and
+anything else that can only run console commands.
+
+## Arenas (op)
+
+`/pb arena generate <id> confirm [name]` builds a speedball field where you stand and
+sets it up. From the console: `/pb arena generate <id> at <world> <x> <y> <z> [name]`.
+By hand: `create`, `setwaiting`, `addspawn <red|blue>`, `wand` + `setbounds`, `enable`.
+`/pb arena list` shows every arena and what it still needs; `/pb help` lists the
+rest (`disable`, `clearspawns`, `tp`, `name`, `delete`).
+
+## Configuration
+
+`plugins/RPEPaintball/config.yml` has the numbers (match length, kill limit,
+respawn time, fire rate, ball speed, grenade cooldown...), each team's marker,
+and every word a player reads, in MiniMessage under `messages:`. `/pb reload`
+re-reads it. Options a newer version adds are written into your existing file
+on start.
+
+`update-check: true` tells the console, and anybody with `paintball.update`, when
+a newer Paintball is on SpigotMC. Set it to `false` to turn that off.
+
+| Permission | Default | |
+|---|---|---|
+| `paintball.play` | everyone | Join, leave, pick a team, the scoreboard |
+| `paintball.admin` | op | Start and stop matches, arenas, reload, `/pb as` |
+| `paintball.update` | op | Told when a newer version is out |
+
 ## Everything you see is RP Engine content
 
 The jar carries a content folder (`src/main/resources/content/paintball/`) and
@@ -29,20 +83,21 @@ installs it into `plugins/RPEngine/content/paintball/` on enable. Nothing on
 screen is drawn by this plugin:
 
 - **The HUD** is `huds/hud.json`, a full-screen shader object drawn in
-  ResourcePack AI Studio, and it is the whole screen: there is not a title in
-  the game. The score strip (top centre), a Valorant-style kill feed (top left),
-  the weapon cluster (bottom right: the grenade card filling as it recharges,
-  the ammo panel and its bar), the crosshair and hit marker, and the middle of
-  the screen, which carries every moment of a match: the countdown ring, GO!,
-  the paint on a splatted player's screen and their respawn ring, SPLATTED and
-  who, and the result on its band with the score. The plugin only sets its
-  values (`pb_red`, `pb_weapon`, `pb_center`..., see `game/Hud.java`); the
-  pictures in them are `tools/hud_art.py`'s, which is why a word drawn in one
-  (VICTORY, GO!) is art rather than config.
+  [ResourcePack AI Studio](https://resourcepack.ai), and it is the whole screen:
+  there is not a title in the game. The score strip (top centre), a
+  Valorant-style kill feed (top left), the weapon cluster (bottom right: the
+  grenade card filling as it recharges, the ammo panel and its bar), the
+  crosshair and hit marker, and the middle of the screen, which carries every
+  moment of a match: the countdown ring, GO!, the paint on a splatted player's
+  screen and their respawn ring, SPLATTED and who, and the result on its band
+  with the score. The plugin only sets its values (`pb_red`, `pb_weapon`,
+  `pb_center`..., see `game/Hud.java`); the pictures in them are
+  `tools/hud_art.py`'s, which is why a word drawn in one (VICTORY, GO!) is art
+  rather than config.
 - **The scoreboard** is `dialogs/scoreboard.json`, a Studio dialog: both teams'
   tables with faces, kills, deaths and accuracy.
-- **The marker** is Studio's Tactical model in five colourways (Ember for red,
-  Tide for blue), each with an aimed twin (`marker_<skin>_aim`) whose holder sees
+- **The marker** is a Studio model in five colourways (Ember for red, Tide for
+  blue), each with an aimed twin (`marker_<skin>_aim`) whose holder sees
   `models/marker_sights.json` down the sights instead (RP Engine's `first-person:`).
 - **The crosshair** is the HUD's own, a 2-pixel plus drawn over the game's 1-pixel
   one (the HUD is drawn after it), with spread ticks from the hip.
@@ -56,38 +111,58 @@ screen is drawn by this plugin:
 `config.yml`'s `ui.hud` and `ui.scoreboard` point at other content ids to
 replace either; a replacement has to print the same values.
 
-## Arenas (op)
-
-`/pb arena generate <id> confirm [name]` builds a speedball field where you stand and
-sets it up. From the console: `/pb arena generate <id> at <world> <x> <y> <z> [name]`.
-By hand: `create`, `setwaiting`, `addspawn <red|blue>`, `wand` + `setbounds`, `enable`.
-
-Numbers (match length, kill limit, respawn time, fire rate, ball speed...) are in
-`plugins/RPEPaintball/config.yml`; `/pb reload` re-reads it.
-
 ## Building
 
 ```
-JAVA_HOME="C:\Program Files\Java\jdk-21.0.10" ./gradlew build   # build/libs/RPE-paintball-<version>.jar
-npm run deploy -- addon paintball --server-only                 # from the repo root: the test server only
+./gradlew build        # build/libs/RPE-paintball-<version>.jar
 ```
 
-The engine has to be built first (`rp-engine/build/libs`). The art:
+Gradle 8.10.2 needs a JDK it can run on: 17 or 21 work, 24 does not. If your
+default `java` is newer, `JAVA_HOME=/path/to/jdk-21 ./gradlew build`. The jar
+itself targets Java 21 through a toolchain Gradle downloads on its own.
+
+RP Engine is compile-only (the server already has it). The build uses, in order:
+
+1. `ENGINE_JAR`, if set: the path to any RP Engine jar.
+2. An engine built beside this project, in `../../rp-engine/build/libs`
+   (`-PengineDir=<dir>` looks somewhere else).
+3. Otherwise RP Engine 0.2.3, the oldest version Paintball runs on, downloaded
+   once from `https://cdn.resourcepack.ai/RPEngine-0.2.3.jar` into
+   `.gradle/rp-engine/` and checked against its SHA-256. Versioned engine jars
+   there are never rewritten.
+
+`ai.resourcepack:common`, a small shared library (the update check), comes from
+`https://repo.resourcepack.ai`, and is shaded into the jar and relocated.
+
+### The art
+
+`tools/` rebuilds the models, textures, glyphs, HUD art, sounds and item YAML in
+the content folder from the sources in `tools/src/`. It needs Python 3 with
+Pillow, NumPy and soundfile (`pip install pillow numpy soundfile`), and nothing
+else: no network, no keys.
 
 ```
-python tools/make_assets.py                 # models, textures, glyphs and HUD art (hud_art.py), sounds, item YAML
+python tools/make_assets.py                                          # everything, deterministically
 python tools/preview_display.py <model.json> <texture.png> out.png   # how an item is held
+python tools/preview_fp.py <model.json> <texture.png> <context> out.png [background.png]   # first person, textured
 ```
 
-The HUD and the scoreboard come out of Studio. `dialogs-src/` holds what was
-exported (`dialogs.json`, the scoreboard's Dialog-style spec; `hud.json`, the
-shader object); to rebuild the content folder's `dialogs/`, `huds/` and
-`resourcepack/` from them, run in `studio/`:
+The HUD and the scoreboard were made and exported in
+[ResourcePack AI Studio](https://resourcepack.ai). `dialogs-src/` keeps what was
+exported (`dialogs.json`, the scoreboard's Dialog-style document; `hud.json`,
+the HUD's shader object), and the content folder's `dialogs/`, `huds/` and
+`resourcepack/` are the export. To change either, edit the HUD or dialog in
+Studio and export it again over those folders, or edit the exported JSON by hand.
 
-```
-node scripts/export-dialog-content.mjs ../rpe-addons/paintball/dialogs-src/dialogs.json <out> \
-  --namespace paintball --shaders <shaders.json>
-```
+## Support
 
-where `shaders.json` is `[{"id": "hud", "shader": <dialogs-src/hud.json>}]`, then copy
-`<out>/dialogs`, `<out>/huds` and `<out>/resourcepack` into the content folder.
+Questions, bugs and suggestions: [resourcepack.ai/discord](https://resourcepack.ai/discord),
+or an issue on this repository.
+
+## Licence
+
+GPL-3.0-or-later. See [`LICENSE`](LICENSE).
+
+The jar bundles [Adventure](https://github.com/KyoriPowered/adventure) (MIT),
+relocated so it cannot meet Paper's copy. The Spigot API and RP Engine are
+compile-only and come from the server at runtime.

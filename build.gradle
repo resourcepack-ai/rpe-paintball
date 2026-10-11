@@ -31,8 +31,8 @@ repositories {
     // ai.resourcepack:common, our own shared plugin library. Exclusive: the
     // ai.resourcepack group is looked for here and nowhere else, so a
     // look-alike published to Central or any repository above cannot stand in
-    // for it. (A checkout with ../plugin-common builds it from source instead;
-    // see settings.gradle.)
+    // for it. (With plugin-common's source beside this project, it is built
+    // from that instead; see settings.gradle.)
     exclusiveContent {
         forRepository {
             maven { url = 'https://repo.resourcepack.ai' }
@@ -43,12 +43,52 @@ repositories {
     }
 }
 
-// The engine's jar, built beside this project. compileOnly, because the
-// engine is a plugin the server already has. ENGINE_JAR points at a
-// downloaded RPEngine jar instead.
-def engineJar = System.getenv('ENGINE_JAR')
-        ? files(System.getenv('ENGINE_JAR'))
-        : fileTree(dir: '../../rp-engine/build/libs', include: 'rp-engine-*.jar', exclude: '*-sources.jar')
+// RP Engine, compileOnly: it is a plugin the server already has. The jar to
+// compile against is the first of:
+//   1. ENGINE_JAR, the path to any RP Engine jar;
+//   2. an engine built beside this project, in ../../rp-engine/build/libs
+//      (-PengineDir=<dir> looks somewhere else);
+//   3. the released RP Engine this addon needs, downloaded once from
+//      cdn.resourcepack.ai into .gradle/rp-engine/ and checked against its SHA-256.
+// The released one is ENGINE_VERSION, the oldest engine the plugin runs on
+// (PaintballPlugin.MIN_ENGINE): compiling against it keeps a newer call out.
+def ENGINE_VERSION = '0.2.3'
+def ENGINE_SHA256 = '0f411c80e492924f6f73ab7b888a052d94b5f846f730c0f8b9846aff1ffbf3bf'
+def ENGINE_URL = "https://cdn.resourcepack.ai/RPEngine-${ENGINE_VERSION}.jar"
+
+def engineEnv = System.getenv('ENGINE_JAR')
+def engineDir = file(findProperty('engineDir') ?: '../../rp-engine/build/libs')
+def engineBuilt = fileTree(dir: engineDir, include: 'rp-engine-*.jar', exclude: '*-sources.jar')
+def engineDownloaded = file(".gradle/rp-engine/RPEngine-${ENGINE_VERSION}.jar")
+
+def downloadEngine = tasks.register('downloadEngine') {
+    description = "Downloads RP Engine ${ENGINE_VERSION} to compile against."
+    outputs.file(engineDownloaded)
+    onlyIf { !engineDownloaded.isFile() }
+    doLast {
+        if (gradle.startParameter.offline) {
+            throw new GradleException("RP Engine ${ENGINE_VERSION} is not downloaded yet and Gradle is offline. " +
+                    "Run once online, or set ENGINE_JAR to an RP Engine jar.")
+        }
+        def part = file("${engineDownloaded}.part")
+        part.parentFile.mkdirs()
+        logger.lifecycle("Downloading ${ENGINE_URL}")
+        URI.create(ENGINE_URL).toURL().withInputStream { input -> part.withOutputStream { it << input } }
+        def sha = java.security.MessageDigest.getInstance('SHA-256').digest(part.bytes).encodeHex().toString()
+        if (sha != ENGINE_SHA256) {
+            part.delete()
+            throw new GradleException("${ENGINE_URL} has SHA-256 ${sha}, expected ${ENGINE_SHA256}. Not using it.")
+        }
+        java.nio.file.Files.move(part.toPath(), engineDownloaded.toPath(),
+                java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    }
+}
+
+def engineJar = engineEnv
+        ? files(engineEnv)
+        : !engineBuilt.files.isEmpty()
+            ? engineBuilt
+            : files(engineDownloaded).builtBy(downloadEngine)
 
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT'
@@ -71,10 +111,8 @@ dependencies {
 
 tasks.register('checkEngineJar') {
     doFirst {
-        if (engineJar.files.isEmpty()) {
-            throw new GradleException(
-                    "No RP Engine jar to compile against. Build the engine first (cd ../../rp-engine && ./gradlew build) " +
-                    "or set ENGINE_JAR to a downloaded RPEngine jar.")
+        if (engineEnv && !file(engineEnv).isFile()) {
+            throw new GradleException("ENGINE_JAR is ${engineEnv}, and there is no file there.")
         }
     }
 }
@@ -87,7 +125,7 @@ processResources {
     }
 }
 
-// RPE-paintball-<version>.jar: the deploy reads the version off the name.
+// RPE-paintball-<version>.jar.
 shadowJar {
     archiveBaseName.set('RPE-paintball')
     archiveClassifier.set('')
