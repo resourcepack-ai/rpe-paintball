@@ -82,7 +82,25 @@ public final class PaintballPlugin extends JavaPlugin {
     }
 
     @Override
+    public void onLoad() {
+        // Asked before the worlds load, so the answer is back for the startup banner.
+        ai.resourcepack.common.update.UpdateCheck.early(this, SPIGOT_RESOURCE);
+    }
+
+    @Override
     public void onEnable() {
+        if (updates != null) updates.stop();
+        updates = UpdateCheck.spigot(this, SPIGOT_RESOURCE)
+                .name("Paintball")
+                .permission(Perms.UPDATE)
+                .enabledWhen(() -> getConfig().getBoolean("update-check", true))
+                .player(this::tellUpdate);
+        ai.resourcepack.common.banner.StartupBanner banner = ai.resourcepack.common.banner.StartupBanner.begin(this)
+                .name("Paintball")
+                .addonOf("RP Engine")
+                .tagline("Team paintball with a full-screen HUD.")
+                .docs("https://resourcepack.ai/docs/rp-engine/paintball")
+                .updates(updates);
         Plugin found = getServer().getPluginManager().getPlugin("RPEngine");
         if (!(found instanceof RPEnginePlugin rp)) {
             getLogger().severe("RP Engine isn't here, and paintball is drawn by it. Disabling.");
@@ -101,7 +119,7 @@ public final class PaintballPlugin extends JavaPlugin {
         }
         try {
             if (AddonContent.install(this, engine, Content.NS)) {
-                getLogger().info("Installed the paintball content into RP Engine; reloading it once.");
+                banner.ok("Content", "Installed into RP Engine, which reloaded once");
                 engine.reload();
             }
         } catch (Exception e) {
@@ -137,14 +155,10 @@ public final class PaintballPlugin extends JavaPlugin {
             ticks++;
             games.tick();
         }, 1L, 1L);
-        getLogger().info("Paintball is ready: " + arenas.all().size() + " arena(s). /pb join, then an op runs /pb start.");
-
-        updates = UpdateCheck.spigot(this, SPIGOT_RESOURCE)
-                .name("Paintball")
-                .permission(Perms.UPDATE)
-                .enabledWhen(() -> getConfig().getBoolean("update-check", true))
-                .player(this::tellUpdate)
-                .start();
+        int n = arenas.all().size();
+        banner.ok("Arenas", n + (n == 1 ? " arena" : " arenas") + ". /pb join, then an op runs /pb start");
+        updates.start();
+        banner.print();
     }
 
     /** The nudge: the sentence, then the link as one clickable piece. */

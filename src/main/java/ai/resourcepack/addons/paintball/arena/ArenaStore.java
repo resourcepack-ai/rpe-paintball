@@ -36,7 +36,6 @@ public final class ArenaStore {
             ConfigurationSection s = root.getConfigurationSection(id);
             if (s != null) arenas.put(id, Arena.load(id, s));
         }
-        log.info("Loaded " + arenas.size() + " arena(s).");
     }
 
     public void save() {

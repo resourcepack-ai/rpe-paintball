@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'ai.resourcepack.addons'
-version = '0.4.3'
+version = '0.4.4'
 
 java {
     toolchain {
@@ -122,7 +122,7 @@ dependencies {
 
     // The small library every ResourcePack AI plugin shades in (the update
     // check, for one), relocated below so it never meets the engine's copy.
-    implementation 'ai.resourcepack:common:0.3.1'
+    implementation 'ai.resourcepack:common:0.5.0'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.11.0'
 }
