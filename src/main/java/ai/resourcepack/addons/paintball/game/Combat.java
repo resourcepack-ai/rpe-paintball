@@ -2,6 +2,7 @@ package ai.resourcepack.addons.paintball.game;
 
 import ai.resourcepack.addons.paintball.content.Content;
 import ai.resourcepack.addons.paintball.config.Settings;
+import ai.resourcepack.addons.paintball.paint.PaintLayer;
 import ai.resourcepack.addons.paintball.team.Team;
 import org.bukkit.Color;
 import org.bukkit.FluidCollisionMode;
@@ -12,6 +13,7 @@ import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.Hanging;
 import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.util.BoundingBox;
@@ -177,7 +179,7 @@ final class Combat {
     private Vector crosshairTarget(GamePlayer gp, Location eye) {
         Vector look = eye.getDirection();
         RayTraceResult hit = eye.getWorld().rayTrace(eye, look, s().range, FluidCollisionMode.ALWAYS, true, 0.12,
-                e -> mayHit(gp, e));
+                e -> stops(gp, e));
         return hit != null ? hit.getHitPosition() : eye.toVector().add(look.clone().multiply(s().range));
     }
 
@@ -260,13 +262,16 @@ final class Combat {
             b.age++;
             double len = b.vel.length();
             RayTraceResult hit = len < 1e-4 ? null : w.rayTrace(b.pos.toLocation(w), b.vel.clone().normalize(), len,
-                    FluidCollisionMode.ALWAYS, true, 0.12, e -> mayHit(b.owner, e));
+                    FluidCollisionMode.ALWAYS, true, 0.12, e -> stops(b.owner, e));
             if (hit != null) {
                 Location at = hit.getHitPosition().toLocation(w);
                 if (hit.getHitEntity() instanceof Player victim) {
                     GamePlayer gv = game.players.get(victim.getUniqueId());
                     fx.splat(at, b.team, false);
                     if (gv != null) game.hit(b.owner, gv, at, Weapon.MARKER);
+                } else if (hit.getHitEntity() instanceof Hanging h) {
+                    fx.splat(at, b.team, false);
+                    game.paint.splatOn(b.team, h, at, 0.9 + ThreadLocalRandom.current().nextDouble() * 0.6);
                 } else if (hit.getHitBlock() != null) {
                     land(b, hit.getHitBlock(), hit.getHitBlockFace(), at);
                 }
@@ -296,7 +301,12 @@ final class Combat {
         game.paint.splat(b.team, block, face, at, 0.9 + ThreadLocalRandom.current().nextDouble() * 0.6);
     }
 
-    /** Whether a ball from {@code shooter} stops on {@code e}: only players of the other team still in the match. */
+    /** Whether a ball from {@code shooter} stops on {@code e}: an enemy, or a painting or frame it paints. */
+    private boolean stops(GamePlayer shooter, Entity e) {
+        return mayHit(shooter, e) || PaintLayer.hangsPaint(e);
+    }
+
+    /** Whether a ball from {@code shooter} hits {@code e}: only players of the other team still in the match. */
     private boolean mayHit(GamePlayer shooter, Entity e) {
         if (!(e instanceof Player p)) return false;
         GamePlayer gp = game.players.get(p.getUniqueId());

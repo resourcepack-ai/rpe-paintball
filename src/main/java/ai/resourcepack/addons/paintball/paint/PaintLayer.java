@@ -8,7 +8,10 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
+import org.bukkit.entity.Hanging;
 import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.ItemFrame;
+import org.bukkit.entity.Painting;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.RayTraceResult;
@@ -59,37 +62,93 @@ public final class PaintLayer {
         if (paintable(block)) decal(team, block, at, side, size);
     }
 
-    /** A grenade went off: splats on the faces it can see around it. */
+    /**
+     * A ball of {@code team}'s paint hit a painting or an item frame at
+     * {@code at}: a splat on its front, kept inside its edges.
+     */
+    public void splatOn(Team team, Hanging hanging, Location at, double size) {
+        BoundingBox box = hanging.getBoundingBox();
+        BlockFace side = hanging.getFacing();
+        Axis normal = Axis.normalOf(side);
+        Axis[] axes = Axis.of(side);
+        Location spot = at.clone();
+        normal.set(spot, outwards(side) ? normal.max(box) : normal.min(box));
+        double radius = size * PAINT_RADIUS;
+        for (Axis a : axes) radius = Math.min(radius, (a.max(box) - a.min(box)) / 2);
+        for (Axis a : axes) a.set(spot, Math.max(a.min(box) + radius, Math.min(a.max(box) - radius, a.get(spot))));
+        double s = radius / PAINT_RADIUS;
+        if (s >= SMALLEST) place(team, spot, side, s);
+    }
+
+    /** Paintings and item frames: what a ball breaks on and paints rather than passing through. */
+    public static boolean hangsPaint(org.bukkit.entity.Entity e) {
+        return e instanceof Painting || e instanceof ItemFrame;
+    }
+
+    /**
+     * A grenade went off: splats on the faces it can see around it.
+     *
+     * <p>Every face is a face of one of a block's real boxes (a fence's post,
+     * a slab's top), and it counts only if a line from the grenade reaches it
+     * first. Measuring off the whole cube instead put paint on the cube's
+     * faces in the air beside a fence post or above a slab.
+     */
     public void burst(Team team, Location center, double radius) {
         World w = center.getWorld();
         int r = (int) Math.ceil(radius);
         Vector c = center.toVector();
-        List<Object[]> seen = new ArrayList<>();
+        List<Spot> seen = new ArrayList<>();
         for (int x = -r; x <= r; x++) {
             for (int y = -r; y <= r; y++) {
                 for (int z = -r; z <= r; z++) {
                     Block b = w.getBlockAt(center.getBlockX() + x, center.getBlockY() + y, center.getBlockZ() + z);
                     if (!paintable(b)) continue;
-                    for (BlockFace side : SIDES) {
-                        if (!b.getRelative(side).isPassable()) continue;
-                        Vector mid = faceCenter(b, side);
-                        double d = mid.distance(c);
-                        if (d > radius) continue;
-                        Vector dir = mid.clone().subtract(c);
-                        RayTraceResult wall = w.rayTraceBlocks(center, dir.normalize(), Math.max(0.01, d - 0.05),
-                                FluidCollisionMode.NEVER, true);
-                        if (wall == null) seen.add(new Object[]{b, side, mid});
+                    boolean cube = full(b);
+                    for (BoundingBox box : boxes(b)) {
+                        for (BlockFace side : SIDES) {
+                            // Against a whole cube, nothing of the face shows.
+                            if (cube && full(b.getRelative(side))) continue;
+                            Vector mid = faceCenter(box, side);
+                            if (mid.distance(c) > radius) continue;
+                            RayTraceResult hit = sight(w, center, mid);
+                            if (hit == null || !b.equals(hit.getHitBlock()) || hit.getHitBlockFace() != side) continue;
+                            seen.add(new Spot(b, null, side, hit.getHitPosition()));
+                        }
                     }
                 }
             }
         }
+        for (org.bukkit.entity.Entity e : w.getNearbyEntities(center, radius, radius, radius, PaintLayer::hangsPaint)) {
+            Hanging h = (Hanging) e;
+            Vector mid = faceCenter(h.getBoundingBox(), h.getFacing());
+            if (mid.distance(c) > radius) continue;
+            RayTraceResult hit = sight(w, center, mid);
+            if (hit != null && h.equals(hit.getHitEntity())) seen.add(new Spot(null, h, h.getFacing(), mid));
+        }
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
         for (int i = 0; i < Math.min(14, seen.size()); i++) {
-            Object[] pick = seen.get(rnd.nextInt(seen.size()));
-            BlockFace side = (BlockFace) pick[1];
-            Vector mid = ((Vector) pick[2]).clone().add(tangentJitter(side, 0.35));
-            decal(team, (Block) pick[0], mid.toLocation(w), side, 1.3 + rnd.nextDouble() * 1.1);
+            Spot pick = seen.get(rnd.nextInt(seen.size()));
+            double size = 1.3 + rnd.nextDouble() * 1.1;
+            if (pick.hanging != null) {
+                splatOn(team, pick.hanging, pick.at.toLocation(w), size);
+                continue;
+            }
+            // Spread round the face of a whole cube; a smaller box's face is its own, and fit() centres on it.
+            Vector at = full(pick.block) ? pick.at.clone().add(tangentJitter(pick.side, 0.35)) : pick.at;
+            decal(team, pick.block, at.toLocation(w), pick.side, size);
         }
+    }
+
+    /** One face a grenade can see: of a block, or of a painting or frame. */
+    private record Spot(Block block, Hanging hanging, BlockFace side, Vector at) {
+    }
+
+    /** What a line from {@code from} to a little past {@code to} reaches first, paintings and frames included. */
+    private static RayTraceResult sight(World w, Location from, Vector to) {
+        Vector dir = to.clone().subtract(from.toVector());
+        double d = dir.length();
+        if (d < 1e-6) return null;
+        return w.rayTrace(from, dir.multiply(1 / d), d + 0.05, FluidCollisionMode.NEVER, true, 0, PaintLayer::hangsPaint);
     }
 
     /** Takes every splat down. */
@@ -101,9 +160,12 @@ public final class PaintLayer {
     private void decal(Team team, Block block, Location at, BlockFace side, double size) {
         Location fitted = at.clone();
         double s = fit(block, side, fitted, size);
-        if (s < SMALLEST) return;
+        if (s >= SMALLEST) place(team, fitted, side, s);
+    }
 
-        World w = at.getWorld();
+    /** Lays a splat of size {@code s} flat on a surface facing {@code side}, centred on {@code fitted}. */
+    private void place(Team team, Location fitted, BlockFace side, double s) {
+        World w = fitted.getWorld();
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
         Vector n = side.getDirection();
         // Each splat sits a hair further out than the last, cycling, so overlapping
@@ -148,12 +210,15 @@ public final class PaintLayer {
             }
         } else {
             // Stairs, slabs, anything made of boxes: the face of the box that
-            // was hit, less whatever sits on it, and nothing past it.
+            // was hit, less whatever sits on it, and nothing past it. Laid on
+            // that face, too: a ball can stop on a fence's collision above
+            // the post you see.
             double[] rect = faceOfHit(block, side, at);
             lo[0] = rect[0];
             hi[0] = rect[1];
             lo[1] = rect[2];
             hi[1] = rect[3];
+            Axis.normalOf(side).set(at, rect[4]);
         }
         for (int i = 0; i < 2; i++) radius = Math.min(radius, (hi[i] - lo[i]) / 2);
         double[] wanted = {axes[0].get(at), axes[1].get(at)};
@@ -212,23 +277,25 @@ public final class PaintLayer {
 
     /**
      * The face a ball landed on, on a block made of more than one box, as
-     * {lo, hi} along each of the face's two axes: the box whose face the hit is
-     * on, trimmed back from any box of the same block sitting on that face (a
-     * stair's upper step on its lower one), to the side the hit is on.
+     * {lo, hi} along each of the face's two axes and then the face's plane:
+     * the box whose face is nearest the hit, trimmed back from any box of the
+     * same block sitting on that face (a stair's upper step on its lower one),
+     * to the side the hit is on.
      */
     private static double[] faceOfHit(Block block, BlockFace side, Location at) {
         Axis[] axes = Axis.of(side);
         Axis normal = Axis.normalOf(side);
-        boolean outwards = side == BlockFace.UP || side == BlockFace.SOUTH || side == BlockFace.EAST;
+        boolean outwards = outwards(side);
         List<BoundingBox> boxes = boxes(block);
         BoundingBox hit = null;
+        double nearest = Double.MAX_VALUE;
         for (BoundingBox b : boxes) {
             double plane = outwards ? normal.max(b) : normal.min(b);
-            if (Math.abs(plane - normal.get(at)) > 0.02) continue;
-            if (axes[0].get(at) < axes[0].min(b) - 0.02 || axes[0].get(at) > axes[0].max(b) + 0.02) continue;
-            if (axes[1].get(at) < axes[1].min(b) - 0.02 || axes[1].get(at) > axes[1].max(b) + 0.02) continue;
-            hit = b;
-            break;
+            double d = Math.abs(plane - normal.get(at)) + outside(axes[0], b, at) + outside(axes[1], b, at);
+            if (d < nearest) {
+                nearest = d;
+                hit = b;
+            }
         }
         if (hit == null) hit = block.getBoundingBox();
         double plane = outwards ? normal.max(hit) : normal.min(hit);
@@ -248,18 +315,36 @@ public final class PaintLayer {
                 else lo0 = Math.max(lo0, bh0);
             }
         }
-        return new double[]{lo0, Math.max(lo0, hi0), lo1, Math.max(lo1, hi1)};
+        return new double[]{lo0, Math.max(lo0, hi0), lo1, Math.max(lo1, hi1), plane};
     }
 
-    /** A block's collision boxes, in world coordinates. */
+    /** How far {@code at} is outside {@code b} along one axis; 0 inside. */
+    private static double outside(Axis axis, BoundingBox b, Location at) {
+        double v = axis.get(at);
+        return Math.max(0, Math.max(axis.min(b) - v, v - axis.max(b)));
+    }
+
+    /**
+     * A block's collision boxes, in world coordinates, cut down to the block
+     * you see: a fence's or a wall's collision reaches half a block above its
+     * post, and paint there would hang in the air.
+     */
     private static List<BoundingBox> boxes(Block block) {
+        BoundingBox seen = block.getBoundingBox();
         List<BoundingBox> out = new ArrayList<>();
         for (BoundingBox b : block.getCollisionShape().getBoundingBoxes()) {
             // Relative to the block, as Bukkit hands them out; shifted unless already placed.
-            out.add(b.getMaxX() <= 1.5 && b.getMaxY() <= 1.5 && b.getMaxZ() <= 1.5
-                    ? b.clone().shift(block.getX(), block.getY(), block.getZ()) : b.clone());
+            BoundingBox placed = b.getMaxX() <= 1.5 && b.getMaxY() <= 1.5 && b.getMaxZ() <= 1.5
+                    ? b.clone().shift(block.getX(), block.getY(), block.getZ()) : b.clone();
+            if (seen.getVolume() > 0 && placed.overlaps(seen)) placed.intersection(seen);
+            out.add(placed);
         }
         return out;
+    }
+
+    /** Whether {@code side} points along its axis rather than against it. */
+    private static boolean outwards(BlockFace side) {
+        return side == BlockFace.UP || side == BlockFace.SOUTH || side == BlockFace.EAST;
     }
 
     /** One whole cube of collision: what a splat may spread across into its neighbours. */
@@ -328,9 +413,10 @@ public final class PaintLayer {
         return m.isSolid() || !b.getCollisionShape().getBoundingBoxes().isEmpty();
     }
 
-    private static Vector faceCenter(Block b, BlockFace side) {
+    /** The middle of a box's face on {@code side}. */
+    private static Vector faceCenter(BoundingBox b, BlockFace side) {
         Vector n = side.getDirection();
-        return new Vector(b.getX() + 0.5 + n.getX() * 0.5, b.getY() + 0.5 + n.getY() * 0.5, b.getZ() + 0.5 + n.getZ() * 0.5);
+        return b.getCenter().add(new Vector(n.getX() * b.getWidthX(), n.getY() * b.getHeight(), n.getZ() * b.getWidthZ()).multiply(0.5));
     }
 
     private static Vector tangentJitter(BlockFace side, double amount) {
