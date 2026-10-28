@@ -48,6 +48,10 @@ public final class Settings {
     public final double throwSpeed;
     public final double grenadeRadius;
 
+    public final int minesPerMatch;
+    public final int mineArmTicks;
+    public final double mineRadius;
+
     public final int maxDecals;
 
     /** Each team's marker. */
@@ -93,6 +97,10 @@ public final class Settings {
         fuseTicks = Math.max(5, c.getInt("grenade.fuse-ticks", 30));
         throwSpeed = c.getDouble("grenade.throw-speed", 1.1);
         grenadeRadius = c.getDouble("grenade.radius", 3.5);
+
+        minesPerMatch = Math.max(0, c.getInt("mine.per-match", 1));
+        mineArmTicks = (int) Math.round(Math.max(0, c.getDouble("mine.arm-seconds", 1.5)) * 20);
+        mineRadius = Math.max(0.5, c.getDouble("mine.radius", 3.0));
 
         maxDecals = Math.max(50, c.getInt("paint.max-decals", 1500));
 

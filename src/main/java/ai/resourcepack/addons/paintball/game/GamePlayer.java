@@ -26,6 +26,8 @@ public final class GamePlayer {
     long nextShot;
     /** The tick the grenade is back; until then it is recharging. */
     long grenadeReadyAt;
+    /** Mines still to set this match. */
+    int minesLeft;
     long protectedUntil;
     /** The tick they come back, or 0 while they are in. */
     long respawnAt;

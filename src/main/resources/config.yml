@@ -48,6 +48,15 @@ grenade:
   throw-speed: 1.1
   radius: 3.5
 
+mine:
+  # How many mines each player can set in a match (right-click the ground with
+  # it). 0 for none. The first enemy to step on one sets it off.
+  per-match: 1
+  # How long after it is set before it can go off, so you can step away.
+  arm-seconds: 1.5
+  # How far it splats enemies it can see when it goes off.
+  radius: 3.0
+
 paint:
   # The most splats one match keeps on the walls; the oldest go first.
   max-decals: 1500

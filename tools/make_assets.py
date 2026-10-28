@@ -799,6 +799,11 @@ def definitions():
                   "  lore:", '    - "&7Right-click to throw. It bursts a moment later,"', '    - "&7then recharges before you can throw again."',
                   "  model:", "    parent: paintball:grenade",
                   f"    textures: {{g: \"paintball:item/grenade_{team}\", particle: \"paintball:item/grenade_{team}\"}}", ""]
+        # A mine is the grenade, which the plugin squashes flat when it is set down.
+        lines += [f"mine_{team}:", "  material: PAPER", f'  name: "&{code}&lPaint Mine"',
+                  "  lore:", '    - "&7Right-click the ground to set it. The first enemy"', '    - "&7to step on it sets it off."',
+                  "  model:", "    parent: paintball:grenade",
+                  f"    textures: {{g: \"paintball:item/grenade_{team}\", particle: \"paintball:item/grenade_{team}\"}}", ""]
         for n in (1, 2, 3):
             lines += [f"splat_{team}_{n}:", "  material: PAPER", f'  name: "&f{nice} Splat"', "  model:", "    parent: paintball:splat",
                       f"    textures: {{splat: \"paintball:item/splat_{team}_{n}\", particle: \"paintball:item/splat_{team}_{n}\"}}", ""]

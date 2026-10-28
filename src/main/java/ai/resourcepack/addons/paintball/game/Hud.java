@@ -427,7 +427,7 @@ final class Hud {
      */
     private void feedLine(Map<String, String> v, int line, Game.Kill kill, boolean highlight) {
         Overlays o = overlays();
-        String weapon = icon(kill.weapon() == Weapon.GRENADE ? "grenade_icon" : "feed_marker");
+        String weapon = icon(kill.weapon() == Weapon.MARKER ? "feed_marker" : "grenade_icon");
         int killerWidth = o.width(kill.killer()) - 1;
         int victimWidth = o.width(kill.victim()) - 1;
         int iconWidth = Math.max(0, o.width(weapon) - 1);

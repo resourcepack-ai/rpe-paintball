@@ -55,6 +55,7 @@ public final class Game {
     final Hud hud;
     final KillCam killCam = new KillCam(this);
     final Nametags nametags = new Nametags(this);
+    final Mines mines = new Mines(this);
     private final GameManager manager;
 
     Phase phase = Phase.WAITING;
@@ -159,6 +160,7 @@ public final class Game {
         if (live()) {
             // Mid-match: straight onto the smaller team.
             gp.team = smallerTeam();
+            gp.minesLeft = settings().minesPerMatch;
             hud.refreshTeams();
             spawn(gp, p, true);
             broadcast(messages().component("joined-team", "player", p.getName(),
@@ -310,6 +312,8 @@ public final class Game {
         }
         combat.tick();
         if (phase != Phase.LIVE) return;
+        mines.tick();
+        if (phase != Phase.LIVE) return;
         for (GamePlayer gp : active()) {
             Player p = gp.player();
             if (p == null) continue;
@@ -344,7 +348,10 @@ public final class Game {
         players.values().removeIf(gp -> gp.left);
         List<GamePlayer> list = new ArrayList<>(active());
         List<GamePlayer> moved = deal(list);
-        for (GamePlayer gp : list) gp.reset();
+        for (GamePlayer gp : list) {
+            gp.reset();
+            gp.minesLeft = settings().minesPerMatch;
+        }
         for (GamePlayer gp : moved) {
             Player p = gp.player();
             if (p != null) {
@@ -359,6 +366,7 @@ public final class Game {
         warnedAt = -1;
         paint.clear();
         combat.clear();
+        mines.clear();
         played = true;
         phase = Phase.FREEZE;
         timer = settings().freezeSeconds * 20;
@@ -470,6 +478,7 @@ public final class Game {
     public void end() {
         if (!live()) return;
         combat.clear();
+        mines.clear();
         int red = kills.get(Team.RED);
         int blue = kills.get(Team.BLUE);
         winner = red == blue ? null : red > blue ? Team.RED : Team.BLUE;
@@ -529,6 +538,7 @@ public final class Game {
         }
         phase = Phase.WAITING;
         combat.clear();
+        mines.clear();
         paint.clear();
         players.values().removeIf(gp -> gp.left);
         for (GamePlayer gp : active()) {
@@ -542,6 +552,7 @@ public final class Game {
     /** Sends everybody home: {@code /pb stop} in the lobby, the last player leaving, or the plugin going down. */
     void close() {
         combat.clear();
+        mines.clear();
         paint.clear();
         nametags.clear();
         for (GamePlayer gp : active()) {
@@ -635,6 +646,21 @@ public final class Game {
         gp.grenadeReadyAt = now + cooldown;
         combat.throwGrenade(gp, p);
         if (cooldown > 0) p.setCooldown(Loadout.grenade(content, gp.team, cooldown), cooldown);
+    }
+
+    /**
+     * A right click with a mine: set it on top of {@code block}, if that is
+     * ground in the arena. The stack in the hand goes down by one.
+     */
+    public void placeMine(Player p, org.bukkit.block.Block block, org.bukkit.block.BlockFace face) {
+        GamePlayer gp = players.get(p.getUniqueId());
+        if (gp == null || phase != Phase.LIVE || !gp.alive || gp.team == null) return;
+        if (!mines.place(gp, p, block, face)) return;
+        var inv = p.getInventory();
+        for (int slot = 0; slot < 9; slot++) {
+            if (!Loadout.isMine(content, inv.getItem(slot))) continue;
+            inv.setItem(slot, gp.minesLeft > 0 ? Loadout.mine(content, gp.team, gp.minesLeft) : null);
+        }
     }
 
     /** A left click with the marker: up to the sights, or back down. */

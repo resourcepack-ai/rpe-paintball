@@ -170,6 +170,21 @@ public final class GameListener implements Listener {
             g.throwGrenade(p);
             return;
         }
+        if (right && Loadout.isMine(content, item)) {
+            e.setCancelled(true);
+            org.bukkit.block.Block block = e.getClickedBlock();
+            org.bukkit.block.BlockFace face = e.getBlockFace();
+            if (block == null) {
+                // Clicking at the ground a little too far off still means it.
+                org.bukkit.util.RayTraceResult hit = p.rayTraceBlocks(4.5);
+                if (hit != null) {
+                    block = hit.getHitBlock();
+                    face = hit.getHitBlockFace();
+                }
+            }
+            g.placeMine(p, block, face);
+            return;
+        }
         boolean left = e.getAction() == Action.LEFT_CLICK_AIR || e.getAction() == Action.LEFT_CLICK_BLOCK;
         if (left && Loadout.isMarker(content, item)) e.setCancelled(true);
     }

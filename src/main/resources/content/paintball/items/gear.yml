@@ -25,6 +25,16 @@ grenade_red:
     parent: paintball:grenade
     textures: {g: "paintball:item/grenade_red", particle: "paintball:item/grenade_red"}
 
+mine_red:
+  material: PAPER
+  name: "&c&lPaint Mine"
+  lore:
+    - "&7Right-click the ground to set it. The first enemy"
+    - "&7to step on it sets it off."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_red", particle: "paintball:item/grenade_red"}
+
 splat_red_1:
   material: PAPER
   name: "&fRed Splat"
@@ -66,6 +76,16 @@ grenade_blue:
   lore:
     - "&7Right-click to throw. It bursts a moment later,"
     - "&7then recharges before you can throw again."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_blue", particle: "paintball:item/grenade_blue"}
+
+mine_blue:
+  material: PAPER
+  name: "&9&lPaint Mine"
+  lore:
+    - "&7Right-click the ground to set it. The first enemy"
+    - "&7to step on it sets it off."
   model:
     parent: paintball:grenade
     textures: {g: "paintball:item/grenade_blue", particle: "paintball:item/grenade_blue"}

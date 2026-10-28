@@ -98,6 +98,11 @@ public final class Loadout {
         return id != null && id.startsWith("marker_") && id.endsWith("_aim");
     }
 
+    public static boolean isMine(Content content, ItemStack stack) {
+        String id = content.idOf(stack);
+        return id != null && id.startsWith("mine_");
+    }
+
     public static boolean isGrenade(Content content, ItemStack stack) {
         String id = content.idOf(stack);
         return id != null && id.startsWith("grenade_");
@@ -172,12 +177,20 @@ public final class Loadout {
         return item;
     }
 
-    /** Dresses a player for the match: marker in hand, grenade beside it, team mask and suit. */
+    /** The mines a player has still to set, as one stack. */
+    static ItemStack mine(Content content, Team team, int left) {
+        ItemStack item = content.item("mine_" + team.id());
+        item.setAmount(Math.max(1, Math.min(99, left)));
+        return item;
+    }
+
+    /** Dresses a player for the match: marker in hand, grenade beside it, any mines left, team mask and suit. */
     static void equip(Content content, ai.resourcepack.addons.paintball.config.Settings s, Player p, GamePlayer gp) {
         PlayerInventory inv = p.getInventory();
         inv.clear();
         inv.setItem(0, marker(content, skin(s, gp.team)));
         inv.setItem(1, grenade(content, gp.team, s.grenadeCooldownTicks));
+        if (gp.minesLeft > 0) inv.setItem(2, mine(content, gp.team, gp.minesLeft));
         inv.setHelmet(mask(content, gp.team));
         inv.setChestplate(armour(Material.LEATHER_CHESTPLATE, gp.team));
         inv.setLeggings(armour(Material.LEATHER_LEGGINGS, gp.team));
