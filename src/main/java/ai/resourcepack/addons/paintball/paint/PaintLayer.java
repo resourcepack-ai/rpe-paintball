@@ -317,9 +317,15 @@ public final class PaintLayer {
         }
     }
 
+    /**
+     * Whether paint stays on a block: anything a ball stops on. Not only what
+     * the game calls solid, which leaves out ladders: a ball breaks on a ladder
+     * (it has a collision box), so a ladder that took no paint swallowed it.
+     */
     private static boolean paintable(Block b) {
         Material m = b.getType();
-        return m.isSolid() && m != Material.BARRIER && m != Material.LIGHT && !m.name().endsWith("_SIGN");
+        if (m == Material.BARRIER || m == Material.LIGHT || m.name().endsWith("_SIGN")) return false;
+        return m.isSolid() || !b.getCollisionShape().getBoundingBoxes().isEmpty();
     }
 
     private static Vector faceCenter(Block b, BlockFace side) {
