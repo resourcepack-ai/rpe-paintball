@@ -94,6 +94,12 @@ final class Fx {
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_HAT, 0.8f, secondsLeft <= 3 ? 1.6f : 1.2f);
     }
 
+    /** A pling as the clock passes a warning, higher as the last seconds run out. */
+    void timeWarning(Player p, int secondsLeft) {
+        float pitch = secondsLeft <= 5 ? 2.0f - secondsLeft * 0.15f : secondsLeft <= 10 ? 1.2f : 0.9f;
+        p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.9f, pitch);
+    }
+
     void protectedHit(Location at) {
         at.getWorld().spawnParticle(Particle.ENCHANTED_HIT, at, 6, 0.1, 0.1, 0.1, 0.1);
     }

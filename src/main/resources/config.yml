@@ -57,6 +57,9 @@ hud:
   kill-banner-seconds: 2.5
   # How long the hit marker shows round the crosshair, in ticks (20 a second).
   hit-marker-ticks: 6
+  # Seconds left on the clock at which a pling sounds and the time left is
+  # shown in the middle of the screen: in words, or from 10 down, the number.
+  time-warnings: [60, 30, 10, 5, 4, 3, 2, 1]
 
 # Tells you in the console, and ops in chat, when a newer Paintball is on SpigotMC.
 update-check: true
@@ -118,6 +121,10 @@ messages:
   hud-victory: "VICTORY"
   hud-defeat: "DEFEAT"
   hud-draw: "DRAW"
+  # The clock's warnings (hud.time-warnings above), in the same lettering.
+  hud-minute-left: "1 MINUTE LEFT"
+  hud-minutes-left: "{minutes} MINUTES LEFT"
+  hud-seconds-left: "{seconds} SECONDS LEFT"
 
   # The scoreboard dialog's heading.
   scoreboard-victory: "VICTORY"

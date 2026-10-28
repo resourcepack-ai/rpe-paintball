@@ -64,6 +64,9 @@ public final class Game {
     /** When the match went live and when it ended: the HUD's GO! and result are timed from these. */
     long liveAt;
     long endedAt;
+    /** The last of the clock's warnings: when it went off (-1 for none yet this match), and how many seconds were left. */
+    long warnedAt = -1;
+    int warnedSeconds;
     final EnumMap<Team, Integer> kills = new EnumMap<>(Team.class);
     /** The kill feed, newest first. */
     final Deque<Kill> feed = new ArrayDeque<>();
@@ -294,6 +297,12 @@ public final class Game {
 
     private void tickLive() {
         clock--;
+        if (clock > 0 && clock % 20 == 0 && settings().timeWarnings.contains(clock / 20)) {
+            // The sound is here; the words are the HUD's.
+            warnedAt = now;
+            warnedSeconds = clock / 20;
+            for (Player p : online()) fx.timeWarning(p, warnedSeconds);
+        }
         combat.tick();
         if (phase != Phase.LIVE) return;
         for (GamePlayer gp : active()) {
@@ -340,6 +349,7 @@ public final class Game {
         for (Team t : Team.values()) kills.put(t, 0);
         feed.clear();
         winner = null;
+        warnedAt = -1;
         paint.clear();
         combat.clear();
         played = true;

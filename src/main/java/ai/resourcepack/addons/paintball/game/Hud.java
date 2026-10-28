@@ -269,6 +269,8 @@ final class Hud {
      *   <li>splatted: the paint in your splatter's colour, fading, the respawn
      *   ring round the seconds left, and who it was;</li>
      *   <li>a splat of your own: SPLATTED and who, under the crosshair;</li>
+     *   <li>the clock's warnings: the time left in words, or from ten seconds
+     *   down the number alone;</li>
      *   <li>the end: VICTORY, DEFEAT or DRAW on a band, and the score.</li>
      * </ul>
      */
@@ -319,6 +321,14 @@ final class Hud {
                     name = gp.lastKill;
                     nameTeam = gp.lastKillTeam;
                 }
+                // The clock's warnings, wherever nothing else is: the last ten
+                // seconds as the number alone, popping in, and longer in words.
+                long warned = game.now - game.warnedAt;
+                if (game.warnedAt >= 0 && game.warnedSeconds <= 10 && warned < 20 && center.isEmpty()) {
+                    center = lettering("red", warned < 2 ? 4 : 3, String.valueOf(game.warnedSeconds));
+                } else if (game.warnedAt >= 0 && game.warnedSeconds > 10 && warned < 50 && center2.isEmpty()) {
+                    center2 = lettering("gold", 1, timeLeft(m, game.warnedSeconds));
+                }
             }
             case ENDED -> {
                 long since = game.now - game.endedAt;
@@ -342,6 +352,12 @@ final class Hud {
         v.put("pb_name_b", nameTeam == Team.BLUE ? name : "");
         v.put("pb_splat_r", splatTeam == Team.RED ? splat : "");
         v.put("pb_splat_b", splatTeam == Team.BLUE ? splat : "");
+    }
+
+    /** A warning's words: one minute, some minutes, or some seconds left. */
+    private static String timeLeft(Messages m, int seconds) {
+        if (seconds % 60 != 0) return m.plain("hud-seconds-left", "seconds", String.valueOf(seconds));
+        return seconds == 60 ? m.plain("hud-minute-left") : m.plain("hud-minutes-left", "minutes", String.valueOf(seconds / 60));
     }
 
     /**

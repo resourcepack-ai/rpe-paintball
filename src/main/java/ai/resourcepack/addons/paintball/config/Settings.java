@@ -39,6 +39,8 @@ public final class Settings {
     public final int feedTicks;
     public final int killBannerTicks;
     public final int hitMarkerTicks;
+    /** Seconds left on the clock that sound a warning and show it. */
+    public final java.util.Set<Integer> timeWarnings;
 
     public final String hudId;
     public final String scoreboardId;
@@ -77,6 +79,7 @@ public final class Settings {
         feedTicks = (int) Math.round(Math.max(1, c.getDouble("hud.kill-feed-seconds", 8)) * 20);
         killBannerTicks = (int) Math.round(Math.max(0, c.getDouble("hud.kill-banner-seconds", 2.5)) * 20);
         hitMarkerTicks = Math.max(0, c.getInt("hud.hit-marker-ticks", 6));
+        timeWarnings = java.util.Set.copyOf(c.getIntegerList("hud.time-warnings"));
 
         hudId = c.getString("ui.hud", "paintball:hud").trim();
         scoreboardId = c.getString("ui.scoreboard", "paintball:scoreboard").trim();
