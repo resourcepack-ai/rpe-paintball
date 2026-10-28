@@ -157,6 +157,14 @@ messages:
   tab-header: "\n<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold>\n<#5F6368>{map}</#5F6368>\n\n<#FF4655><bold>RED  {red}</bold></#FF4655>     <white>{time}</white>     <#2E9BFF><bold>{blue}  BLUE</bold></#2E9BFF>\n"
   tab-footer: "\n<#9AA0A6>Press <white><key:key.swapOffhand></white> for the full scoreboard</#9AA0A6>\n"
 
+  # PlaceholderAPI's %paintball_arena_status_<arena>%.
+  status-maintenance: "Maintenance"
+  status-not-configured: "Not Configured"
+  status-ready: "Ready"
+  status-starting: "Starting"
+  status-in-game: "In Game"
+  status-ending: "Ending"
+
   # The lobby's hotbar.
   item-scoreboard: "<bold><#FFD23F>Scoreboard"
   item-scoreboard-lore: "<#9AA0A6>The last match, player by player"

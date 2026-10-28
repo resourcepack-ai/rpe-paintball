@@ -28,6 +28,8 @@ tasks.withType(JavaCompile).configureEach {
 repositories {
     mavenCentral()
     maven { url = 'https://hub.spigotmc.org/nexus/content/repositories/snapshots/' }
+    // PlaceholderAPI, for the placeholders. Its own repository; it is not on Central.
+    maven { url = 'https://repo.extendedclip.com/releases/' }
     // ai.resourcepack:common, our own shared plugin library. Exclusive: the
     // ai.resourcepack group is looked for here and nowhere else, so a
     // look-alike published to Central or any repository above cannot stand in
@@ -109,6 +111,9 @@ def engineJar = engineEnv
 dependencies {
     compileOnly 'org.spigotmc:spigot-api:1.21.4-R0.1-SNAPSHOT'
     compileOnly engineJar
+    // PlaceholderAPI: compileOnly, since a server that wants the placeholders
+    // has it, and the expansion is only loaded when it is there.
+    compileOnly 'me.clip:placeholderapi:2.11.6'
 
     // Every message is MiniMessage (config.yml). Paper has Adventure built in
     // and Spigot does not, so the plugin carries its own, relocated below so it

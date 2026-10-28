@@ -50,6 +50,7 @@ public final class PaintballPlugin extends JavaPlugin {
     private GameManager games;
     private ArenaSetup setup;
     private Scoreboard scoreboard;
+    private ai.resourcepack.addons.paintball.stats.StatsStore stats;
     /** Each arena's settings, read over config.yml's: by the arena itself, so a replaced arena is read afresh. */
     private final java.util.Map<ai.resourcepack.addons.paintball.arena.Arena, Settings> arenaSettings = new java.util.IdentityHashMap<>();
     /** Ticks since enable: Spigot has no current-tick counter of its own. */
@@ -139,6 +140,8 @@ public final class PaintballPlugin extends JavaPlugin {
         getDataFolder().mkdirs();
         arenas = new ArenaStore(new File(getDataFolder(), "arenas.yml"), getLogger());
         arenas.load();
+        stats = new ai.resourcepack.addons.paintball.stats.StatsStore(new File(getDataFolder(), "stats.json"), getLogger());
+        stats.load();
         snapshots = new PlayerSnapshot(new File(getDataFolder(), "snapshots"), getLogger());
         games = new GameManager(this);
         setup = new ArenaSetup(this, arenas, games);
@@ -159,6 +162,11 @@ public final class PaintballPlugin extends JavaPlugin {
         }, 1L, 1L);
         int n = arenas.all().size();
         banner.ok("Arenas", n + (n == 1 ? " arena" : " arenas") + ". /pb join, then an op runs /pb start");
+        if (getServer().getPluginManager().isPluginEnabled("PlaceholderAPI")) {
+            // Its own class, so nothing of PlaceholderAPI's is loaded on a server without it.
+            new ai.resourcepack.addons.paintball.stats.PaintballExpansion(this).register();
+            banner.ok("PlaceholderAPI", "%paintball_...% placeholders registered");
+        }
         updates.start();
         banner.print();
     }
@@ -242,6 +250,11 @@ public final class PaintballPlugin extends JavaPlugin {
 
     public ArenaStore arenas() {
         return arenas;
+    }
+
+    /** Every player's totals and every arena's match count, for the placeholders. */
+    public ai.resourcepack.addons.paintball.stats.StatsStore stats() {
+        return stats;
     }
 
     public PlayerSnapshot snapshots() {

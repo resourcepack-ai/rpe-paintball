@@ -86,6 +86,28 @@ on start.
 `update-check: true` tells the console, and anybody with `paintball.update`, when
 a newer Paintball is on SpigotMC. Set it to `false` to turn that off.
 
+## Placeholders
+
+With [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/)
+installed, `%paintball_...%` placeholders are registered. Each finished match
+is added to every player's totals in `plugins/RPEPaintball/stats.json`.
+
+| Placeholder | What it is |
+|---|---|
+| `%paintball_arena_status_<arena>%` | Maintenance (closed), Not Configured, Ready, Starting, In Game or Ending |
+| `%paintball_arena_players_<arena>%` | How many are in its lobby or match |
+| `%paintball_arena_plays_<arena>%` | How many matches it has had |
+| `%paintball_arena_name_<arena>%` | Its display name |
+| `%paintball_arena_red_<arena>%`, `%paintball_arena_blue_<arena>%` | Each team's kills in its current or last match |
+| `%paintball_arena_time_<arena>%` | Its match clock |
+| `%paintball_player_<stat>%` | The player's own total |
+| `%paintball_player_arena%`, `%paintball_player_team%` | Where the player is playing, and for whom |
+| `%paintball_leaderboard_<stat>_<n>%` | Who is n-th for that stat |
+| `%paintball_leaderboard_<stat>_<n>_value%` | Their number |
+
+A `<stat>` is `kills`, `deaths`, `wins` (or `won`), `losses` (or `lost`),
+`matches` (or `played`), `shots`, `hits`, `accuracy` or `kd`.
+
 ## Permissions
 
 One node per command, so you can hand out exactly what somebody needs (a

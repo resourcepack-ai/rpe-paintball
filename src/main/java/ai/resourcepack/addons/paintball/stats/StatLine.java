@@ -35,6 +35,7 @@ public final class StatLine {
     }
 
     public String kd() {
-        return String.format("%.2f", kills / (double) Math.max(1, deaths));
+        // A point whatever the server's language: "1.50", never "1,50".
+        return String.format(java.util.Locale.ROOT, "%.2f", kills / (double) Math.max(1, deaths));
     }
 }

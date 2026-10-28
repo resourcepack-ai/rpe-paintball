@@ -7,7 +7,7 @@ author: ResourcePack AI
 # Hard, not soft: the marker, the paint, the HUD and the scoreboard are all
 # RP Engine content. This plugin is the game on top.
 depend: [RPEngine]
-softdepend: [Multiverse-Core]
+softdepend: [Multiverse-Core, PlaceholderAPI]
 
 commands:
   paintball:

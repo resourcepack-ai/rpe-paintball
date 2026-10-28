@@ -473,6 +473,7 @@ public final class Game {
         int red = kills.get(Team.RED);
         int blue = kills.get(Team.BLUE);
         winner = red == blue ? null : red > blue ? Team.RED : Team.BLUE;
+        record();
         phase = Phase.ENDED;
         endedAt = now;
         timer = settings().endSeconds * 20;
@@ -489,6 +490,22 @@ public final class Game {
             fx.fanfare(p, winner != null && gp.team == winner);
         }
         hud.refreshScores();
+    }
+
+    /**
+     * Into stats.json: everybody's kills, deaths, shots and hits, and for
+     * whoever was still there at the end the match, won or lost (a draw is
+     * neither), and one more match on this arena.
+     */
+    private void record() {
+        var stats = plugin.stats();
+        for (GamePlayer gp : players.values()) {
+            if (gp.team == null) continue;
+            Boolean won = gp.left || winner == null ? null : gp.team == winner;
+            stats.record(gp.id, gp.name, gp.stats, !gp.left, won);
+        }
+        stats.played(arena.id());
+        stats.save();
     }
 
     /**
