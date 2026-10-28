@@ -70,6 +70,17 @@ hud:
   # shown in the middle of the screen: in words, or from 10 down, the number.
   time-warnings: [60, 30, 10, 5, 4, 3, 2, 1]
 
+nametags:
+  # The names over players' heads. The game's own show through walls; with this
+  # on they are text that blocks in front of it hide, like anything else.
+  hide-behind-blocks: false
+  # Whether you see the other team's names too, not only your own team's. With
+  # hide-behind-blocks off, that means through walls as well.
+  enemies: false
+  # How a name reads, in MiniMessage, with hide-behind-blocks on. {player} is
+  # the name and {team_colour} its team's colour (#FF4655 or #2E9BFF).
+  format: "<{team_colour}>{player}"
+
 # Tells you in the console, and ops in chat, when a newer Paintball is on SpigotMC.
 update-check: true
 

@@ -180,11 +180,11 @@ public final class PaintballPlugin extends JavaPlugin {
         if (games != null) games.stopAll();
     }
 
-    /** Takes down any paintball displays a crash left in loaded worlds (they are never saved, but be sure). */
+    /** Takes down any paintball displays (paint, cameras, name tags) a crash left in loaded worlds (they are never saved, but be sure). */
     private void sweepStrays() {
         int n = 0;
         for (World w : getServer().getWorlds()) {
-            for (Entity e : w.getEntitiesByClass(ItemDisplay.class)) {
+            for (Entity e : w.getEntitiesByClass(org.bukkit.entity.Display.class)) {
                 if (e.getScoreboardTags().contains("paintball")) {
                     e.remove();
                     n++;

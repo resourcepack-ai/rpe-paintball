@@ -82,6 +82,25 @@ final class Hud {
         }
     }
 
+    /** What the game's own name tags were last set to: shown or not, and to enemies too. */
+    private Boolean tagsShown;
+    private boolean tagsToEnemies;
+
+    /**
+     * The game's own name tags: shown (to teammates, or to everybody with
+     * {@code enemies}) or off, while {@link Nametags} draws its own.
+     */
+    void gameNameTags(boolean shown, boolean enemies) {
+        if (tagsShown != null && tagsShown == shown && tagsToEnemies == enemies) return;
+        tagsShown = shown;
+        tagsToEnemies = enemies;
+        org.bukkit.scoreboard.Team.OptionStatus status = !shown ? org.bukkit.scoreboard.Team.OptionStatus.NEVER
+                : enemies ? org.bukkit.scoreboard.Team.OptionStatus.ALWAYS : org.bukkit.scoreboard.Team.OptionStatus.FOR_OWN_TEAM;
+        for (org.bukkit.scoreboard.Team st : board.getTeams()) {
+            st.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, status);
+        }
+    }
+
     private Overlays overlays() {
         return game.plugin.content().engine().overlays();
     }

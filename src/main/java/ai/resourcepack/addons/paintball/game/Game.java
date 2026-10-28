@@ -54,6 +54,7 @@ public final class Game {
     final Combat combat;
     final Hud hud;
     final KillCam killCam = new KillCam(this);
+    final Nametags nametags = new Nametags(this);
     private final GameManager manager;
 
     Phase phase = Phase.WAITING;
@@ -295,6 +296,7 @@ public final class Game {
                 if (timer <= 0 && !backToLobby()) return;
             }
         }
+        nametags.tick();
         hud.tick();
     }
 
@@ -524,6 +526,7 @@ public final class Game {
     void close() {
         combat.clear();
         paint.clear();
+        nametags.clear();
         for (GamePlayer gp : active()) {
             Player p = gp.player();
             if (p == null) continue;
