@@ -47,6 +47,11 @@ public final class GamePlayer {
     long aimChangedAt;
     /** The last place they stood inside the arena, for putting them back when they stray. */
     Location lastInside;
+    /** While they are out: the camera they watch their killer through, whose it is, where round it started, and when. See {@link KillCam}. */
+    org.bukkit.entity.ItemDisplay camera;
+    UUID camOn;
+    double camAngle;
+    long camFrom;
 
     /** This match's counters: kills, deaths, shots, hits. */
     final StatLine stats = new StatLine();

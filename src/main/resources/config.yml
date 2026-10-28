@@ -13,6 +13,9 @@ match-seconds: 180
 kill-limit: 0
 freeze-seconds: 3
 respawn-seconds: 3
+# While you're out, the camera circles whoever splatted you. false leaves you a
+# free spectator where you fell.
+killer-camera: true
 spawn-protection-seconds: 1.5
 # How long the final scoreboard stays up before everybody is back in the lobby.
 end-seconds: 12

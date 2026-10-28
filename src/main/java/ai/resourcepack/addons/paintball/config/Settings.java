@@ -25,6 +25,8 @@ public final class Settings {
     public final int killLimit;
     public final int freezeSeconds;
     public final int respawnTicks;
+    /** While a player is out, the camera circles whoever splatted them. */
+    public final boolean killerCamera;
     public final int protectionTicks;
     public final int grenadeCooldownTicks;
     public final int endSeconds;
@@ -66,6 +68,7 @@ public final class Settings {
         killLimit = Math.max(0, c.getInt("kill-limit", 0));
         freezeSeconds = Math.max(1, c.getInt("freeze-seconds", 3));
         respawnTicks = (int) Math.round(Math.max(0.5, c.getDouble("respawn-seconds", 3)) * 20);
+        killerCamera = c.getBoolean("killer-camera", true);
         protectionTicks = (int) Math.round(Math.max(0, c.getDouble("spawn-protection-seconds", 1.5)) * 20);
         grenadeCooldownTicks = (int) Math.round(Math.max(0, c.getDouble("grenade.cooldown-seconds", 15)) * 20);
         endSeconds = Math.max(3, c.getInt("end-seconds", 12));

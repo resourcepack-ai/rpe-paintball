@@ -53,6 +53,7 @@ public final class Game {
     final PaintLayer paint;
     final Combat combat;
     final Hud hud;
+    final KillCam killCam = new KillCam(this);
     private final GameManager manager;
 
     Phase phase = Phase.WAITING;
@@ -176,6 +177,7 @@ public final class Game {
         aim(gp, p, false);
         unfreeze(p);
         hud.leave(p);
+        killCam.stop(gp, p);
         if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
         plugin.snapshots().restore(p);
         broadcast(messages().component("left", "player", p.getName()));
@@ -314,6 +316,8 @@ public final class Game {
                 keepInside(gp, p);
             } else if (gp.respawnAt > 0 && now >= gp.respawnAt) {
                 spawn(gp, p, false);
+            } else {
+                killCam.tick(gp, p);
             }
         }
         if (clock <= 0) end();
@@ -389,6 +393,7 @@ public final class Game {
         gp.protectedUntil = first ? 0 : now + s.protectionTicks;
         aim(gp, p, false);
         Location at = first ? slotFor(gp) : spawnFor(gp);
+        killCam.stop(gp, p);
         if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
         p.setGameMode(GameMode.ADVENTURE);
         p.teleport(at);
@@ -450,6 +455,7 @@ public final class Game {
             fx.knockedOut(vp);
             vp.getInventory().clear();
             vp.setGameMode(GameMode.SPECTATOR);
+            if (settings().killerCamera && sp != null && sp.getWorld().equals(vp.getWorld())) killCam.start(victim, vp, sp);
         }
         hud.refreshScores();
         int limit = settings().killLimit;
@@ -473,6 +479,7 @@ public final class Game {
             if (p == null) continue;
             aim(gp, p, false);
             unfreeze(p);
+            killCam.stop(gp, p);
             if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
             p.setGameMode(GameMode.ADVENTURE);
             p.getInventory().clear();
@@ -522,6 +529,7 @@ public final class Game {
             if (p == null) continue;
             unfreeze(p);
             hud.leave(p);
+            killCam.stop(gp, p);
             if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
             manager.forget(p);
             plugin.snapshots().restore(p);
