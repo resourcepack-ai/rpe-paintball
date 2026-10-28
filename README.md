@@ -121,8 +121,10 @@ screen is drawn by this plugin:
   screen and their respawn ring, SPLATTED and who, and the result on its band
   with the score. The plugin only sets its values (`pb_red`, `pb_weapon`,
   `pb_center`..., see `game/Hud.java`); the pictures in them are
-  `tools/hud_art.py`'s, which is why a word drawn in one (VICTORY, GO!) is art
-  rather than config.
+  `tools/hud_art.py`'s. The big words in the middle (GO!, SPLATTED BY,
+  VICTORY...) are spelled out of that lettering by the plugin, so they are in
+  `config.yml` like every other word, limited to the letters it has: A-Z, 0-9,
+  `! - '` and spaces.
 - **The scoreboard** is `dialogs/scoreboard.json`, a Studio dialog: both teams'
   tables with faces, kills, deaths and accuracy.
 - **The marker** is a Studio model in five colourways (Ember for red, Tide for

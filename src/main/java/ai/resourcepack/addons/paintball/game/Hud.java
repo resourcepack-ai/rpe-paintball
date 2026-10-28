@@ -273,6 +273,7 @@ final class Hud {
      * </ul>
      */
     private void middle(Map<String, String> v, GamePlayer gp, Settings s) {
+        Messages m = messages();
         String center = "";
         String center2 = "";
         String name = "";
@@ -287,13 +288,13 @@ final class Hud {
                 String ring = icon("ring_start_" + Math.min(START_RING_FRAMES - 1, into / 2));
                 center = over(ring, lettering("white", into < 2 ? 4 : 3, String.valueOf(seconds)));
                 if (gp.team != null) {
-                    center2 = lettering("grey", 1, "YOU'RE TEAM") + overlays().space(6)
-                            + lettering(gp.team == Team.RED ? "red" : "blue", 2, gp.team == Team.RED ? "RED" : "BLUE");
+                    center2 = lettering("grey", 1, m.plain("hud-your-team")) + overlays().space(6)
+                            + lettering(gp.team == Team.RED ? "red" : "blue", 2, m.plain(gp.team == Team.RED ? "hud-team-red" : "hud-team-blue"));
                 }
             }
             case LIVE -> {
                 long sinceGo = game.now - game.liveAt;
-                if (sinceGo < 24) center = lettering("green", sinceGo < 2 ? 6 : sinceGo < 4 ? 5 : 4, "GO!");
+                if (sinceGo < 24) center = lettering("green", sinceGo < 2 ? 6 : sinceGo < 4 ? 5 : 4, m.plain("hud-go"));
                 if (!gp.alive) {
                     long out = game.now - gp.splattedAt;
                     int fade = out < SPLAT_HOLD ? 0 : (int) (1 + (out - SPLAT_HOLD) / SPLAT_STEP);
@@ -309,12 +310,12 @@ final class Hud {
                                 lettering("white", 2, String.valueOf(Math.max(1, (left + 19) / 20))));
                     }
                     if (gp.splattedBy != null) {
-                        center2 = lettering("grey", 1, "SPLATTED BY");
+                        center2 = lettering("grey", 1, m.plain("hud-splatted-by"));
                         name = gp.splattedBy;
                         nameTeam = gp.splattedByTeam;
                     }
                 } else if (gp.lastKill != null && game.now - gp.lastKillAt < s.killBannerTicks) {
-                    center2 = lettering("gold", 1, "SPLATTED");
+                    center2 = lettering("gold", 1, m.plain("hud-splatted"));
                     name = gp.lastKill;
                     nameTeam = gp.lastKillTeam;
                 }
@@ -324,7 +325,7 @@ final class Hud {
                 Team w = game.winner();
                 String look = w == null ? "draw" : gp.team == w ? "victory" : "defeat";
                 String sheet = w == null ? "grey" : gp.team == w ? "gold" : "red";
-                String word = look.toUpperCase();
+                String word = m.plain("hud-" + look);
                 String band = icon("band_" + look + "_0") + overlays().space(-1) + icon("band_" + look + "_1");
                 center = over(band, lettering(sheet, since < 2 ? 5 : since < 4 ? 4 : 3, word));
                 Overlays o = overlays();
@@ -448,7 +449,9 @@ final class Hud {
     /**
      * Words in the HUD's own lettering ({@code t_<sheet><scale>_<char>}): the
      * score digits' style, outlined, in a sheet per colour. A space is half a
-     * letter; a character the sheets do not have is left out.
+     * letter; a character the sheets do not have (anything but A-Z, 0-9 and
+     * {@code ! - '}) is left out, which is what a server's own wording for
+     * these, in config.yml, is drawn with.
      */
     private String lettering(String sheet, int scale, String text) {
         StringBuilder out = new StringBuilder();

@@ -106,6 +106,18 @@ messages:
   hud-first-to: "FIRST TO {kills}"
   hud-reloading: "RELOADING"
   hud-marker: "{skin} MARKER"
+  # The words in the middle of the screen, in the HUD's own big lettering. It
+  # has A-Z, 0-9, ! - ' and spaces; anything else is left out. The result is
+  # drawn over a band of fixed width, so a much longer word runs past its ends.
+  hud-your-team: "YOU'RE TEAM"
+  hud-team-red: "RED"
+  hud-team-blue: "BLUE"
+  hud-go: "GO!"
+  hud-splatted-by: "SPLATTED BY"
+  hud-splatted: "SPLATTED"
+  hud-victory: "VICTORY"
+  hud-defeat: "DEFEAT"
+  hud-draw: "DRAW"
 
   # The scoreboard dialog's heading.
   scoreboard-victory: "VICTORY"
