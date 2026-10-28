@@ -1,10 +1,26 @@
 package ai.resourcepack.addons.paintball.config;
 
 import ai.resourcepack.addons.paintball.team.Skin;
+import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 
-/** config.yml, read once into fields so the hot paths never touch YAML. */
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
+/**
+ * config.yml, read once into fields so the hot paths never touch YAML.
+ *
+ * <p>An arena can set any of the game's options for itself ({@code settings:}
+ * under it in arenas.yml, or {@code /pb arena set}); {@link #layered} reads
+ * those over config.yml, so an option the arena leaves alone is the server's.
+ */
 public final class Settings {
+    /** Top-level sections and options that are the server's, not an arena's. */
+    private static final List<String> NOT_PER_ARENA = List.of("ui", "messages", "update-check");
+
     public final int matchSeconds;
     public final int killLimit;
     public final int freezeSeconds;
@@ -83,5 +99,62 @@ public final class Settings {
 
         hudId = c.getString("ui.hud", "paintball:hud").trim();
         scoreboardId = c.getString("ui.scoreboard", "paintball:scoreboard").trim();
+    }
+
+    /** The settings of an arena: its own options, then config.yml's for the rest. */
+    public static Settings layered(FileConfiguration global, Map<String, Object> own) {
+        // Copied rather than set as defaults: every read above names its own
+        // fallback, and a fallback named in the call wins over a defaults
+        // section, so an option the arena left alone would be the jar's rather
+        // than the server's.
+        YamlConfiguration c = new YamlConfiguration();
+        java.util.Set<String> paths = new java.util.LinkedHashSet<>(global.getKeys(true));
+        if (global.getDefaults() != null) paths.addAll(global.getDefaults().getKeys(true));
+        for (String path : paths) {
+            if (path.startsWith("messages") || global.isConfigurationSection(path)) continue;
+            c.set(path, global.get(path));
+        }
+        for (Map.Entry<String, Object> e : own.entrySet()) c.set(e.getKey(), e.getValue());
+        return new Settings(c);
+    }
+
+    /** Every option an arena may set for itself, by path, in config.yml's order. */
+    public static List<String> arenaOptions(Configuration config) {
+        Configuration known = config.getDefaults() != null ? config.getDefaults() : config;
+        List<String> out = new ArrayList<>();
+        for (String path : known.getKeys(true)) {
+            if (known.isConfigurationSection(path) || NOT_PER_ARENA.contains(path.split("\\.", 2)[0])) continue;
+            out.add(path);
+        }
+        return out;
+    }
+
+    /**
+     * {@code text} as a value for an option shaped like {@code example} (its
+     * value in config.yml): a whole number, a number, true/false, a list of
+     * whole numbers split by commas, or a word.
+     *
+     * @throws IllegalArgumentException when it is not one
+     */
+    public static Object parse(Object example, String text) {
+        String t = text.trim();
+        try {
+            if (example instanceof Integer || example instanceof Long) return Integer.parseInt(t);
+            if (example instanceof Number) return Double.parseDouble(t);
+            if (example instanceof List<?>) {
+                List<Integer> out = new ArrayList<>();
+                for (String part : t.replace("[", "").replace("]", "").split("[,\\s]+")) {
+                    if (!part.isEmpty()) out.add(Integer.parseInt(part));
+                }
+                return out;
+            }
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("not a number: " + t);
+        }
+        if (example instanceof Boolean) {
+            if (t.equalsIgnoreCase("true") || t.equalsIgnoreCase("false")) return Boolean.parseBoolean(t.toLowerCase(Locale.ROOT));
+            throw new IllegalArgumentException("true or false, not " + t);
+        }
+        return t;
     }
 }

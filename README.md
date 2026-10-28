@@ -57,7 +57,14 @@ anything else that can only run console commands.
 sets it up. From the console: `/pb arena generate <id> at <world> <x> <y> <z> [name]`.
 By hand: `create`, `setwaiting`, `addspawn <red|blue>`, `wand` + `setbounds`, `enable`.
 `/pb arena list` shows every arena and what it still needs; `/pb help` lists the
-rest (`disable`, `clearspawns`, `tp`, `name`, `delete`).
+rest (`disable`, `clearspawns`, `tp`, `name`, `set`, `delete`).
+
+`/pb arena set <id> <option> <value>` gives one arena its own value for any of
+`config.yml`'s game options (`match-seconds`, `kill-limit`, `marker.hopper`,
+`teams.red.marker`...): everything but `ui`, `messages` and `update-check`.
+`default` puts an option back to `config.yml`'s, and `/pb arena set <id>` lists
+what the arena sets. They are kept under `settings:` beside the arena in
+`arenas.yml`.
 
 `/pb arena disable <id>` closes an arena until `enable` opens it again: nobody
 can join it or start a match on it, however they ask (`/pb join <id>`,
@@ -70,7 +77,9 @@ same. Staff can still `tp` to a closed arena and change it.
 
 `plugins/RPEPaintball/config.yml` has the numbers (match length, kill limit,
 respawn time, fire rate, ball speed, grenade cooldown...), each team's marker,
-and every word a player reads, in MiniMessage under `messages:`. `/pb reload`
+and every word a player reads, in MiniMessage under `messages:`. The numbers
+and the markers are the server's defaults: an arena can set any of them for
+itself (see Arenas). `/pb reload`
 re-reads it. Options a newer version adds are written into your existing file
 on start.
 
@@ -97,7 +106,7 @@ can be stuck in a match.
 | `paintball.stop` | op | `/pb stop` |
 | `paintball.reload` | op | `/pb reload` |
 | `paintball.as` | op | `/pb as <player> ...`; what they run is checked against *their* permissions |
-| `paintball.arena` | op | Arena setup: `/pb arena list`, `create`, `setwaiting`, `addspawn`, `clearspawns`, `wand` (and using the wand), `setbounds`, `enable`, `disable`, `tp`, `name` |
+| `paintball.arena` | op | Arena setup: `/pb arena list`, `create`, `setwaiting`, `addspawn`, `clearspawns`, `wand` (and using the wand), `setbounds`, `enable`, `disable`, `tp`, `name`, `set` |
 | `paintball.arena.generate` | op | `/pb arena generate`, which replaces every block in a 31 × 14 × 57 box (two below your feet to eleven above) and builds a glass waiting box over the middle, up to 17 above |
 | `paintball.arena.delete` | op | `/pb arena delete`, which also ends that arena's match and sends its players home |
 | `paintball.bypass.commands` | op | Run any command during a match. Without it a player in a match may only use `/pb`, `/msg`, `/tell`, `/w`, `/r`, `/reply`, `/me` and `/list` |

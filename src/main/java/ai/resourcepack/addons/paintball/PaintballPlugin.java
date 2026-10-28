@@ -50,6 +50,8 @@ public final class PaintballPlugin extends JavaPlugin {
     private GameManager games;
     private ArenaSetup setup;
     private Scoreboard scoreboard;
+    /** Each arena's settings, read over config.yml's: by the arena itself, so a replaced arena is read afresh. */
+    private final java.util.Map<ai.resourcepack.addons.paintball.arena.Arena, Settings> arenaSettings = new java.util.IdentityHashMap<>();
     /** Ticks since enable: Spigot has no current-tick counter of its own. */
     private long ticks;
 
@@ -198,6 +200,7 @@ public final class PaintballPlugin extends JavaPlugin {
         addNewOptions();
         settings = new Settings(getConfig());
         messages = new Messages(getConfig());
+        arenaSettings.clear();
         if (!games.games().isEmpty()) return false;
         arenas.load();
         return true;
@@ -221,8 +224,20 @@ public final class PaintballPlugin extends JavaPlugin {
         return content;
     }
 
+    /** config.yml's settings: the server's, before any arena's own. */
     public Settings settings() {
         return settings;
+    }
+
+    /** The settings a match on {@code arena} plays by: the options it sets for itself, then config.yml's. */
+    public Settings settings(ai.resourcepack.addons.paintball.arena.Arena arena) {
+        if (arena == null || arena.settings().isEmpty()) return settings;
+        return arenaSettings.computeIfAbsent(arena, a -> Settings.layered(getConfig(), a.settings()));
+    }
+
+    /** An arena's own options changed: read them again. */
+    public void arenaSettingsChanged(ai.resourcepack.addons.paintball.arena.Arena arena) {
+        arenaSettings.remove(arena);
     }
 
     public ArenaStore arenas() {

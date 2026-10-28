@@ -61,7 +61,7 @@ permissions:
     description: /pb as <player> ... - run a subcommand as somebody else (for NPCs and console). Checked against THEIR permissions.
     default: op
   paintball.arena:
-    description: /pb arena setup - list, create, setwaiting, addspawn, clearspawns, wand and setbounds, enable, disable, tp, name.
+    description: /pb arena setup - list, create, setwaiting, addspawn, clearspawns, wand and setbounds, enable, disable, tp, name, set (an arena's own settings).
     default: op
   paintball.arena.generate:
     description: /pb arena generate - build a whole field, replacing every block in a 31x14x57 box (two below your feet to eleven above) and building a glass waiting box over it, up to 17 above.

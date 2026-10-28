@@ -5,6 +5,7 @@ import ai.resourcepack.addons.paintball.arena.Arena;
 import ai.resourcepack.addons.paintball.arena.ArenaSetup;
 import ai.resourcepack.addons.paintball.arena.ArenaStore;
 import ai.resourcepack.addons.paintball.arena.FieldBuilder;
+import ai.resourcepack.addons.paintball.config.Settings;
 import ai.resourcepack.addons.paintball.game.Game;
 import ai.resourcepack.addons.paintball.team.Team;
 import ai.resourcepack.addons.paintball.text.Text;
@@ -21,6 +22,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 /**
  * {@code /paintball}, alias {@code /pb}.
@@ -180,6 +182,10 @@ public final class PaintballCommand implements TabExecutor {
             }
             return;
         }
+        if (a[0].equalsIgnoreCase("set")) {
+            arenaSet(sender, a);
+            return;
+        }
         Player p = as(sender);
         if (p == null) {
             // From the console a field can still be built, at a place named outright:
@@ -217,12 +223,15 @@ public final class PaintballCommand implements TabExecutor {
                 }
                 String name = rest.length() > 7 ? rest.substring(7).trim() : null;
                 Arena target = plugin.arenas().get(id);
+                Arena old = target;
                 if (target != null && !target.worldName().equals(p.getWorld().getName())) {
                     plugin.arenas().remove(id);
                     target = null;
                 }
                 if (target == null) target = setup.create(p, id, name == null || name.isEmpty() ? null : name);
                 if (target == null) return;
+                // A field rebuilt in another world is a new arena, but the same one to play.
+                if (old != null && old != target) old.settings().forEach(target::setting);
                 new FieldBuilder(p.getLocation()).build(target, setup);
                 p.teleport(target.waiting());
                 Text.send(p, Text.msg("Built <#FFD23F>" + target.name() + "</#FFD23F>. <white>/pb start</white> when you're ready."));
@@ -272,6 +281,58 @@ public final class PaintballCommand implements TabExecutor {
         }
     }
 
+    /**
+     * {@code /pb arena set <id> [<option> <value|default>]}: one of config.yml's
+     * game options for one arena alone, or with no option, what it sets. Works
+     * from the console too: nothing here needs a place.
+     */
+    private void arenaSet(CommandSender sender, String[] a) {
+        Arena arena = a.length > 1 ? plugin.arenas().get(a[1]) : null;
+        if (arena == null) {
+            Text.send(sender, Text.error(a.length > 1 ? "No arena called " + a[1] + ". <white>/pb arena list"
+                    : "/pb arena set <id> [<option> <value|default>]"));
+            return;
+        }
+        if (a.length == 2) {
+            if (arena.settings().isEmpty()) {
+                Text.send(sender, Text.msg(arena.name() + " plays by config.yml. <white>/pb arena set " + arena.id()
+                        + " <option> <value></white> changes an option for it alone."));
+                return;
+            }
+            Text.send(sender, Text.msg(arena.name() + " sets, over config.yml:"));
+            for (Map.Entry<String, Object> e : arena.settings().entrySet()) {
+                Text.send(sender, Text.msg("  <white>" + e.getKey() + "</white> " + Text.MM.escapeTags(String.valueOf(e.getValue()))
+                        + " <#5F6368>(config.yml: " + Text.MM.escapeTags(String.valueOf(plugin.getConfig().get(e.getKey()))) + ")"));
+            }
+            return;
+        }
+        String option = a[2].toLowerCase(Locale.ROOT);
+        if (!Settings.arenaOptions(plugin.getConfig()).contains(option)) {
+            Text.send(sender, Text.error("No option " + option + " an arena can set. Any of config.yml's but ui, messages and update-check; tab lists them."));
+            return;
+        }
+        if (a.length < 4) {
+            Text.send(sender, Text.error("/pb arena set " + arena.id() + " " + option + " <value|default>"));
+            return;
+        }
+        String text = String.join(" ", Arrays.copyOfRange(a, 3, a.length));
+        Object value = null;
+        if (!text.equalsIgnoreCase("default")) {
+            try {
+                value = Settings.parse(plugin.getConfig().get(option), text);
+            } catch (IllegalArgumentException e) {
+                Text.send(sender, Text.error(option + ": " + e.getMessage()));
+                return;
+            }
+        }
+        arena.setting(option, value);
+        plugin.arenas().save();
+        plugin.arenaSettingsChanged(arena);
+        Text.send(sender, Text.msg(value == null
+                ? option + " on " + arena.name() + " is config.yml's again <#5F6368>(" + Text.MM.escapeTags(String.valueOf(plugin.getConfig().get(option))) + ")"
+                : option + " on " + arena.name() + " is now <white>" + Text.MM.escapeTags(String.valueOf(value)) + "</white>."));
+    }
+
     private void consoleGenerate(CommandSender sender, String[] a) {
         String id = a[1].toLowerCase(Locale.ROOT);
         World world = Bukkit.getWorld(a[3]);
@@ -294,6 +355,7 @@ public final class PaintballCommand implements TabExecutor {
         Arena old = plugin.arenas().get(id);
         if (old != null && plugin.games().existing(id) != null) plugin.games().existing(id).stop();
         Arena target = new Arena(id, name, world.getName());
+        if (old != null) old.settings().forEach(target::setting);
         plugin.arenas().put(target);
         new FieldBuilder(new Location(world, x, y, z)).build(target, plugin.setup());
         Text.send(sender, Text.msg("Built and opened " + name + " in " + world.getName() + "."));
@@ -344,7 +406,7 @@ public final class PaintballCommand implements TabExecutor {
     }
 
     private static final List<String> ARENA_SUBCOMMANDS = List.of("list", "generate", "create", "setwaiting", "addspawn",
-            "clearspawns", "wand", "setbounds", "enable", "disable", "tp", "name", "delete");
+            "clearspawns", "wand", "setbounds", "enable", "disable", "tp", "name", "set", "delete");
 
     /** The arena subcommands a sender may run, in the order help and tab-completion show them. */
     private static List<String> arenaSubcommands(CommandSender s) {
@@ -394,6 +456,12 @@ public final class PaintballCommand implements TabExecutor {
         } else if (args.length == 4 && args[0].equalsIgnoreCase("arena") && sender.hasPermission(Perms.ARENA)) {
             String op = args[1].toLowerCase(Locale.ROOT);
             if (op.equals("addspawn") || op.equals("clearspawns")) out.addAll(List.of("red", "blue"));
+            if (op.equals("set")) out.addAll(Settings.arenaOptions(plugin.getConfig()));
+        } else if (args.length == 5 && args[0].equalsIgnoreCase("arena") && args[1].equalsIgnoreCase("set")
+                && sender.hasPermission(Perms.ARENA)) {
+            Object global = plugin.getConfig().get(args[3].toLowerCase(Locale.ROOT));
+            if (global != null) out.add(String.valueOf(global).replace(" ", ""));
+            out.add("default");
         }
         String typed = args[args.length - 1].toLowerCase(Locale.ROOT);
         out.removeIf(x -> !x.toLowerCase(Locale.ROOT).startsWith(typed));

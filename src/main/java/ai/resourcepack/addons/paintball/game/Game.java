@@ -83,7 +83,7 @@ public final class Game {
         this.arena = arena;
         this.content = plugin.content();
         this.fx = new Fx(content);
-        this.paint = new PaintLayer(content, plugin.settings().maxDecals);
+        this.paint = new PaintLayer(content, plugin.settings(arena).maxDecals);
         this.combat = new Combat(this, content, fx);
         this.hud = new Hud(this);
         if (FREEZE_KEY == null) FREEZE_KEY = new NamespacedKey(plugin, "freeze");
@@ -91,8 +91,9 @@ public final class Game {
         for (Team t : Team.values()) kills.put(t, 0);
     }
 
+    /** This arena's settings: its own options, then config.yml's. */
     Settings settings() {
-        return plugin.settings();
+        return plugin.settings(arena);
     }
 
     ai.resourcepack.addons.paintball.config.Messages messages() {

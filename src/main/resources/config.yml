@@ -1,6 +1,12 @@
 # Paintball, an RP Engine addon. Players /pb join; an op runs /pb start (alone is fine).
 # One mode: a hit splats you, you're back in a few seconds, and the team with
 # more kills when the clock runs out wins.
+#
+# Everything from here down to update-check is the server's default: an arena
+# can set any of it for itself with /pb arena set <arena> <option> <value>
+# (or under settings: beside that arena in arenas.yml), e.g.
+#   /pb arena set main match-seconds 300
+#   /pb arena set main marker.hopper 60
 
 match-seconds: 180
 # End early when a team reaches this many kills. 0 plays the whole clock.

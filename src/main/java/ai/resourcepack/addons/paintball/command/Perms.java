@@ -34,7 +34,7 @@ public final class Perms {
     public static final String RELOAD = "paintball.reload";
     /** {@code /pb as <player> ...}: run a subcommand as somebody else. */
     public static final String AS = "paintball.as";
-    /** {@code /pb arena} setup (list, create, spawns, bounds, the wand, open/close, tp, rename). */
+    /** {@code /pb arena} setup (list, create, spawns, bounds, the wand, open/close, tp, rename, its own settings). */
     public static final String ARENA = "paintball.arena";
     /** {@code /pb arena generate}, which replaces every block in a large box. */
     public static final String ARENA_GENERATE = "paintball.arena.generate";

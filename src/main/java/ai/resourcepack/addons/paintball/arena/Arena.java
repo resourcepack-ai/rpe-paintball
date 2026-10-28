@@ -9,8 +9,10 @@ import org.bukkit.util.BoundingBox;
 
 import java.util.ArrayList;
 import java.util.EnumMap;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 /**
  * One map: where players wait, where each team starts, the box the match is
@@ -27,6 +29,8 @@ public final class Arena {
     private final Map<Team, List<Point>> spawns = new EnumMap<>(Team.class);
     private BoundingBox bounds;
     private boolean enabled;
+    /** config.yml's game options this arena sets for itself, by path ("match-seconds", "marker.speed"). */
+    private final Map<String, Object> settings = new TreeMap<>();
 
     public Arena(String id, String name, String world) {
         this.id = id;
@@ -102,6 +106,17 @@ public final class Arena {
         this.enabled = on;
     }
 
+    /** The options this arena sets for itself; everything else is config.yml's. */
+    public Map<String, Object> settings() {
+        return Collections.unmodifiableMap(settings);
+    }
+
+    /** Sets one of config.yml's options for this arena alone, or with {@code null} goes back to config.yml's. */
+    public void setting(String path, Object value) {
+        if (value == null) settings.remove(path);
+        else settings.put(path, value);
+    }
+
     /** What the arena still needs before it can be enabled. Empty when it is ready. */
     public List<String> missing() {
         List<String> out = new ArrayList<>();
@@ -135,6 +150,12 @@ public final class Arena {
         } else {
             s.set("bounds", null);
         }
+        if (settings.isEmpty()) {
+            s.set("settings", null);
+        } else {
+            ConfigurationSection own = s.createSection("settings");
+            for (Map.Entry<String, Object> e : settings.entrySet()) own.set(e.getKey(), e.getValue());
+        }
     }
 
     static Arena load(String id, ConfigurationSection s) {
@@ -154,6 +175,12 @@ public final class Arena {
         if (min != null && max != null && min.size() == 3 && max.size() == 3) {
             a.bounds = new BoundingBox(num(min.get(0)), num(min.get(1)), num(min.get(2)),
                     num(max.get(0)), num(max.get(1)), num(max.get(2)));
+        }
+        ConfigurationSection own = s.getConfigurationSection("settings");
+        if (own != null) {
+            for (Map.Entry<String, Object> e : own.getValues(true).entrySet()) {
+                if (!(e.getValue() instanceof ConfigurationSection)) a.settings.put(e.getKey(), e.getValue());
+            }
         }
         return a;
     }
