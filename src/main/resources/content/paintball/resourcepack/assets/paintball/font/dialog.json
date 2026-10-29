@@ -17,6 +17,42 @@
    "chars": [
     ""
    ]
+  },
+  {
+   "type": "bitmap",
+   "file": "minecraft:font/dialog_paintball_scoreboard_ctf_background.png",
+   "ascent": 7,
+   "height": 143,
+   "chars": [
+    ""
+   ]
+  },
+  {
+   "type": "bitmap",
+   "file": "minecraft:font/dialog_paintball_scoreboard_ctf_tile_r0c1.png",
+   "ascent": 7,
+   "height": 143,
+   "chars": [
+    ""
+   ]
+  },
+  {
+   "type": "bitmap",
+   "file": "minecraft:font/dialog_paintball_scoreboard_ffa_background.png",
+   "ascent": 7,
+   "height": 200,
+   "chars": [
+    ""
+   ]
+  },
+  {
+   "type": "bitmap",
+   "file": "minecraft:font/dialog_paintball_scoreboard_ffa_tile_r0c1.png",
+   "ascent": 7,
+   "height": 200,
+   "chars": [
+    ""
+   ]
   }
  ]
 }

@@ -79,6 +79,15 @@
       },
       {
         "formats": {
+          "min_inclusive": 97,
+          "max_inclusive": 97
+        },
+        "min_format": 97,
+        "max_format": 97,
+        "directory": "rpe_shader_v97"
+      },
+      {
+        "formats": {
           "min_inclusive": 84,
           "max_inclusive": 84
         },
@@ -112,6 +121,15 @@
         "min_format": 75,
         "max_format": 88,
         "directory": "rpai_dialog_v75"
+      },
+      {
+        "formats": {
+          "min_inclusive": 97,
+          "max_inclusive": 97
+        },
+        "min_format": 97,
+        "max_format": 97,
+        "directory": "rpai_dialog_v97"
       }
     ]
   }

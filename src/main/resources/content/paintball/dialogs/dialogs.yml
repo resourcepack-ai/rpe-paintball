@@ -2,3 +2,7 @@
 # documents. Edit the documents and export again rather than this file.
 scoreboard:
   json: paintball/dialogs/scoreboard.json
+scoreboard_ctf:
+  json: paintball/dialogs/scoreboard_ctf.json
+scoreboard_ffa:
+  json: paintball/dialogs/scoreboard_ffa.json

@@ -13,8 +13,23 @@ in float vertexDistance;
 in vec4 vertexColor;
 in vec2 texCoord0;
 
+// rpai-merge:begin fragment-declarations v1
 in vec4 rawColor;
 in vec4 rpeScreen;
+// rpai-merge:end fragment-declarations
+// rpai-merge:begin fragment-vanilla v1
+// #moj_import <fog.glsl>
+// uniform sampler2D Sampler0;
+// uniform vec4 ColorModulator;
+// uniform float FogStart;
+// uniform float FogEnd;
+// uniform vec4 FogColor;
+// in float vertexDistance;
+// in vec4 vertexColor;
+// in vec2 texCoord0;
+// out vec4 fragColor;
+// rpai-merge:end fragment-vanilla
+
 out vec4 fragColor;
 
 // Vanilla's own, untouched below this line. Called by our main when the
@@ -27,6 +42,8 @@ void rpe_vanilla_main() {
     fragColor = linear_fog(color, vertexDistance, FogStart, FogEnd, FogColor);
 }
 
+// rpai-merge:begin fragment-epilogue v1
+// rpai-merge:renames main rpe_vanilla_main
 
 const float SIG_R = 0.996078;
 const float SIG_B = 0.003922;
@@ -136,6 +153,50 @@ void scene_0(vec2 p, vec2 screen, out float d, out vec3 col, out float shapeAlph
     d = opUnion(d, d4);
 }
 
+// ---- Paintball HUD (free for all) (signature 1, full screen) ----
+// Drawn at rpeScreen: the fragment's own position in GUI pixels, which the
+// vertex shader interpolates across the glyph it stretched over the screen.
+// No texel lookup and no canvas to clip to.
+
+// d: distance to the composed surface. col: its colour at this fragment.
+void scene_1(vec2 p, vec2 screen, out float d, out vec3 col, out float shapeAlpha) {
+    vec2 stretchK = screen / vec2(640.0, 360.0);
+    float stretchS = min(stretchK.x, stretchK.y);
+    d = 1e6;
+    col = vec3(0.0);
+    shapeAlpha = 0.0;
+
+    // box #1 (union)
+    float d0 = sdBox((p - (vec2(0.5, 0.0) * screen + vec2(-48.0, 14.0))), (vec2(25.0, 10.0)));
+    col = mix(col, vec3(0.2275, 0.2627, 0.3137), step(d0, d));
+    shapeAlpha = mix(shapeAlpha, 0.92, step(d0, d));
+    d = opUnion(d, d0);
+
+    // box #2 (union)
+    float d1 = sdBox((p - (vec2(0.5, 0.0) * screen + vec2(-48.0, 23.5))), (vec2(25.0, 0.5)));
+    col = mix(col, vec3(0.9098, 0.9176, 0.9294), step(d1, d));
+    shapeAlpha = mix(shapeAlpha, 0.95, step(d1, d));
+    d = opUnion(d, d1);
+
+    // box #3 (union)
+    float d2 = sdBox((p - (vec2(0.5, 0.0) * screen + vec2(48.0, 14.0))), (vec2(25.0, 10.0)));
+    col = mix(col, vec3(1.0, 0.8235, 0.2471), step(d2, d));
+    shapeAlpha = mix(shapeAlpha, 0.92, step(d2, d));
+    d = opUnion(d, d2);
+
+    // box #4 (union)
+    float d3 = sdBox((p - (vec2(0.5, 0.0) * screen + vec2(48.0, 23.5))), (vec2(25.0, 0.5)));
+    col = mix(col, vec3(0.7216, 0.5647, 0.1098), step(d3, d));
+    shapeAlpha = mix(shapeAlpha, 0.95, step(d3, d));
+    d = opUnion(d, d3);
+
+    // roundedBox #5 (union)
+    float d4 = sdRoundedBox((p - (vec2(0.5, 0.0) * screen + vec2(0.0, 14.0))), (vec2(21.0, 10.0)), (2.0));
+    col = mix(col, vec3(0.051, 0.0667, 0.0902), step(d4, d));
+    shapeAlpha = mix(shapeAlpha, 0.88, step(d4, d));
+    d = opUnion(d, d4);
+}
+
 void dispatch(int id, vec2 cell, vec2 sub, out float d, out vec3 col, out float a) {
     d = 1e6;
     col = vec3(0.0);
@@ -145,6 +206,15 @@ void dispatch(int id, vec2 cell, vec2 sub, out float d, out vec3 col, out float 
         vec2 stretchK = screen / vec2(640.0, 360.0);
         float stretchS = min(stretchK.x, stretchK.y);
         scene_0(rpeScreen.xy, screen, d, col, a);
+        float feather = max(max(max(max(max(1.0, 1.0), 1.0), 1.0), 1.0), 1.0);
+        a *= 1.0 - smoothstep(-feather * 0.5, feather * 0.5, d);
+        return;
+    }
+    if (id == 1) {
+        vec2 screen = rpeScreen.zw;
+        vec2 stretchK = screen / vec2(640.0, 360.0);
+        float stretchS = min(stretchK.x, stretchK.y);
+        scene_1(rpeScreen.xy, screen, d, col, a);
         float feather = max(max(max(max(max(1.0, 1.0), 1.0), 1.0), 1.0), 1.0);
         a *= 1.0 - smoothstep(-feather * 0.5, feather * 0.5, d);
         return;
@@ -207,4 +277,4 @@ void main() {
     }
     fragColor = vec4(shapeCol, shapeAlpha);
 }
-
+// rpai-merge:end fragment-epilogue

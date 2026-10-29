@@ -2,3 +2,5 @@
 # Edit the objects and export again rather than these files.
 hud:
   json: paintball/huds/hud.json
+hud_ffa:
+  json: paintball/huds/hud_ffa.json

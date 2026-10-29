@@ -33,6 +33,15 @@
    "chars": [
     ""
    ]
+  },
+  {
+   "type": "bitmap",
+   "file": "paintball:font/rpe_shader_1.png",
+   "ascent": 7,
+   "height": 8,
+   "chars": [
+    ""
+   ]
   }
  ]
 }
