@@ -226,15 +226,15 @@ void scene_2(vec2 p, vec2 screen, out float d, out vec3 col, out float shapeAlph
     shapeAlpha = 0.0;
 
     // roundedBox #1 (union)
-    float d0 = sdRoundedBox((p - (vec2(1.0, 0.5) * screen + vec2(-58.0, -3.0))), (vec2(52.0, 44.0)), (3.0));
-    col = mix(col, vec3(0.051, 0.0667, 0.0902), step(d0, d));
-    shapeAlpha = mix(shapeAlpha, 0.42, step(d0, d));
+    float d0 = sdRoundedBox((p - (vec2(1.0, 0.0) * screen + vec2(-40.0, 55.0))), (vec2(36.0, 12.0)), (4.0));
+    col = mix(col, vec3(0.0471, 0.0627, 0.0863), step(d0, d));
+    shapeAlpha = mix(shapeAlpha, 0.55, step(d0, d));
     d = opUnion(d, d0);
 
     // roundedBox #2 (union)
-    float d1 = sdRoundedBox((p - (vec2(1.0, 0.0) * screen + vec2(-36.0, 30.0))), (vec2(32.0, 24.0)), (3.0));
-    col = mix(col, vec3(0.051, 0.0667, 0.0902), step(d1, d));
-    shapeAlpha = mix(shapeAlpha, 0.42, step(d1, d));
+    float d1 = sdRoundedBox((p - (vec2(1.0, 0.5) * screen + vec2(-56.0, -2.0))), (vec2(52.0, 46.0)), (4.0));
+    col = mix(col, vec3(0.0471, 0.0627, 0.0863), step(d1, d));
+    shapeAlpha = mix(shapeAlpha, 0.45, step(d1, d));
     d = opUnion(d, d1);
 }
 
