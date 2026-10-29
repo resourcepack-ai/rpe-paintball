@@ -115,3 +115,72 @@ marker_gold_aim:
   first-person:
     parent: paintball:marker_sights
     textures: {atlas: "paintball:item/marker_gold", particle: "paintball:item/marker_gold"}
+
+marker_violet:
+  material: PAPER
+  name: "&5&lViolet Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_violet", particle: "paintball:item/marker_violet"}
+
+marker_violet_aim:
+  material: PAPER
+  name: "&5&lViolet Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_violet", particle: "paintball:item/marker_violet"}
+  first-person:
+    parent: paintball:marker_sights
+    textures: {atlas: "paintball:item/marker_violet", particle: "paintball:item/marker_violet"}
+
+marker_bubblegum:
+  material: PAPER
+  name: "&d&lBubblegum Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_bubblegum", particle: "paintball:item/marker_bubblegum"}
+
+marker_bubblegum_aim:
+  material: PAPER
+  name: "&d&lBubblegum Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_bubblegum", particle: "paintball:item/marker_bubblegum"}
+  first-person:
+    parent: paintball:marker_sights
+    textures: {atlas: "paintball:item/marker_bubblegum", particle: "paintball:item/marker_bubblegum"}
+
+marker_frost:
+  material: PAPER
+  name: "&b&lFrost Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_frost", particle: "paintball:item/marker_frost"}
+
+marker_frost_aim:
+  material: PAPER
+  name: "&b&lFrost Marker"
+  lore:
+    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"
+    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"
+  model:
+    parent: paintball:marker
+    textures: {atlas: "paintball:item/marker_frost", particle: "paintball:item/marker_frost"}
+  first-person:
+    parent: paintball:marker_sights
+    textures: {atlas: "paintball:item/marker_frost", particle: "paintball:item/marker_frost"}

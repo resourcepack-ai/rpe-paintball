@@ -32,7 +32,18 @@ SRC = os.path.join(ROOT, "src")
 OUT = os.path.join(ROOT, "..", "src", "main", "resources", "content", "paintball")
 A = os.path.join(OUT, "assets")
 
-TEAMS = {"red": (0xFF, 0x46, 0x55), "blue": (0x2E, 0x9B, 0xFF)}
+# Every paint a player can be in: the two teams' and, for a free for all, six
+# more. Each gets its own ball, splats, grenade, mine, mask and kill-feed edge
+# (the plugin's team/Paint.java has the same list and the same colours).
+TEAMS = {
+    "red": (0xFF, 0x46, 0x55), "blue": (0x2E, 0x9B, 0xFF),
+    "green": (0x5B, 0xE3, 0x7D), "orange": (0xFF, 0x8A, 0x3D), "yellow": (0xFF, 0xD2, 0x3F),
+    "purple": (0xA4, 0x5C, 0xFF), "pink": (0xFF, 0x5C, 0xC8), "cyan": (0x3D, 0xE0, 0xE0),
+}
+# The legacy colour code for each paint's item names.
+CODES = {"red": "c", "blue": "9", "green": "a", "orange": "6", "yellow": "e", "purple": "5", "pink": "d", "cyan": "b"}
+# Capture the flag has two sides, so two flags.
+SIDES = ("red", "blue")
 
 
 def path(*p):
@@ -77,6 +88,10 @@ SKINS = {
     "toxic": dict(display="Toxic", body=(0.21, 0.42, 0.62), accent=0x7CFF4F),
     "sunset": dict(display="Sunset", body=(0.76, 0.40, 0.62), accent=0xFF8A3D),
     "gold": dict(display="Gold", body=(0.60, 0.10, 0.30), accent=0xFFC94A),
+    # Free for all's last three colours.
+    "violet": dict(display="Violet", body=(0.74, 0.28, 0.58), accent=0xA45CFF),
+    "bubblegum": dict(display="Bubblegum", body=(0.91, 0.26, 0.80), accent=0xFF5CC8),
+    "frost": dict(display="Frost", body=(0.53, 0.16, 0.82), accent=0x3DE0E0),
 }
 TAN_V = 198 / 255   # the furniture's main tan, which the lightness map is measured from
 TRIM_V = 200 / 255  # the main blue of the trim
@@ -514,6 +529,129 @@ def grenade():
         team_recolour(atlas, team, GRENADE_RED).save(path("textures", "item", f"grenade_{team}.png"))
 
 
+def flag():
+    """Studio's capture-the-flag flag, stood on the middle of the model's floor
+    and coloured per side. The plugin draws it on an item display and sizes it
+    there, standing at a base or carried on a back."""
+    src = os.path.join(SRC, "flag_generated.json")
+    if not os.path.exists(src):
+        return False
+    els = studio_model("flag", "f")
+    lo = [min(min(e["from"][i], e["to"][i]) for e in els) for i in range(3)]
+    hi = [max(max(e["from"][i], e["to"][i]) for e in els) for i in range(3)]
+    # Sixteen units tall, its foot on the floor and its pole in the middle of
+    # the model, so the display's origin is where the pole meets the ground and
+    # the banner flies off to one side of it.
+    pole = next(e for e in els if "pole" in e.get("name", "") and "socket" not in e.get("name", ""))
+    px = (pole["from"][0] + pole["to"][0]) / 2
+    pz = (pole["from"][2] + pole["to"][2]) / 2
+    k = 16 / (hi[1] - lo[1])
+
+    def fit(p):
+        return [round(8 + (p[0] - px) * k, 3),
+                round((p[1] - lo[1]) * k, 3),
+                round(8 + (p[2] - pz) * k, 3)]
+
+    for e in els:
+        e["from"], e["to"] = fit(e["from"]), fit(e["to"])
+        # Studio's exact turn of the banner's panels, which a model file has no
+        # word for: the legal angle beside it is what the game draws.
+        e.pop("free_rotation", None)
+        if e.get("rotation"):
+            e["rotation"]["origin"] = fit(e["rotation"]["origin"])
+    model = {
+        "textures": {"f": "paintball:item/flag_red", "particle": "paintball:item/flag_red"},
+        "elements": els,
+        "display": {
+            "gui": {"rotation": [20, 45, 0], "translation": [0, 0, 0], "scale": [0.8, 0.8, 0.8]},
+            "ground": {"scale": [0.5, 0.5, 0.5]},
+            "fixed": {"scale": [1, 1, 1]},
+        },
+    }
+    save_json(model, "models", "flag.json")
+    atlas = Image.open(os.path.join(SRC, "flag_atlas.png")).convert("RGBA")
+    ref = main_red(atlas)
+    for side in SIDES:
+        team_recolour(atlas, side, ref).save(path("textures", "item", f"flag_{side}.png"))
+    return True
+
+
+def main_red(atlas):
+    """The red that covers most of an atlas: what becomes the side's colour exactly."""
+    counts = {}
+    for r, g, b, a in atlas.getdata():
+        if a == 0:
+            continue
+        h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+        if s >= 0.35 and v >= 0.35 and (h * 360 <= 15 or h * 360 >= 330):
+            counts[(r, g, b)] = counts.get((r, g, b), 0) + 1
+    return max(counts, key=counts.get) if counts else (220, 40, 50)
+
+
+# The flag icons beside capture the flag's score: 9 wide, 11 tall, the digits'
+# height. Home is the banner solid, taken is its outline, dropped is the banner
+# fallen to the foot of the pole.
+FLAG_ICONS = {
+    "home": [
+        "##.......",
+        "#######..",
+        "########.",
+        "#######..",
+        "########.",
+        "#######..",
+        "#........",
+        "#........",
+        "#........",
+        "#........",
+        "###......",
+    ],
+    "taken": [
+        "##.......",
+        "#######..",
+        "#.....##.",
+        "#.....#..",
+        "#.....##.",
+        "#######..",
+        "#........",
+        "#........",
+        "#........",
+        "#........",
+        "###......",
+    ],
+    "dropped": [
+        ".........",
+        ".........",
+        ".........",
+        ".........",
+        ".........",
+        ".........",
+        "..######.",
+        ".#######.",
+        "..######.",
+        ".#######.",
+        "#########",
+    ],
+}
+
+
+def flag_icons():
+    for side in SIDES:
+        rgb = TEAMS[side]
+        for state, rows in FLAG_ICONS.items():
+            img = Image.new("RGBA", (9, 11), (0, 0, 0, 0))
+            px = img.load()
+            for y, row in enumerate(rows):
+                for x, c in enumerate(row):
+                    if c != "#":
+                        continue
+                    pole = x == 0 and state != "dropped"
+                    px[x, y] = ((236, 236, 236, 255) if pole else rgb + (255,))
+            # A clear right column keeps the advance the cell's (see bitmap()).
+            if not any(img.getpixel((8, y))[3] for y in range(11)):
+                px[8, 0] = FAINT
+            img.save(path("textures", "font", f"flag_{side}_{state}.png"))
+
+
 # ---------------------------------------------------------------------------
 # Font glyphs
 # ---------------------------------------------------------------------------
@@ -772,7 +910,7 @@ def sounds():
 def definitions():
     lines = ["# The marker: one model (assets/models/marker.json), a texture per skin, and an",
              "# aimed twin of each whose holder sees the sights. The plugin hands these out.", ""]
-    codes = {"ember": "c", "tide": "9", "toxic": "a", "sunset": "6", "gold": "e"}
+    codes = {"ember": "c", "tide": "9", "toxic": "a", "sunset": "6", "gold": "e", "violet": "5", "bubblegum": "d", "frost": "b"}
     lore = ["  lore:", '    - "&7Hold &fright-click&7 to fire, &fleft-click&7 to aim"',
             '    - "&fQ&7 reloads  &8·  &fF&7 scoreboard"']
     for skin, cfg in SKINS.items():
@@ -790,7 +928,7 @@ def definitions():
              "# masks are worn, balls fly, splats sit on walls, grenades are thrown.", ""]
     for team in TEAMS:
         nice = team.capitalize()
-        code = "c" if team == "red" else "9"
+        code = CODES[team]
         lines += [f"mask_{team}:", "  material: PAPER", f'  name: "&{code}{nice} Mask"', "  model:", "    parent: paintball:mask",
                   f"    textures: {{mask: \"paintball:item/mask_{team}\", particle: \"paintball:item/mask_{team}\"}}", ""]
         lines += [f"ball_{team}:", "  material: PAPER", f'  name: "&f{nice} Paintball"', "  model:", "    parent: paintball:ball",
@@ -807,6 +945,12 @@ def definitions():
         for n in (1, 2, 3):
             lines += [f"splat_{team}_{n}:", "  material: PAPER", f'  name: "&f{nice} Splat"', "  model:", "    parent: paintball:splat",
                       f"    textures: {{splat: \"paintball:item/splat_{team}_{n}\", particle: \"paintball:item/splat_{team}_{n}\"}}", ""]
+    if os.path.exists(path("models", "flag.json")):
+        lines += ["# Capture the flag's flags, drawn by the plugin at each base and on a carrier's back.", ""]
+        for side in SIDES:
+            lines += [f"flag_{side}:", "  material: PAPER", f'  name: "&{CODES[side]}&l{side.capitalize()} Flag"', "  model:",
+                      "    parent: paintball:flag",
+                      f"    textures: {{f: \"paintball:item/flag_{side}\", particle: \"paintball:item/flag_{side}\"}}", ""]
     write_text("\n".join(lines), "items", "gear.yml")
 
     icons = ["# Glyphs the plugin writes into the HUD (huds/hud.json). Generated by",
@@ -822,6 +966,10 @@ def definitions():
     names = [f"feed_l_{t}" for t in TEAMS] + [f"feed_r_{t}" for t in TEAMS]         + [f"feed_m{w}" for w in FEED_WIDTHS] + [f"feed_h{w}" for w in FEED_WIDTHS]
     for name in names:
         icons += [f"{name}:", f"  file: {name}", f"  height: {FEED_H}", "  ascent: 10", ""]
+    icons += ["# Capture the flag: each flag's state, beside its team's score.", ""]
+    for side in SIDES:
+        for state in FLAG_ICONS:
+            icons += [f"flag_{side}_{state}:", f"  file: flag_{side}_{state}", "  height: 11", "  ascent: 9", ""]
     icons += ["feed_marker:", "  file: feed_marker", "  height: 9", "  ascent: 8", "",
               "# Centred on the crosshair: half a pixel up and left of the middle, where",
               "# the game's own plus is on a screen an even number of pixels across.",
@@ -845,6 +993,8 @@ if __name__ == "__main__":
     ball()
     splats()
     grenade()
+    flag()
+    flag_icons()
     screen_splats()
     small_glyphs()
     hud_glyphs()

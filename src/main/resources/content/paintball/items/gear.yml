@@ -110,3 +110,349 @@ splat_blue_3:
   model:
     parent: paintball:splat
     textures: {splat: "paintball:item/splat_blue_3", particle: "paintball:item/splat_blue_3"}
+
+mask_green:
+  material: PAPER
+  name: "&aGreen Mask"
+  model:
+    parent: paintball:mask
+    textures: {mask: "paintball:item/mask_green", particle: "paintball:item/mask_green"}
+
+ball_green:
+  material: PAPER
+  name: "&fGreen Paintball"
+  model:
+    parent: paintball:ball
+    textures: {ball: "paintball:item/ball_green", particle: "paintball:item/ball_green"}
+
+grenade_green:
+  material: PAPER
+  name: "&a&lPaint Grenade"
+  lore:
+    - "&7Right-click to throw. It bursts a moment later,"
+    - "&7then recharges before you can throw again."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_green", particle: "paintball:item/grenade_green"}
+
+mine_green:
+  material: PAPER
+  name: "&a&lPaint Mine"
+  lore:
+    - "&7Right-click the ground to set it. The first enemy"
+    - "&7to step on it sets it off."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_green", particle: "paintball:item/grenade_green"}
+
+splat_green_1:
+  material: PAPER
+  name: "&fGreen Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_green_1", particle: "paintball:item/splat_green_1"}
+
+splat_green_2:
+  material: PAPER
+  name: "&fGreen Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_green_2", particle: "paintball:item/splat_green_2"}
+
+splat_green_3:
+  material: PAPER
+  name: "&fGreen Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_green_3", particle: "paintball:item/splat_green_3"}
+
+mask_orange:
+  material: PAPER
+  name: "&6Orange Mask"
+  model:
+    parent: paintball:mask
+    textures: {mask: "paintball:item/mask_orange", particle: "paintball:item/mask_orange"}
+
+ball_orange:
+  material: PAPER
+  name: "&fOrange Paintball"
+  model:
+    parent: paintball:ball
+    textures: {ball: "paintball:item/ball_orange", particle: "paintball:item/ball_orange"}
+
+grenade_orange:
+  material: PAPER
+  name: "&6&lPaint Grenade"
+  lore:
+    - "&7Right-click to throw. It bursts a moment later,"
+    - "&7then recharges before you can throw again."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_orange", particle: "paintball:item/grenade_orange"}
+
+mine_orange:
+  material: PAPER
+  name: "&6&lPaint Mine"
+  lore:
+    - "&7Right-click the ground to set it. The first enemy"
+    - "&7to step on it sets it off."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_orange", particle: "paintball:item/grenade_orange"}
+
+splat_orange_1:
+  material: PAPER
+  name: "&fOrange Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_orange_1", particle: "paintball:item/splat_orange_1"}
+
+splat_orange_2:
+  material: PAPER
+  name: "&fOrange Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_orange_2", particle: "paintball:item/splat_orange_2"}
+
+splat_orange_3:
+  material: PAPER
+  name: "&fOrange Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_orange_3", particle: "paintball:item/splat_orange_3"}
+
+mask_yellow:
+  material: PAPER
+  name: "&eYellow Mask"
+  model:
+    parent: paintball:mask
+    textures: {mask: "paintball:item/mask_yellow", particle: "paintball:item/mask_yellow"}
+
+ball_yellow:
+  material: PAPER
+  name: "&fYellow Paintball"
+  model:
+    parent: paintball:ball
+    textures: {ball: "paintball:item/ball_yellow", particle: "paintball:item/ball_yellow"}
+
+grenade_yellow:
+  material: PAPER
+  name: "&e&lPaint Grenade"
+  lore:
+    - "&7Right-click to throw. It bursts a moment later,"
+    - "&7then recharges before you can throw again."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_yellow", particle: "paintball:item/grenade_yellow"}
+
+mine_yellow:
+  material: PAPER
+  name: "&e&lPaint Mine"
+  lore:
+    - "&7Right-click the ground to set it. The first enemy"
+    - "&7to step on it sets it off."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_yellow", particle: "paintball:item/grenade_yellow"}
+
+splat_yellow_1:
+  material: PAPER
+  name: "&fYellow Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_yellow_1", particle: "paintball:item/splat_yellow_1"}
+
+splat_yellow_2:
+  material: PAPER
+  name: "&fYellow Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_yellow_2", particle: "paintball:item/splat_yellow_2"}
+
+splat_yellow_3:
+  material: PAPER
+  name: "&fYellow Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_yellow_3", particle: "paintball:item/splat_yellow_3"}
+
+mask_purple:
+  material: PAPER
+  name: "&5Purple Mask"
+  model:
+    parent: paintball:mask
+    textures: {mask: "paintball:item/mask_purple", particle: "paintball:item/mask_purple"}
+
+ball_purple:
+  material: PAPER
+  name: "&fPurple Paintball"
+  model:
+    parent: paintball:ball
+    textures: {ball: "paintball:item/ball_purple", particle: "paintball:item/ball_purple"}
+
+grenade_purple:
+  material: PAPER
+  name: "&5&lPaint Grenade"
+  lore:
+    - "&7Right-click to throw. It bursts a moment later,"
+    - "&7then recharges before you can throw again."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_purple", particle: "paintball:item/grenade_purple"}
+
+mine_purple:
+  material: PAPER
+  name: "&5&lPaint Mine"
+  lore:
+    - "&7Right-click the ground to set it. The first enemy"
+    - "&7to step on it sets it off."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_purple", particle: "paintball:item/grenade_purple"}
+
+splat_purple_1:
+  material: PAPER
+  name: "&fPurple Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_purple_1", particle: "paintball:item/splat_purple_1"}
+
+splat_purple_2:
+  material: PAPER
+  name: "&fPurple Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_purple_2", particle: "paintball:item/splat_purple_2"}
+
+splat_purple_3:
+  material: PAPER
+  name: "&fPurple Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_purple_3", particle: "paintball:item/splat_purple_3"}
+
+mask_pink:
+  material: PAPER
+  name: "&dPink Mask"
+  model:
+    parent: paintball:mask
+    textures: {mask: "paintball:item/mask_pink", particle: "paintball:item/mask_pink"}
+
+ball_pink:
+  material: PAPER
+  name: "&fPink Paintball"
+  model:
+    parent: paintball:ball
+    textures: {ball: "paintball:item/ball_pink", particle: "paintball:item/ball_pink"}
+
+grenade_pink:
+  material: PAPER
+  name: "&d&lPaint Grenade"
+  lore:
+    - "&7Right-click to throw. It bursts a moment later,"
+    - "&7then recharges before you can throw again."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_pink", particle: "paintball:item/grenade_pink"}
+
+mine_pink:
+  material: PAPER
+  name: "&d&lPaint Mine"
+  lore:
+    - "&7Right-click the ground to set it. The first enemy"
+    - "&7to step on it sets it off."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_pink", particle: "paintball:item/grenade_pink"}
+
+splat_pink_1:
+  material: PAPER
+  name: "&fPink Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_pink_1", particle: "paintball:item/splat_pink_1"}
+
+splat_pink_2:
+  material: PAPER
+  name: "&fPink Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_pink_2", particle: "paintball:item/splat_pink_2"}
+
+splat_pink_3:
+  material: PAPER
+  name: "&fPink Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_pink_3", particle: "paintball:item/splat_pink_3"}
+
+mask_cyan:
+  material: PAPER
+  name: "&bCyan Mask"
+  model:
+    parent: paintball:mask
+    textures: {mask: "paintball:item/mask_cyan", particle: "paintball:item/mask_cyan"}
+
+ball_cyan:
+  material: PAPER
+  name: "&fCyan Paintball"
+  model:
+    parent: paintball:ball
+    textures: {ball: "paintball:item/ball_cyan", particle: "paintball:item/ball_cyan"}
+
+grenade_cyan:
+  material: PAPER
+  name: "&b&lPaint Grenade"
+  lore:
+    - "&7Right-click to throw. It bursts a moment later,"
+    - "&7then recharges before you can throw again."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_cyan", particle: "paintball:item/grenade_cyan"}
+
+mine_cyan:
+  material: PAPER
+  name: "&b&lPaint Mine"
+  lore:
+    - "&7Right-click the ground to set it. The first enemy"
+    - "&7to step on it sets it off."
+  model:
+    parent: paintball:grenade
+    textures: {g: "paintball:item/grenade_cyan", particle: "paintball:item/grenade_cyan"}
+
+splat_cyan_1:
+  material: PAPER
+  name: "&fCyan Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_cyan_1", particle: "paintball:item/splat_cyan_1"}
+
+splat_cyan_2:
+  material: PAPER
+  name: "&fCyan Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_cyan_2", particle: "paintball:item/splat_cyan_2"}
+
+splat_cyan_3:
+  material: PAPER
+  name: "&fCyan Splat"
+  model:
+    parent: paintball:splat
+    textures: {splat: "paintball:item/splat_cyan_3", particle: "paintball:item/splat_cyan_3"}
+
+# Capture the flag's flags, drawn by the plugin at each base and on a carrier's back.
+
+flag_red:
+  material: PAPER
+  name: "&c&lRed Flag"
+  model:
+    parent: paintball:flag
+    textures: {f: "paintball:item/flag_red", particle: "paintball:item/flag_red"}
+
+flag_blue:
+  material: PAPER
+  name: "&9&lBlue Flag"
+  model:
+    parent: paintball:flag
+    textures: {f: "paintball:item/flag_blue", particle: "paintball:item/flag_blue"}

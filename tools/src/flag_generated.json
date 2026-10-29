@@ -1,0 +1,677 @@
+{
+  "parent": "block/block",
+  "textures": {
+    "atlas": "paintball:item/flag_atlas",
+    "particle": "paintball:item/flag_atlas"
+  },
+  "elements": [
+    {
+      "name": "weighted_base_a",
+      "from": [
+        -1.75,
+        0,
+        3
+      ],
+      "to": [
+        2.25,
+        2,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.75,
+            7,
+            6.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            5.75,
+            7,
+            6.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            3.25,
+            7,
+            5.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            3.25,
+            7,
+            5.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            10.75,
+            0,
+            11.75,
+            2.5
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            11.75,
+            0,
+            12.75,
+            2.5
+          ],
+          "texture": "#atlas"
+        }
+      }
+    },
+    {
+      "name": "weighted_base_b",
+      "from": [
+        -4.75,
+        0.06,
+        6
+      ],
+      "to": [
+        5.25,
+        1.94,
+        10
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3.25,
+            7,
+            5.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            3.25,
+            7,
+            5.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            5.75,
+            7,
+            6.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            5.75,
+            7,
+            6.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            12.75,
+            0,
+            15.25,
+            1
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            0,
+            7,
+            2.5,
+            8
+          ],
+          "texture": "#atlas"
+        }
+      }
+    },
+    {
+      "name": "weighted_base_c",
+      "from": [
+        -1.75,
+        -0.06,
+        3
+      ],
+      "to": [
+        2.25,
+        2.06,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.75,
+            7,
+            6.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            5.75,
+            7,
+            6.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            3.25,
+            7,
+            5.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            3.25,
+            7,
+            5.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            10.75,
+            0,
+            11.75,
+            2.5
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            11.75,
+            0,
+            12.75,
+            2.5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "rotation": {
+        "origin": [
+          0.25,
+          1,
+          8
+        ],
+        "axis": "y",
+        "angle": 45
+      }
+    },
+    {
+      "name": "weighted_base_d",
+      "from": [
+        -1.75,
+        0.12,
+        3
+      ],
+      "to": [
+        2.25,
+        1.88,
+        13
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            5.75,
+            7,
+            6.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            5.75,
+            7,
+            6.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            3.25,
+            7,
+            5.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            3.25,
+            7,
+            5.75,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            10.75,
+            0,
+            11.75,
+            2.5
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            11.75,
+            0,
+            12.75,
+            2.5
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "rotation": {
+        "origin": [
+          0.25,
+          1,
+          8
+        ],
+        "axis": "y",
+        "angle": -45
+      }
+    },
+    {
+      "name": "pole_socket",
+      "from": [
+        -1.25,
+        2,
+        6.5
+      ],
+      "to": [
+        1.75,
+        3,
+        9.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.25,
+            7,
+            8,
+            7.25
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            7.25,
+            7,
+            8,
+            7.25
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            7.25,
+            7,
+            8,
+            7.25
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            7.25,
+            7,
+            8,
+            7.25
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            2.5,
+            7,
+            3.25,
+            7.75
+          ],
+          "texture": "#atlas"
+        }
+      }
+    },
+    {
+      "name": "white_pole",
+      "from": [
+        -0.25,
+        3,
+        7.5
+      ],
+      "to": [
+        0.75,
+        31,
+        8.5
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0,
+            0,
+            0.25,
+            7
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            0,
+            0,
+            0.25,
+            7
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            0,
+            0,
+            0.25,
+            7
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            0,
+            0,
+            0.25,
+            7
+          ],
+          "texture": "#atlas"
+        }
+      }
+    },
+    {
+      "name": "rounded_cap",
+      "from": [
+        -0.75,
+        31,
+        7
+      ],
+      "to": [
+        1.25,
+        32,
+        9
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            8,
+            7,
+            8.5,
+            7.25
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            8,
+            7,
+            8.5,
+            7.25
+          ],
+          "texture": "#atlas"
+        },
+        "east": {
+          "uv": [
+            8,
+            7,
+            8.5,
+            7.25
+          ],
+          "texture": "#atlas"
+        },
+        "west": {
+          "uv": [
+            8,
+            7,
+            8.5,
+            7.25
+          ],
+          "texture": "#atlas"
+        },
+        "up": {
+          "uv": [
+            6.75,
+            7,
+            7.25,
+            7.5
+          ],
+          "texture": "#atlas"
+        },
+        "down": {
+          "uv": [
+            6.75,
+            7,
+            7.25,
+            7.5
+          ],
+          "texture": "#atlas"
+        }
+      }
+    },
+    {
+      "name": "banner_hoist",
+      "from": [
+        0.75,
+        18,
+        8
+      ],
+      "to": [
+        7.75,
+        30,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            0.25,
+            0,
+            2,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            2,
+            0,
+            3.75,
+            3
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "free_rotation": {
+        "origin": [
+          0.75,
+          24,
+          8
+        ],
+        "angles": [
+          0,
+          21.79,
+          0
+        ]
+      },
+      "rotation": {
+        "origin": [
+          0.75,
+          24,
+          8
+        ],
+        "axis": "y",
+        "angle": 22.5
+      }
+    },
+    {
+      "name": "banner_middle",
+      "from": [
+        6.75,
+        18,
+        8
+      ],
+      "to": [
+        13.75,
+        30,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            3.75,
+            0,
+            5.5,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            5.5,
+            0,
+            7.25,
+            3
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "free_rotation": {
+        "origin": [
+          13.75,
+          24,
+          8
+        ],
+        "angles": [
+          0,
+          -21.79,
+          0
+        ]
+      },
+      "rotation": {
+        "origin": [
+          13.75,
+          24,
+          8
+        ],
+        "axis": "y",
+        "angle": -22.5
+      }
+    },
+    {
+      "name": "banner_fly",
+      "from": [
+        13.75,
+        18,
+        8
+      ],
+      "to": [
+        20.75,
+        30,
+        8
+      ],
+      "faces": {
+        "north": {
+          "uv": [
+            7.25,
+            0,
+            9,
+            3
+          ],
+          "texture": "#atlas"
+        },
+        "south": {
+          "uv": [
+            9,
+            0,
+            10.75,
+            3
+          ],
+          "texture": "#atlas"
+        }
+      },
+      "free_rotation": {
+        "origin": [
+          13.75,
+          24,
+          8
+        ],
+        "angles": [
+          0,
+          21.79,
+          0
+        ]
+      },
+      "rotation": {
+        "origin": [
+          13.75,
+          24,
+          8
+        ],
+        "axis": "y",
+        "angle": 22.5
+      }
+    }
+  ],
+  "groups": [
+    {
+      "name": "flag_stand",
+      "origin": [
+        0.25,
+        0,
+        8
+      ],
+      "children": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6
+      ]
+    },
+    {
+      "name": "red_banner",
+      "origin": [
+        0.75,
+        30,
+        8
+      ],
+      "children": [
+        7,
+        8,
+        9
+      ]
+    }
+  ]
+}

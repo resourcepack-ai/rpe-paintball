@@ -86,6 +86,36 @@ feed_l_blue:
   height: 13
   ascent: 10
 
+feed_l_green:
+  file: feed_l_green
+  height: 13
+  ascent: 10
+
+feed_l_orange:
+  file: feed_l_orange
+  height: 13
+  ascent: 10
+
+feed_l_yellow:
+  file: feed_l_yellow
+  height: 13
+  ascent: 10
+
+feed_l_purple:
+  file: feed_l_purple
+  height: 13
+  ascent: 10
+
+feed_l_pink:
+  file: feed_l_pink
+  height: 13
+  ascent: 10
+
+feed_l_cyan:
+  file: feed_l_cyan
+  height: 13
+  ascent: 10
+
 feed_r_red:
   file: feed_r_red
   height: 13
@@ -93,6 +123,36 @@ feed_r_red:
 
 feed_r_blue:
   file: feed_r_blue
+  height: 13
+  ascent: 10
+
+feed_r_green:
+  file: feed_r_green
+  height: 13
+  ascent: 10
+
+feed_r_orange:
+  file: feed_r_orange
+  height: 13
+  ascent: 10
+
+feed_r_yellow:
+  file: feed_r_yellow
+  height: 13
+  ascent: 10
+
+feed_r_purple:
+  file: feed_r_purple
+  height: 13
+  ascent: 10
+
+feed_r_pink:
+  file: feed_r_pink
+  height: 13
+  ascent: 10
+
+feed_r_cyan:
+  file: feed_r_cyan
   height: 13
   ascent: 10
 
@@ -165,6 +225,38 @@ feed_h64:
   file: feed_h64
   height: 13
   ascent: 10
+
+# Capture the flag: each flag's state, beside its team's score.
+
+flag_red_home:
+  file: flag_red_home
+  height: 11
+  ascent: 9
+
+flag_red_taken:
+  file: flag_red_taken
+  height: 11
+  ascent: 9
+
+flag_red_dropped:
+  file: flag_red_dropped
+  height: 11
+  ascent: 9
+
+flag_blue_home:
+  file: flag_blue_home
+  height: 11
+  ascent: 9
+
+flag_blue_taken:
+  file: flag_blue_taken
+  height: 11
+  ascent: 9
+
+flag_blue_dropped:
+  file: flag_blue_dropped
+  height: 11
+  ascent: 9
 
 feed_marker:
   file: feed_marker
