@@ -11,6 +11,8 @@ public final class StatLine {
     public int matches;
     public int mvps;
     public long paint;
+    /** Flags brought home, in capture the flag. */
+    public int captures;
 
     public void add(StatLine o) {
         kills += o.kills;
@@ -22,6 +24,7 @@ public final class StatLine {
         matches += o.matches;
         mvps += o.mvps;
         paint += o.paint;
+        captures += o.captures;
     }
 
     public StatLine copy() {

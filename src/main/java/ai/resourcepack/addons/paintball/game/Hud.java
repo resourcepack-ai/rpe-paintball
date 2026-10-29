@@ -2,6 +2,7 @@ package ai.resourcepack.addons.paintball.game;
 
 import ai.resourcepack.addons.paintball.config.Messages;
 import ai.resourcepack.addons.paintball.config.Settings;
+import ai.resourcepack.addons.paintball.team.Paint;
 import ai.resourcepack.addons.paintball.team.Team;
 import ai.resourcepack.addons.paintball.text.Text;
 import ai.resourcepack.engine.api.Overlays;
@@ -45,6 +46,14 @@ final class Hud {
     private static final int FEED_LINES = 3;
 
     private static final String[] FEED_SUFFIXES = {"", "_kr", "_kb", "_vr", "_vb"};
+    /** The free-for-all HUD's feed: the panel, then the killer and the victim, each one white run. */
+    private static final String[] FFA_FEED_SUFFIXES = {"", "_k", "_v"};
+    /**
+     * The free-for-all HUD's screen paint is two runs, because a run carries at
+     * most four colours besides its own: this one is red with blue, green,
+     * orange and yellow as states, the other purple with pink and cyan.
+     */
+    private static final Set<Paint> FFA_SPLAT_A = java.util.EnumSet.of(Paint.RED, Paint.BLUE, Paint.GREEN, Paint.ORANGE, Paint.YELLOW);
 
     // ---- tools/hud_art.py's numbers ----------------------------------------------------
     /** The weapon cluster: the grenade card, a gap, the ammo panel. */
@@ -80,6 +89,11 @@ final class Hud {
             st.setOption(org.bukkit.scoreboard.Team.Option.COLLISION_RULE, org.bukkit.scoreboard.Team.OptionStatus.NEVER);
             st.setAllowFriendlyFire(false);
         }
+        // A free for all has one side per player, which a scoreboard team cannot
+        // say, so everybody is in one whose names nobody sees.
+        org.bukkit.scoreboard.Team all = board.registerNewTeam("c_ffa");
+        all.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, org.bukkit.scoreboard.Team.OptionStatus.NEVER);
+        all.setOption(org.bukkit.scoreboard.Team.Option.COLLISION_RULE, org.bukkit.scoreboard.Team.OptionStatus.NEVER);
     }
 
     /** What the game's own name tags were last set to: shown or not, and to enemies too. */
@@ -97,7 +111,10 @@ final class Hud {
         org.bukkit.scoreboard.Team.OptionStatus status = !shown ? org.bukkit.scoreboard.Team.OptionStatus.NEVER
                 : enemies ? org.bukkit.scoreboard.Team.OptionStatus.ALWAYS : org.bukkit.scoreboard.Team.OptionStatus.FOR_OWN_TEAM;
         for (org.bukkit.scoreboard.Team st : board.getTeams()) {
-            st.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, status);
+            // In the free-for-all team "own team" would be everybody.
+            boolean everybody = st.getName().equals("c_ffa");
+            st.setOption(org.bukkit.scoreboard.Team.Option.NAME_TAG_VISIBILITY, everybody && status == org.bukkit.scoreboard.Team.OptionStatus.FOR_OWN_TEAM
+                    ? org.bukkit.scoreboard.Team.OptionStatus.NEVER : status);
         }
     }
 
@@ -110,7 +127,7 @@ final class Hud {
     }
 
     private String hudId() {
-        return game.settings().hudId;
+        return game.settings().hud(game.mode);
     }
 
     void join(Player p) {
@@ -142,10 +159,9 @@ final class Hud {
             for (String e : new HashSet<>(st.getEntries())) st.removeEntry(e);
         }
         for (GamePlayer gp : game.active()) {
-            if (gp.team != null) {
-                org.bukkit.scoreboard.Team st = board.getTeam((gp.team == Team.RED ? "a_" : "b_") + gp.team.id());
-                if (st != null) st.addEntry(gp.name);
-            }
+            org.bukkit.scoreboard.Team st = gp.team != null ? board.getTeam((gp.team == Team.RED ? "a_" : "b_") + gp.team.id())
+                    : gp.paint != null ? board.getTeam("c_ffa") : null;
+            if (st != null) st.addEntry(gp.name);
         }
         refreshScores();
     }
@@ -160,12 +176,12 @@ final class Hud {
         for (GamePlayer gp : game.active()) {
             Player p = gp.player();
             if (p == null) continue;
-            if (gp.team == null) {
+            if (gp.paint == null) {
                 p.setPlayerListName(Text.legacy(Text.plain(gp.name, Text.BODY)));
                 continue;
             }
             p.setPlayerListName(Text.legacy(Component.text()
-                    .append(Text.plain("▍", gp.team.color()))
+                    .append(Text.plain("▍", gp.paint.color()))
                     .append(Text.plain(" " + gp.name + "  ", Text.BODY))
                     .append(Text.plain(String.valueOf(gp.stats.kills), Text.BODY).decorate(TextDecoration.BOLD))
                     .append(Text.plain(" / ", Text.DIM))
@@ -198,8 +214,13 @@ final class Hud {
         }
     }
 
-    /** The lobby's line: how each side is picking, and what this player picked. */
+    /** The lobby's line: the mode next up, how each side is picking, and what this player picked. */
     private Component lobbyBar(GamePlayer gp) {
+        Messages m0 = messages();
+        Mode mode = game.mode();
+        if (!mode.teams()) {
+            return m0.component("lobby-ffa", "count", String.valueOf(game.size()), "mode", m0.plain("mode-" + mode.id()));
+        }
         int red = 0;
         int blue = 0;
         for (GamePlayer o : game.active()) {
@@ -207,7 +228,7 @@ final class Hud {
             else if (o.pick == Team.BLUE) blue++;
         }
         Messages m = messages();
-        return m.component("lobby-teams", "count", String.valueOf(game.size()),
+        return m.component("lobby-teams", "mode", m.plain("mode-" + mode.id()), "count", String.valueOf(game.size()),
                 "red", String.valueOf(red), "blue", String.valueOf(blue),
                 "pick", gp.pick == null ? m.plain("pick-none") : gp.pick.display().toUpperCase(),
                 "pick_colour", gp.pick == null ? "#9AA0A6" : gp.pick.color().asHexString());
@@ -227,11 +248,17 @@ final class Hud {
         overlays.show(p, hudId());
     }
 
+    /** Every value either HUD prints, so leaving clears all of them. */
     private static List<String> names() {
         List<String> out = new java.util.ArrayList<>(List.of("pb_red", "pb_blue", "pb_time", "pb_status",
                 "pb_weapon", "pb_gun", "pb_gun_hot", "pb_hit", "pb_xhair",
-                "pb_center", "pb_center2", "pb_name_r", "pb_name_b", "pb_splat_r", "pb_splat_b"));
-        for (int k = 1; k <= FEED_LINES; k++) for (String s : FEED_SUFFIXES) out.add("pb_f" + k + s);
+                "pb_center", "pb_center2", "pb_name_r", "pb_name_b", "pb_splat_r", "pb_splat_b",
+                "pb_you", "pb_leader", "pb_you_tag", "pb_lead_tag", "pb_name",
+                "pb_splat_a", "pb_splat_a_c", "pb_splat_z", "pb_splat_z_c"));
+        for (int k = 1; k <= FEED_LINES; k++) {
+            for (String s : FEED_SUFFIXES) out.add("pb_f" + k + s);
+            for (String s : FFA_FEED_SUFFIXES) out.add("pb_f" + k + s);
+        }
         return out;
     }
 
@@ -239,8 +266,18 @@ final class Hud {
         Settings s = game.settings();
         Messages m = messages();
         Map<String, String> v = new LinkedHashMap<>();
-        v.put("pb_red", digits(String.valueOf(game.kills(Team.RED))));
-        v.put("pb_blue", digits(String.valueOf(game.kills(Team.BLUE))));
+        boolean ffa = game.mode == Mode.FFA;
+        if (ffa) {
+            List<GamePlayer> standings = game.standings();
+            GamePlayer leader = standings.isEmpty() ? null : standings.get(0);
+            v.put("pb_you", digits(String.valueOf(gp.stats.kills)));
+            v.put("pb_leader", digits(String.valueOf(leader == null ? 0 : leader.stats.kills)));
+            v.put("pb_you_tag", m.plain("hud-ffa-you"));
+            v.put("pb_lead_tag", leader == null ? "" : leader == gp ? m.plain("hud-ffa-leading") : leader.name);
+        } else {
+            v.put("pb_red", score(Team.RED));
+            v.put("pb_blue", score(Team.BLUE));
+        }
         v.put("pb_time", digits(game.clockText()));
 
         boolean live = game.phase == Game.Phase.LIVE;
@@ -250,13 +287,20 @@ final class Hud {
         String status = "";
         if (game.phase == Game.Phase.FREEZE) status = m.plain("hud-get-ready");
         else if (armed && game.now < gp.protectedUntil) status = m.plain("hud-protected");
-        else if (armed && s.killLimit > 0) status = m.plain("hud-first-to", "kills", String.valueOf(s.killLimit));
+        else if (armed && game.mode == Mode.CTF) {
+            status = game.flags.carrying(gp) ? m.plain("hud-ctf-carrying")
+                    : m.plain("hud-ctf-first-to", "captures", String.valueOf(s.captures));
+        } else if (live && ffa) {
+            status = m.plain(s.killLimit > 0 ? "hud-ffa-place-limit" : "hud-ffa-place",
+                    "place", place(m, game.placeOf(gp)), "players", String.valueOf(game.standings().size()),
+                    "kills", String.valueOf(s.killLimit));
+        } else if (armed && s.killLimit > 0) status = m.plain("hud-first-to", "kills", String.valueOf(s.killLimit));
         v.put("pb_status", status);
 
         // The marker, bottom right, and what it is called above it.
         boolean reloading = armed && gp.reloading > 0;
         v.put("pb_weapon", armed ? weapon(gp, s, reloading) : "");
-        v.put("pb_gun", armed && !reloading ? m.plain("hud-marker", "skin", gp.team == null ? "" : Loadout.skinName(s, gp)) : "");
+        v.put("pb_gun", armed && !reloading ? m.plain("hud-marker", "skin", gp.paint == null ? "" : game.skinOf(gp).display().toUpperCase()) : "");
         v.put("pb_gun_hot", reloading ? m.plain("hud-reloading") : "");
 
         // The crosshair is the HUD's own, a plus drawn over the game's: from the
@@ -265,16 +309,34 @@ final class Hud {
         v.put("pb_xhair", armed ? icon("xhair_" + ticks) : "");
         v.put("pb_hit", armed && game.now < gp.hitUntil ? icon("hitmarker") : "");
 
-        middle(v, gp, s);
+        middle(v, gp, s, ffa);
 
         int k = 1;
         for (Game.Kill kill : game.feed) {
             if (k > FEED_LINES || game.now - kill.at() > s.feedTicks) break;
             boolean mine = gp.name.equals(kill.killer()) || gp.name.equals(kill.victim());
-            feedLine(v, k++, kill, mine);
+            feedLine(v, k++, kill, mine, ffa);
         }
-        for (; k <= FEED_LINES; k++) for (String suffix : FEED_SUFFIXES) v.put("pb_f" + k + suffix, "");
+        for (; k <= FEED_LINES; k++) for (String suffix : ffa ? FFA_FEED_SUFFIXES : FEED_SUFFIXES) v.put("pb_f" + k + suffix, "");
         return v;
+    }
+
+    /** A team's number in the strip; in capture the flag, its flag's state beside its captures. */
+    private String score(Team t) {
+        String n = digits(String.valueOf(game.score(t)));
+        if (game.mode != Mode.CTF) return n;
+        String state = switch (game.flags.state(t)) {
+            case TAKEN -> "taken";
+            case DROPPED -> "dropped";
+            default -> "home";
+        };
+        return icon("flag_" + t.id() + "_" + state) + overlays().space(2) + n;
+    }
+
+    /** 1ST, 2ND, 3RD, 4TH... in the server's words. */
+    private static String place(Messages m, int n) {
+        if (n >= 1 && n <= 3) return m.plain("hud-place-" + n);
+        return m.plain("hud-place-n", "place", String.valueOf(n));
     }
 
     /**
@@ -283,24 +345,26 @@ final class Hud {
      *
      * <ul>
      *   <li>the countdown: a gold ring a second round, the number popping in,
-     *   and which team you are on;</li>
+     *   and which team you are on (or that it is every player for themselves);</li>
      *   <li>going live: GO!, popping in;</li>
      *   <li>splatted: the paint in your splatter's colour, fading, the respawn
      *   ring round the seconds left, and who it was;</li>
      *   <li>a splat of your own: SPLATTED and who, under the crosshair;</li>
+     *   <li>capture the flag: what just happened to a flag;</li>
      *   <li>the clock's warnings: the time left in words, or from ten seconds
      *   down the number alone;</li>
-     *   <li>the end: VICTORY, DEFEAT or DRAW on a band, and the score.</li>
+     *   <li>the end: VICTORY, DEFEAT or DRAW on a band, and the score; in a
+     *   free for all, VICTORY or your place, and your kills.</li>
      * </ul>
      */
-    private void middle(Map<String, String> v, GamePlayer gp, Settings s) {
+    private void middle(Map<String, String> v, GamePlayer gp, Settings s, boolean ffa) {
         Messages m = messages();
         String center = "";
         String center2 = "";
         String name = "";
-        Team nameTeam = null;
+        Paint namePaint = null;
         String splat = "";
-        Team splatTeam = null;
+        Paint splatPaint = null;
 
         switch (game.phase) {
             case FREEZE -> {
@@ -308,7 +372,9 @@ final class Hud {
                 int seconds = Math.max(1, (game.timer + 19) / 20);
                 String ring = icon("ring_start_" + Math.min(START_RING_FRAMES - 1, into / 2));
                 center = over(ring, lettering("white", into < 2 ? 4 : 3, String.valueOf(seconds)));
-                if (gp.team != null) {
+                if (ffa) {
+                    center2 = lettering("gold", 1, m.plain("hud-ffa-banner"));
+                } else if (gp.team != null) {
                     center2 = lettering("grey", 1, m.plain("hud-your-team")) + overlays().space(6)
                             + lettering(gp.team == Team.RED ? "red" : "blue", 2, m.plain(gp.team == Team.RED ? "hud-team-red" : "hud-team-blue"));
                 }
@@ -319,9 +385,9 @@ final class Hud {
                 if (!gp.alive) {
                     long out = game.now - gp.splattedAt;
                     int fade = out < SPLAT_HOLD ? 0 : (int) (1 + (out - SPLAT_HOLD) / SPLAT_STEP);
-                    if (fade < SPLAT_FADE_FRAMES && gp.splattedByTeam != null) {
+                    if (fade < SPLAT_FADE_FRAMES && gp.splattedByPaint != null) {
                         splat = icon("hud_splat_" + gp.splat + "_" + fade);
-                        splatTeam = gp.splattedByTeam;
+                        splatPaint = gp.splattedByPaint;
                     }
                     if (gp.respawnAt > 0) {
                         long left = Math.max(0, gp.respawnAt - game.now);
@@ -333,12 +399,20 @@ final class Hud {
                     if (gp.splattedBy != null) {
                         center2 = lettering("grey", 1, m.plain("hud-splatted-by"));
                         name = gp.splattedBy;
-                        nameTeam = gp.splattedByTeam;
+                        namePaint = gp.splattedByPaint;
                     }
                 } else if (gp.lastKill != null && game.now - gp.lastKillAt < s.killBannerTicks) {
                     center2 = lettering("gold", 1, m.plain("hud-splatted"));
                     name = gp.lastKill;
-                    nameTeam = gp.lastKillTeam;
+                    namePaint = gp.lastKillPaint;
+                }
+                // Capture the flag: what just happened, for a couple of seconds.
+                Flags.Event e = game.flags.last;
+                if (e != null && game.now - e.at() < 50 && center2.isEmpty()) {
+                    boolean ours = gp.team == e.flag();
+                    String sheet = e.key().equals("hud-flag-captured") || e.key().equals("hud-flag-taken")
+                            ? (ours ? "grey" : "gold") : (ours ? "gold" : "grey");
+                    center2 = lettering(sheet, 1, m.plain(e.key(), "team", e.flag().display().toUpperCase()));
                 }
                 // The clock's warnings, wherever nothing else is: the last ten
                 // seconds as the number alone, popping in, and longer in words.
@@ -351,26 +425,47 @@ final class Hud {
             }
             case ENDED -> {
                 long since = game.now - game.endedAt;
-                Team w = game.winner();
-                String look = w == null ? "draw" : gp.team == w ? "victory" : "defeat";
-                String sheet = w == null ? "grey" : gp.team == w ? "gold" : "red";
+                Boolean won = game.won(gp);
+                String look = won == null ? "draw" : won ? "victory" : "defeat";
+                String sheet = won == null ? "grey" : won ? "gold" : "red";
                 String word = m.plain("hud-" + look);
+                if (ffa && won == Boolean.FALSE) {
+                    // Not first: your place, on the plain band.
+                    look = "draw";
+                    sheet = "grey";
+                    word = place(m, game.placeOf(gp));
+                }
                 String band = icon("band_" + look + "_0") + overlays().space(-1) + icon("band_" + look + "_1");
                 center = over(band, lettering(sheet, since < 2 ? 5 : since < 4 ? 4 : 3, word));
                 Overlays o = overlays();
-                center2 = lettering("red", 2, String.valueOf(game.kills(Team.RED))) + o.space(8)
-                        + lettering("grey", 2, "-") + o.space(8)
-                        + lettering("blue", 2, String.valueOf(game.kills(Team.BLUE)));
+                if (ffa) {
+                    center2 = lettering("grey", 2, m.plain("hud-ffa-kills", "kills", String.valueOf(gp.stats.kills)));
+                } else {
+                    center2 = lettering("red", 2, String.valueOf(game.score(Team.RED))) + o.space(8)
+                            + lettering("grey", 2, "-") + o.space(8)
+                            + lettering("blue", 2, String.valueOf(game.score(Team.BLUE)));
+                }
             }
             default -> {
             }
         }
         v.put("pb_center", center);
         v.put("pb_center2", center2);
-        v.put("pb_name_r", nameTeam == Team.RED ? name : "");
-        v.put("pb_name_b", nameTeam == Team.BLUE ? name : "");
-        v.put("pb_splat_r", splatTeam == Team.RED ? splat : "");
-        v.put("pb_splat_b", splatTeam == Team.BLUE ? splat : "");
+        if (ffa) {
+            // One name run in white; the paint on the screen in the splatter's own colour, by state.
+            v.put("pb_name", name);
+            boolean first = splatPaint != null && FFA_SPLAT_A.contains(splatPaint);
+            v.put("pb_splat_a", first ? splat : "");
+            v.put("pb_splat_a_c", first ? splatPaint.id() : "");
+            boolean second = splatPaint != null && !first;
+            v.put("pb_splat_z", second ? splat : "");
+            v.put("pb_splat_z_c", second ? splatPaint.id() : "");
+        } else {
+            v.put("pb_name_r", namePaint == Paint.RED ? name : "");
+            v.put("pb_name_b", namePaint == Paint.BLUE ? name : "");
+            v.put("pb_splat_r", splatPaint == Paint.RED ? splat : "");
+            v.put("pb_splat_b", splatPaint == Paint.BLUE ? splat : "");
+        }
     }
 
     /** A warning's words: one minute, some minutes, or some seconds left. */
@@ -425,7 +520,7 @@ final class Hud {
      * weapon. Every width is the engine's, the same one it lays the runs out
      * with, so the pieces meet wherever the names end.
      */
-    private void feedLine(Map<String, String> v, int line, Game.Kill kill, boolean highlight) {
+    private void feedLine(Map<String, String> v, int line, Game.Kill kill, boolean highlight, boolean ffa) {
         Overlays o = overlays();
         String weapon = icon(kill.weapon() == Weapon.MARKER ? "feed_marker" : "grenade_icon");
         int killerWidth = o.width(kill.killer()) - 1;
@@ -439,7 +534,7 @@ final class Hud {
         // Each piece advances its width and one more; the step back closes the gap.
         String back = o.space(-1);
         StringBuilder panel = new StringBuilder();
-        panel.append(icon("feed_l_" + kill.killerTeam().id())).append(back);
+        panel.append(icon("feed_l_" + kill.killerPaint().id())).append(back);
         int left = total - 6;
         for (int piece = 64; piece >= 1; piece >>= 1) {
             while (left >= piece) {
@@ -447,17 +542,23 @@ final class Hud {
                 left -= piece;
             }
         }
-        panel.append(icon("feed_r_" + kill.victimTeam().id())).append(back);
+        panel.append(icon("feed_r_" + kill.victimPaint().id())).append(back);
         panel.append(o.space(-(total - iconX))).append(weapon);
 
         String p = "pb_f" + line;
         v.put(p, panel.toString());
         String killer = o.space(killerX) + kill.killer();
         String victim = o.space(victimX) + kill.victim();
-        v.put(p + "_kr", kill.killerTeam() == Team.RED ? killer : "");
-        v.put(p + "_kb", kill.killerTeam() == Team.BLUE ? killer : "");
-        v.put(p + "_vr", kill.victimTeam() == Team.RED ? victim : "");
-        v.put(p + "_vb", kill.victimTeam() == Team.BLUE ? victim : "");
+        if (ffa) {
+            // Each player's colour is the panel's edge; the names are white and grey.
+            v.put(p + "_k", killer);
+            v.put(p + "_v", victim);
+            return;
+        }
+        v.put(p + "_kr", kill.killerPaint() == Paint.RED ? killer : "");
+        v.put(p + "_kb", kill.killerPaint() == Paint.BLUE ? killer : "");
+        v.put(p + "_vr", kill.victimPaint() == Paint.RED ? victim : "");
+        v.put(p + "_vb", kill.victimPaint() == Paint.BLUE ? victim : "");
     }
 
     /** Which ring of spread ticks a spread draws: standing, moving, flying. */
@@ -532,10 +633,22 @@ final class Hud {
     // ---- the player list (Tab) -------------------------------------------------------
 
     private Component header() {
-        return messages().component("tab-header",
+        Messages m = messages();
+        if (game.mode() == Mode.FFA) {
+            List<GamePlayer> top = game.standings();
+            GamePlayer leader = top.isEmpty() ? null : top.get(0);
+            return m.component("tab-header-ffa",
+                    "map", game.arena().name().toUpperCase(),
+                    "mode", m.plain("mode-ffa"),
+                    "leader", leader == null ? "-" : leader.name,
+                    "leader_kills", String.valueOf(leader == null ? 0 : leader.stats.kills),
+                    "time", game.clockText());
+        }
+        return m.component("tab-header",
                 "map", game.arena().name().toUpperCase(),
-                "red", String.valueOf(game.kills(Team.RED)),
-                "blue", String.valueOf(game.kills(Team.BLUE)),
+                "mode", m.plain("mode-" + game.mode().id()),
+                "red", String.valueOf(game.score(Team.RED)),
+                "blue", String.valueOf(game.score(Team.BLUE)),
                 "time", game.clockText());
     }
 }

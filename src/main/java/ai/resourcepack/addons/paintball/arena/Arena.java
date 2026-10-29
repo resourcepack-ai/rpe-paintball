@@ -27,6 +27,8 @@ public final class Arena {
     private String world;
     private Point waiting;
     private final Map<Team, List<Point>> spawns = new EnumMap<>(Team.class);
+    /** Where each team's flag stands in capture the flag. */
+    private final Map<Team, Point> flags = new EnumMap<>(Team.class);
     private BoundingBox bounds;
     private boolean enabled;
     /** config.yml's game options this arena sets for itself, by path ("match-seconds", "marker.speed"). */
@@ -90,6 +92,23 @@ public final class Arena {
         spawns.get(team).clear();
     }
 
+    /** Where {@code team}'s flag stands, or null when it has not been put anywhere. */
+    public Location flag(Team team) {
+        Point p = flags.get(team);
+        return p == null ? null : p.at(world());
+    }
+
+    public void flag(Team team, Location at) {
+        if (at == null) flags.remove(team);
+        else flags.put(team, Point.of(at));
+    }
+
+    /** Whether both flags have a place, which capture the flag needs. */
+    public boolean hasFlags() {
+        for (Team t : Team.values()) if (!flags.containsKey(t)) return false;
+        return true;
+    }
+
     public BoundingBox bounds() {
         return bounds;
     }
@@ -143,6 +162,8 @@ public final class Arena {
             List<List<Double>> out = new ArrayList<>();
             for (Point p : spawns.get(t)) out.add(p.toList());
             s.set("spawns." + t.id(), out);
+            Point flag = flags.get(t);
+            s.set("flags." + t.id(), flag == null ? null : flag.toList());
         }
         if (bounds != null) {
             s.set("bounds.min", List.of(bounds.getMinX(), bounds.getMinY(), bounds.getMinZ()));
@@ -169,6 +190,10 @@ public final class Arena {
                 Point p = Point.fromList(o instanceof List<?> l ? l : null);
                 if (p != null) a.spawns.get(t).add(p);
             }
+        }
+        for (Team t : Team.values()) {
+            Point flag = Point.fromList(s.getList("flags." + t.id()));
+            if (flag != null) a.flags.put(t, flag);
         }
         List<?> min = s.getList("bounds.min");
         List<?> max = s.getList("bounds.max");

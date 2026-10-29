@@ -113,6 +113,17 @@ public final class ArenaSetup implements Listener {
         Text.send(p, Text.msg("Cleared the " + t.display().toLowerCase() + " spawns."));
     }
 
+    /** Capture the flag: {@code t}'s flag stands where {@code p} stands. */
+    public void setFlag(Player p, Arena a, Team t) {
+        if (!sameWorld(p, a) || !idle(p, a)) return;
+        Location at = p.getLocation().getBlock().getLocation().add(0.5, 0, 0.5);
+        at.setYaw(p.getLocation().getYaw());
+        a.flag(t, at);
+        store.save();
+        Text.send(p, Text.msg("The <" + t.color().asHexString() + ">" + t.display() + "</" + t.color().asHexString()
+                + "> flag stands here." + (a.hasFlags() ? " Both flags are placed: <white>/pb start " + a.id() + " ctf</white> plays capture the flag." : "")));
+    }
+
     public void setBounds(Player p, Arena a) {
         Location[] pick = picks.get(p.getUniqueId());
         if (pick == null || pick[0] == null || pick[1] == null) {

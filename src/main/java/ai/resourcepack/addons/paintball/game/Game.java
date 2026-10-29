@@ -4,6 +4,8 @@ import ai.resourcepack.addons.paintball.command.Perms;
 import ai.resourcepack.addons.paintball.content.Content;
 import ai.resourcepack.addons.paintball.PaintballPlugin;
 import ai.resourcepack.addons.paintball.config.Settings;
+import ai.resourcepack.addons.paintball.team.Paint;
+import ai.resourcepack.addons.paintball.team.Skin;
 import ai.resourcepack.addons.paintball.team.Team;
 import ai.resourcepack.addons.paintball.text.Text;
 import ai.resourcepack.addons.paintball.arena.Arena;
@@ -32,8 +34,13 @@ import java.util.UUID;
 /**
  * The match on one arena. Players join and wait in the lobby; an op starts it;
  * a hit splats you and you are back in a few seconds; when the clock runs out
- * (or a team reaches the kill limit) the team with more kills wins, everybody
- * sees the scoreboard, and it is back to the lobby for another.
+ * (or somebody reaches the limit) the winner is decided by the {@link Mode}
+ * being played, everybody sees the scoreboard, and it is back to the lobby
+ * for another.
+ *
+ * <p>Who a player is with is their {@code team} (red or blue, and nothing in
+ * a free for all); what they look like is their {@code paint}, which every
+ * player in a match has. {@link #allies} is the one place the two meet.
  *
  * <pre>WAITING -> FREEZE -> LIVE -> ENDED -> WAITING</pre>
  *
@@ -56,9 +63,14 @@ public final class Game {
     final KillCam killCam = new KillCam(this);
     final Nametags nametags = new Nametags(this);
     final Mines mines = new Mines(this);
+    final Flags flags = new Flags(this);
     private final GameManager manager;
 
     Phase phase = Phase.WAITING;
+    /** What the current (or last) match is played as. */
+    Mode mode = Mode.TEAMS;
+    /** The mode the next match is started as, when {@code /pb start} named one; null for the arena's. */
+    private Mode nextMode;
     /** Ticks left in FREEZE or ENDED. */
     int timer;
     /** Ticks left on the match clock while LIVE. */
@@ -71,13 +83,17 @@ public final class Game {
     long warnedAt = -1;
     int warnedSeconds;
     final EnumMap<Team, Integer> kills = new EnumMap<>(Team.class);
+    /** Capture the flag's score. */
+    final EnumMap<Team, Integer> captures = new EnumMap<>(Team.class);
     /** The kill feed, newest first. */
     final Deque<Kill> feed = new ArrayDeque<>();
 
-    /** One line of the kill feed. */
-    record Kill(String killer, Team killerTeam, String victim, Team victimTeam, Weapon weapon, long at) {
+    /** One line of the kill feed: who, in what paint, with what. */
+    record Kill(String killer, Paint killerPaint, String victim, Paint victimPaint, Weapon weapon, long at) {
     }
+    /** The winning team, or in a free for all the winning player; null for a draw. */
     Team winner;
+    GamePlayer champion;
     boolean played;
 
     Game(PaintballPlugin plugin, GameManager manager, Arena arena) {
@@ -91,12 +107,71 @@ public final class Game {
         this.hud = new Hud(this);
         if (FREEZE_KEY == null) FREEZE_KEY = new NamespacedKey(plugin, "freeze");
         if (AIM_KEY == null) AIM_KEY = new NamespacedKey(plugin, "aim");
-        for (Team t : Team.values()) kills.put(t, 0);
+        for (Team t : Team.values()) {
+            kills.put(t, 0);
+            captures.put(t, 0);
+        }
     }
 
-    /** This arena's settings: its own options, then config.yml's. */
+    /** What this match plays by: config.yml, its mode's options, then the arena's own. */
     Settings settings() {
-        return plugin.settings(arena);
+        return plugin.settings(arena, mode());
+    }
+
+    /** The mode being played, or in the lobby the one the next match will be. */
+    public Mode mode() {
+        return phase == Phase.WAITING ? lobbyMode() : mode;
+    }
+
+    private Mode lobbyMode() {
+        return nextMode != null ? nextMode : plugin.modeOf(arena);
+    }
+
+    /**
+     * Whether two players are on the same side: the same player, or teammates
+     * in a team mode. In a free for all everybody else is an enemy.
+     */
+    boolean allies(GamePlayer a, GamePlayer b) {
+        if (a == b) return true;
+        return mode.teams() && a.team != null && a.team == b.team;
+    }
+
+    /** Whether {@code shooter} can splat {@code victim}: both playing, and not on the same side. */
+    boolean enemies(GamePlayer shooter, GamePlayer victim) {
+        return shooter.paint != null && victim.paint != null && !allies(shooter, victim);
+    }
+
+    /** The marker a player carries: their team's, or in a free for all their colour's. */
+    Skin skinOf(GamePlayer gp) {
+        Settings s = settings();
+        if (mode == Mode.FFA && gp.paint != null) return s.ffaMarkers.get(gp.paint);
+        return gp.team == Team.BLUE ? s.blueSkin : s.redSkin;
+    }
+
+    /** A team's score: kills, or in capture the flag captures. */
+    public int score(Team t) {
+        return mode == Mode.CTF ? captures.get(t) : kills.get(t);
+    }
+
+    /** In a free for all, everybody playing, most kills first (then fewer deaths). */
+    public List<GamePlayer> standings() {
+        List<GamePlayer> out = new ArrayList<>();
+        for (GamePlayer gp : players.values()) if (gp.paint != null) out.add(gp);
+        out.sort(Comparator.comparingInt((GamePlayer gp) -> gp.stats.kills).reversed()
+                .thenComparingInt(gp -> gp.stats.deaths));
+        return out;
+    }
+
+    /** A player's place in a free for all: 1 for the lead, shared when level on kills. */
+    public int placeOf(GamePlayer gp) {
+        int place = 1;
+        for (GamePlayer o : players.values()) if (o.paint != null && o.stats.kills > gp.stats.kills) place++;
+        return place;
+    }
+
+    /** The winner of a free for all, once it is over. */
+    public GamePlayer champion() {
+        return champion;
     }
 
     ai.resourcepack.addons.paintball.config.Messages messages() {
@@ -158,13 +233,22 @@ public final class Game {
         PlayerSnapshot.reset(p);
         hud.join(p);
         if (live()) {
-            // Mid-match: straight onto the smaller team.
-            gp.team = smallerTeam();
             gp.minesLeft = settings().minesPerMatch;
-            hud.refreshTeams();
-            spawn(gp, p, true);
-            broadcast(messages().component("joined-team", "player", p.getName(),
-                    "colour", gp.team.color().asHexString(), "team", gp.team.display()));
+            if (mode.teams()) {
+                // Mid-match: straight onto the smaller team.
+                gp.team = smallerTeam();
+                gp.paint = gp.team.paint();
+                hud.refreshTeams();
+                spawn(gp, p, true);
+                broadcast(messages().component("joined-team", "player", p.getName(),
+                        "colour", gp.team.color().asHexString(), "team", gp.team.display()));
+            } else {
+                gp.paint = freestPaint();
+                hud.refreshTeams();
+                spawn(gp, p, true);
+                broadcast(messages().component("joined-ffa", "player", p.getName(),
+                        "colour", gp.paint.color().asHexString()));
+            }
         } else {
             toLobby(p, gp);
             broadcast(messages().component("joined-lobby", "player", p.getName(), "count", String.valueOf(size())));
@@ -177,6 +261,7 @@ public final class Game {
         if (gp == null) return;
         if (live()) gp.left = true;
         else players.remove(p.getUniqueId());
+        flags.drop(gp);
         aim(gp, p, false);
         unfreeze(p);
         hud.leave(p);
@@ -207,7 +292,23 @@ public final class Game {
         p.setGameMode(GameMode.ADVENTURE);
         p.teleport(arena.waiting());
         PlayerSnapshot.reset(p);
-        Loadout.lobby(content, messages(), p, gp.pick);
+        Loadout.lobby(content, messages(), p, gp.pick, lobbyMode().teams());
+    }
+
+    /** The colour the fewest players have, in config.yml's order: for whoever joins a free for all. */
+    private Paint freestPaint() {
+        List<Paint> colours = settings().ffaColours;
+        Paint best = colours.get(0);
+        int fewest = Integer.MAX_VALUE;
+        for (Paint c : colours) {
+            int n = 0;
+            for (GamePlayer o : active()) if (o.paint == c) n++;
+            if (n < fewest) {
+                fewest = n;
+                best = c;
+            }
+        }
+        return best;
     }
 
     /**
@@ -228,7 +329,7 @@ public final class Game {
         }
         if (!live() && p.getGameMode() != GameMode.SPECTATOR) {
             int held = p.getInventory().getHeldItemSlot();
-            Loadout.lobby(content, messages(), p, gp.pick);
+            Loadout.lobby(content, messages(), p, gp.pick, lobbyMode().teams());
             p.getInventory().setHeldItemSlot(held);
         }
     }
@@ -288,11 +389,13 @@ public final class Game {
                 if (timer == settings().endSeconds * 20 - 60) {
                     for (Player p : online()) plugin.scoreboard().open(p, this);
                 }
-                if (timer % 20 == 0 && timer > settings().endSeconds * 20 - 120 && winner != null) {
-                    List<GamePlayer> team = roster(winner);
-                    if (!team.isEmpty()) {
-                        Player w = team.get((int) (now / 20 % team.size())).player();
-                        if (w != null) fx.firework(w.getLocation().add(0, 1, 0), winner);
+                if (timer % 20 == 0 && timer > settings().endSeconds * 20 - 120) {
+                    List<GamePlayer> winners = winner != null ? roster(winner)
+                            : champion != null ? List.of(champion) : List.of();
+                    if (!winners.isEmpty()) {
+                        GamePlayer w = winners.get((int) (now / 20 % winners.size()));
+                        Player wp = w.player();
+                        if (wp != null && w.paint != null) fx.firework(wp.getLocation().add(0, 1, 0), w.paint);
                     }
                 }
                 if (timer <= 0 && !backToLobby()) return;
@@ -314,6 +417,10 @@ public final class Game {
         if (phase != Phase.LIVE) return;
         mines.tick();
         if (phase != Phase.LIVE) return;
+        if (mode == Mode.CTF) {
+            flags.tick();
+            if (phase != Phase.LIVE) return;
+        }
         for (GamePlayer gp : active()) {
             Player p = gp.player();
             if (p == null) continue;
@@ -341,13 +448,46 @@ public final class Game {
 
     // ---- starting ----------------------------------------------------------------
 
-    /** Deals the teams and starts the countdown. Works with one player: they play against nobody. */
+    /**
+     * Why a match of {@code m} cannot start on this arena, as a message key,
+     * or null when it can: capture the flag needs both flags placed.
+     */
+    public String whyNot(Mode m) {
+        if (m == Mode.CTF && !arena.hasFlags()) return "ctf-no-flags";
+        return null;
+    }
+
+    /** Starts the arena's own mode. */
     public boolean start() {
+        return start(null);
+    }
+
+    /**
+     * Deals the teams (or the colours) and starts the countdown, as
+     * {@code as} or, with null, the arena's mode. Works with one player: they
+     * play against nobody.
+     */
+    public boolean start(Mode as) {
         if (live() || size() == 0 || !open()) return false;
         if (phase == Phase.ENDED && !backToLobby()) return false;
+        Mode m = as != null ? as : lobbyMode();
+        if (whyNot(m) != null) return false;
+        mode = m;
+        nextMode = null;
         players.values().removeIf(gp -> gp.left);
         List<GamePlayer> list = new ArrayList<>(active());
-        List<GamePlayer> moved = deal(list);
+        List<GamePlayer> moved = new ArrayList<>();
+        if (mode.teams()) {
+            moved = deal(list);
+            for (GamePlayer gp : list) gp.paint = gp.team.paint();
+        } else {
+            Collections.shuffle(list);
+            List<Paint> colours = settings().ffaColours;
+            for (int i = 0; i < list.size(); i++) {
+                list.get(i).team = null;
+                list.get(i).paint = colours.get(i % colours.size());
+            }
+        }
         for (GamePlayer gp : list) {
             gp.reset();
             gp.minesLeft = settings().minesPerMatch;
@@ -360,13 +500,19 @@ public final class Game {
                         "team", gp.team.display(), "colour", gp.team.color().asHexString()));
             }
         }
-        for (Team t : Team.values()) kills.put(t, 0);
+        for (Team t : Team.values()) {
+            kills.put(t, 0);
+            captures.put(t, 0);
+        }
         feed.clear();
         winner = null;
+        champion = null;
         warnedAt = -1;
         paint.clear();
         combat.clear();
         mines.clear();
+        flags.clear();
+        if (mode == Mode.CTF) flags.start();
         played = true;
         phase = Phase.FREEZE;
         timer = settings().freezeSeconds * 20;
@@ -409,31 +555,57 @@ public final class Game {
         p.teleport(at);
         gp.lastInside = at;
         PlayerSnapshot.reset(p);
-        Loadout.equip(content, s, p, gp);
+        Loadout.equip(content, s, p, gp, skinOf(gp));
         // The grenade keeps recharging through a death: dying is not a way to get it back sooner.
-        if (gp.grenadeReadyAt > now) p.setCooldown(Loadout.grenade(content, gp.team, s.grenadeCooldownTicks), (int) (gp.grenadeReadyAt - now));
+        if (gp.grenadeReadyAt > now) p.setCooldown(Loadout.grenade(content, gp.paint, s.grenadeCooldownTicks), (int) (gp.grenadeReadyAt - now));
         if (!first) fx.respawned(p);
     }
 
     /** At the start, everybody gets their own spawn point in turn. */
     private Location slotFor(GamePlayer gp) {
-        List<Location> spawns = arena.spawns(gp.team);
-        int i = roster(gp.team).indexOf(gp);
+        List<Location> spawns = spawnsFor(gp);
+        int i = gp.team != null ? roster(gp.team).indexOf(gp) : active().indexOf(gp);
         Location at = spawns.get(Math.max(0, i) % spawns.size()).clone();
         if (i >= spawns.size()) at.add((i / spawns.size()) * 0.8, 0, 0);
         return at;
     }
 
+    /**
+     * Where a player comes back: one of their team's spawns at random, or in
+     * a free for all whichever spawn is furthest from everybody still in.
+     */
     private Location spawnFor(GamePlayer gp) {
-        List<Location> spawns = arena.spawns(gp.team);
-        return spawns.get((int) (Math.random() * spawns.size()));
+        List<Location> spawns = spawnsFor(gp);
+        if (gp.team != null) return spawns.get((int) (Math.random() * spawns.size()));
+        Location best = spawns.get(0);
+        double furthest = -1;
+        for (Location at : spawns) {
+            double nearest = Double.MAX_VALUE;
+            for (GamePlayer o : active()) {
+                Player op = o == gp || !o.alive ? null : o.player();
+                if (op != null && op.getWorld().equals(at.getWorld())) nearest = Math.min(nearest, op.getLocation().distanceSquared(at));
+            }
+            if (nearest > furthest) {
+                furthest = nearest;
+                best = at;
+            }
+        }
+        return best;
+    }
+
+    /** A team's spawns, or in a free for all every spawn on the field. */
+    private List<Location> spawnsFor(GamePlayer gp) {
+        if (gp.team != null) return arena.spawns(gp.team);
+        List<Location> all = new ArrayList<>();
+        for (Team t : Team.values()) all.addAll(arena.spawns(t));
+        return all;
     }
 
     // ---- hits ----------------------------------------------------------------------
 
     /** {@code shooter} hit {@code victim}: one hit and they are splatted. */
     void hit(GamePlayer shooter, GamePlayer victim, Location at, Weapon weapon) {
-        if (phase != Phase.LIVE || !victim.alive || victim.left || victim.team == shooter.team) return;
+        if (phase != Phase.LIVE || !victim.alive || victim.left || !enemies(shooter, victim)) return;
         if (now < victim.protectedUntil) {
             fx.protectedHit(at);
             return;
@@ -443,15 +615,15 @@ public final class Game {
         victim.stats.deaths++;
         victim.alive = false;
         victim.respawnAt = now + settings().respawnTicks;
-        kills.merge(shooter.team, 1, Integer::sum);
-        feed.addFirst(new Kill(shooter.name, shooter.team, victim.name, victim.team, weapon, now));
+        if (shooter.team != null) kills.merge(shooter.team, 1, Integer::sum);
+        feed.addFirst(new Kill(shooter.name, shooter.paint, victim.name, victim.paint, weapon, now));
         while (feed.size() > 3) feed.removeLast();
         victim.splattedBy = shooter.name;
-        victim.splattedByTeam = shooter.team;
+        victim.splattedByPaint = shooter.paint;
         victim.splattedAt = now;
         victim.splat = 1 + java.util.concurrent.ThreadLocalRandom.current().nextInt(3);
         shooter.lastKill = victim.name;
-        shooter.lastKillTeam = victim.team;
+        shooter.lastKillPaint = victim.paint;
         shooter.lastKillAt = now;
         shooter.hitUntil = now + settings().hitMarkerTicks;
 
@@ -459,6 +631,7 @@ public final class Game {
         Player sp = shooter.player();
         fx.splatted(vp);
         fx.hitConfirm(sp);
+        flags.drop(victim);
         if (vp != null) {
             // The paint on their screen and who did it are both the HUD's.
             aim(victim, vp, false);
@@ -469,19 +642,40 @@ public final class Game {
         }
         hud.refreshScores();
         int limit = settings().killLimit;
-        if (limit > 0 && kills.get(shooter.team) >= limit) end();
+        if (limit <= 0 || mode == Mode.CTF) return;
+        int score = mode == Mode.FFA ? shooter.stats.kills : kills.get(shooter.team);
+        if (score >= limit) end();
+    }
+
+    /** {@code team} scored a capture: the end, when it was the last one needed. */
+    void captured(Team team) {
+        captures.merge(team, 1, Integer::sum);
+        hud.refreshScores();
+        if (captures.get(team) >= settings().captures) end();
     }
 
     // ---- the end ---------------------------------------------------------------------
 
-    /** Time is up (or the limit was reached): more kills wins. */
+    /**
+     * Time is up (or somebody reached the limit): the team with the higher
+     * score wins, or in a free for all the player with the most kills (fewer
+     * deaths breaking a tie). Level is a draw.
+     */
     public void end() {
         if (!live()) return;
         combat.clear();
         mines.clear();
-        int red = kills.get(Team.RED);
-        int blue = kills.get(Team.BLUE);
-        winner = red == blue ? null : red > blue ? Team.RED : Team.BLUE;
+        flags.clear();
+        if (mode.teams()) {
+            int red = score(Team.RED);
+            int blue = score(Team.BLUE);
+            winner = red == blue ? null : red > blue ? Team.RED : Team.BLUE;
+        } else {
+            List<GamePlayer> top = standings();
+            boolean clear = !top.isEmpty() && (top.size() == 1 || top.get(0).stats.kills > top.get(1).stats.kills
+                    || top.get(0).stats.deaths < top.get(1).stats.deaths);
+            champion = clear ? top.get(0) : null;
+        }
         record();
         phase = Phase.ENDED;
         endedAt = now;
@@ -496,7 +690,7 @@ public final class Game {
             p.setGameMode(GameMode.ADVENTURE);
             p.getInventory().clear();
             // The result and the score are the HUD's.
-            fx.fanfare(p, winner != null && gp.team == winner);
+            fx.fanfare(p, won(gp) == Boolean.TRUE);
         }
         hud.refreshScores();
     }
@@ -509,12 +703,17 @@ public final class Game {
     private void record() {
         var stats = plugin.stats();
         for (GamePlayer gp : players.values()) {
-            if (gp.team == null) continue;
-            Boolean won = gp.left || winner == null ? null : gp.team == winner;
-            stats.record(gp.id, gp.name, gp.stats, !gp.left, won);
+            if (gp.paint == null) continue;
+            stats.record(gp.id, gp.name, gp.stats, !gp.left, gp.left ? null : won(gp));
         }
         stats.played(arena.id());
         stats.save();
+    }
+
+    /** Whether a player won the match just ended: true, false, or null for a draw. */
+    Boolean won(GamePlayer gp) {
+        if (mode.teams()) return winner == null ? null : gp.team == winner;
+        return champion == null ? null : gp == champion;
     }
 
     /**
@@ -539,6 +738,7 @@ public final class Game {
         phase = Phase.WAITING;
         combat.clear();
         mines.clear();
+        flags.clear();
         paint.clear();
         players.values().removeIf(gp -> gp.left);
         for (GamePlayer gp : active()) {
@@ -553,6 +753,7 @@ public final class Game {
     void close() {
         combat.clear();
         mines.clear();
+        flags.clear();
         paint.clear();
         nametags.clear();
         for (GamePlayer gp : active()) {
@@ -641,11 +842,12 @@ public final class Game {
     public void throwGrenade(Player p) {
         GamePlayer gp = players.get(p.getUniqueId());
         if (gp == null || phase != Phase.LIVE || !gp.alive || now < gp.grenadeReadyAt) return;
+        if (flags.carrying(gp) && !settings().carrierThrows) return;
         // The grenade stays in the hotbar and recharges, greyed out by the game's own cooldown sweep.
         int cooldown = settings().grenadeCooldownTicks;
         gp.grenadeReadyAt = now + cooldown;
         combat.throwGrenade(gp, p);
-        if (cooldown > 0) p.setCooldown(Loadout.grenade(content, gp.team, cooldown), cooldown);
+        if (cooldown > 0) p.setCooldown(Loadout.grenade(content, gp.paint, cooldown), cooldown);
     }
 
     /**
@@ -654,12 +856,13 @@ public final class Game {
      */
     public void placeMine(Player p, org.bukkit.block.Block block, org.bukkit.block.BlockFace face) {
         GamePlayer gp = players.get(p.getUniqueId());
-        if (gp == null || phase != Phase.LIVE || !gp.alive || gp.team == null) return;
+        if (gp == null || phase != Phase.LIVE || !gp.alive || gp.paint == null) return;
+        if (flags.carrying(gp) && !settings().carrierThrows) return;
         if (!mines.place(gp, p, block, face)) return;
         var inv = p.getInventory();
         for (int slot = 0; slot < 9; slot++) {
             if (!Loadout.isMine(content, inv.getItem(slot))) continue;
-            inv.setItem(slot, gp.minesLeft > 0 ? Loadout.mine(content, gp.team, gp.minesLeft) : null);
+            inv.setItem(slot, gp.minesLeft > 0 ? Loadout.mine(content, gp.paint, gp.minesLeft) : null);
         }
     }
 
@@ -691,10 +894,10 @@ public final class Game {
         var inv = p.getInventory();
         int held = inv.getHeldItemSlot();
         for (int slot = 0; slot < 9; slot++) {
-            if (!Loadout.isMarker(content, inv.getItem(slot)) || gp.team == null) continue;
+            if (!Loadout.isMarker(content, inv.getItem(slot)) || gp.paint == null) continue;
             boolean aimed = on && slot == held;
             if (Loadout.isAimed(content, inv.getItem(slot)) != aimed) {
-                inv.setItem(slot, Loadout.marker(content, Loadout.skin(settings(), gp.team), aimed));
+                inv.setItem(slot, Loadout.marker(content, skinOf(gp), aimed));
             }
         }
         AttributeInstance speed = p.getAttribute(Attribute.MOVEMENT_SPEED);

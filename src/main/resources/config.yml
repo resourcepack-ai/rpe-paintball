@@ -1,12 +1,19 @@
 # Paintball, an RP Engine addon. Players /pb join; an op runs /pb start (alone is fine).
-# One mode: a hit splats you, you're back in a few seconds, and the team with
-# more kills when the clock runs out wins.
+# A hit splats you and you're back in a few seconds.
 #
 # Everything from here down to update-check is the server's default: an arena
 # can set any of it for itself with /pb arena set <arena> <option> <value>
 # (or under settings: beside that arena in arenas.yml), e.g.
+#   /pb arena set main mode ctf
 #   /pb arena set main match-seconds 300
-#   /pb arena set main marker.hopper 60
+#   /pb arena set main modes.ffa.kill-limit 20
+
+# What an arena plays unless it sets its own:
+#   teams  team deathmatch: red against blue, most splats wins
+#   ffa    free for all: everybody for themselves, each in a paint of their own
+#   ctf    capture the flag: red against blue, for each other's flag
+# /pb start <arena> <mode> plays another mode for one match.
+mode: teams
 
 match-seconds: 180
 # End early when a team reaches this many kills. 0 plays the whole clock.
@@ -61,12 +68,62 @@ paint:
   # The most splats one match keeps on the walls; the oldest go first.
   max-decals: 1500
 
-# Which marker each team carries: ember, tide, toxic, sunset or gold.
+# Which marker each team carries: ember, tide, toxic, sunset, gold, violet,
+# bubblegum or frost.
 teams:
   red:
     marker: ember
   blue:
     marker: tide
+
+# Free for all: everybody for themselves. First to the kill limit, or the most
+# kills when the clock runs out, wins; everybody else is told their place.
+ffa:
+  # The paint colours handed out, in this order, one to a player (more players
+  # than colours share them): red, blue, green, orange, yellow, purple, pink, cyan.
+  colours: [red, blue, green, orange, yellow, purple, pink, cyan]
+  # The marker each colour carries.
+  markers:
+    red: ember
+    blue: tide
+    green: toxic
+    orange: sunset
+    yellow: gold
+    purple: violet
+    pink: bubblegum
+    cyan: frost
+
+# Capture the flag: take the other team's flag from its base and bring it to
+# yours. Spawns are the arena's; the flags stand where /pb arena setflag put
+# them (a generated field has them already).
+ctf:
+  # Captures to win. The team with more when the clock runs out wins.
+  captures: 3
+  # A dropped flag goes home on its own after this long. A teammate touching it
+  # sends it home at once.
+  flag-return-seconds: 20
+  # Whether your own flag has to be at home for you to score with theirs.
+  need-own-flag: true
+  # How fast the carrier walks, as a share of their normal speed.
+  carrier-speed: 0.85
+  # Whether the carrier glows, seen through walls by everybody.
+  carrier-glows: true
+  # Whether the carrier can throw their grenade and set their mine.
+  carrier-can-throw: false
+  # How close, in blocks, you have to come to a flag to take it, return it or score.
+  flag-reach: 1.3
+
+# Any option above, changed for one mode's matches only. An arena can do the
+# same: /pb arena set <arena> modes.ctf.respawn-seconds 6.
+modes:
+  teams: {}
+  ffa:
+    match-seconds: 240
+    kill-limit: 15
+    respawn-seconds: 2
+  ctf:
+    match-seconds: 480
+    respawn-seconds: 5
 
 hud:
   # How long a splat stays in the kill feed (top left).
@@ -93,13 +150,16 @@ nametags:
 # Tells you in the console, and ops in chat, when a newer Paintball is on SpigotMC.
 update-check: true
 
-# The HUD and the scoreboard are RP Engine content: this plugin installs them
-# into plugins/RPEngine/content/paintball/ (huds/hud.json and
-# dialogs/scoreboard.json, both drawn in ResourcePack AI Studio). Point these at
-# another HUD or dialog to replace them; it has to print the same values.
+# The HUDs and the scoreboards are RP Engine content: this plugin installs them
+# into plugins/RPEngine/content/paintball/ (huds/ and dialogs/, all drawn in
+# ResourcePack AI Studio). Point these at another HUD or dialog to replace one;
+# it has to print the same values. Capture the flag draws the team HUD.
 ui:
   hud: paintball:hud
+  hud-ffa: paintball:hud_ffa
   scoreboard: paintball:scoreboard
+  scoreboard-ffa: paintball:scoreboard_ffa
+  scoreboard-ctf: paintball:scoreboard_ctf
 
 # Everything a player reads. MiniMessage; {prefix} is the prefix below, and the
 # other {names} are filled in by the plugin.
@@ -108,6 +168,8 @@ messages:
 
   joined-lobby: "{prefix}<#5BE37D>+</#5BE37D> <white>{player}</white> joined the lobby <#9AA0A6>({count})"
   joined-team: "{prefix}<white>{player}</white> joined <{colour}>{team}</{colour}>."
+  joined-ffa: "{prefix}<{colour}>{player}</{colour}> joined the match."
+  ctf-no-flags: "{prefix}<#FF5C5C>{arena} has nowhere for the flags. An op stands at each base and runs <white>/pb arena setflag {id} red</white> and <white>blue</white>."
   left: "{prefix}<#FF5C5C>-</#FF5C5C> <white>{player}</white> left."
   start-hint-op: "{prefix}Start whenever you like with <white>/pb start</white>."
   start-hint: "{prefix}Waiting for an op to start the match."
@@ -130,7 +192,8 @@ messages:
   pick-none: "RANDOM"
 
   # Shown at the bottom of the screen while you're in the lobby.
-  lobby-teams: "<#9AA0A6>Lobby  <#5F6368>·</#5F6368>  <#FF4655>RED {red}</#FF4655>  <#2E9BFF>BLUE {blue}</#2E9BFF>  <#5F6368>·</#5F6368>  you: <{pick_colour}>{pick}</{pick_colour}>  <#5F6368>·</#5F6368>  /pb leave to go"
+  lobby-ffa: "<#9AA0A6>Lobby  <#5F6368>·</#5F6368>  <#FFD23F>{mode}</#FFD23F>  <#5F6368>·</#5F6368>  {count} in  <#5F6368>·</#5F6368>  /pb leave to go"
+  lobby-teams: "<#9AA0A6>Lobby  <#5F6368>·</#5F6368>  <#FFD23F>{mode}</#FFD23F>  <#5F6368>·</#5F6368>  <#FF4655>RED {red}</#FF4655>  <#2E9BFF>BLUE {blue}</#2E9BFF>  <#5F6368>·</#5F6368>  you: <{pick_colour}>{pick}</{pick_colour}>  <#5F6368>·</#5F6368>  /pb leave to go"
 
   # The HUD's words. Plain text: the HUD draws them in its own colours.
   hud-get-ready: "GET READY"
@@ -154,6 +217,36 @@ messages:
   hud-minute-left: "1 MINUTE LEFT"
   hud-minutes-left: "{minutes} MINUTES LEFT"
   hud-seconds-left: "{seconds} SECONDS LEFT"
+  # Free for all.
+  hud-ffa-banner: "FREE FOR ALL"
+  hud-ffa-you: "YOU"
+  hud-ffa-leading: "YOU LEAD"
+  hud-ffa-place: "{place} OF {players}"
+  hud-ffa-place-limit: "{place} OF {players}  ·  FIRST TO {kills}"
+  hud-ffa-kills: "{kills} KILLS"
+  hud-place-1: "1ST"
+  hud-place-2: "2ND"
+  hud-place-3: "3RD"
+  hud-place-n: "{place}TH"
+  # Capture the flag. The flag lines are in the big lettering; {team} is the flag's.
+  hud-ctf-first-to: "FIRST TO {captures} CAPTURES"
+  hud-ctf-carrying: "YOU HAVE THE FLAG  ·  TAKE IT HOME"
+  hud-flag-taken: "{team} FLAG TAKEN"
+  hud-flag-dropped: "{team} FLAG DROPPED"
+  hud-flag-returned: "{team} FLAG RETURNED"
+  hud-flag-captured: "{team} FLAG CAPTURED"
+
+  # The modes' names, in the lobby, the player list and placeholders.
+  mode-teams: "TEAM DEATHMATCH"
+  mode-ffa: "FREE FOR ALL"
+  mode-ctf: "CAPTURE THE FLAG"
+
+  # Capture the flag, in chat. {player} in {colour}; {flag} is the flag's team in {flag_colour}.
+  ctf-taken: "{prefix}<{colour}>{player}</{colour}> took the <{flag_colour}>{flag}</{flag_colour}> flag!"
+  ctf-dropped: "{prefix}<{colour}>{player}</{colour}> dropped the <{flag_colour}>{flag}</{flag_colour}> flag."
+  ctf-returned: "{prefix}<{colour}>{player}</{colour}> sent the <{flag_colour}>{flag}</{flag_colour}> flag home."
+  ctf-returned-auto: "{prefix}The <{flag_colour}>{flag}</{flag_colour}> flag went home."
+  ctf-captured: "{prefix}<{colour}>{player}</{colour}> captured the <{flag_colour}>{flag}</{flag_colour}> flag!"
 
   # The scoreboard dialog's heading.
   scoreboard-victory: "VICTORY"
@@ -161,9 +254,19 @@ messages:
   scoreboard-draw: "DRAW"
   scoreboard-live: "SCOREBOARD"
   scoreboard-last: "LAST MATCH"
+  # Its column headings.
+  scoreboard-red: "RED"
+  scoreboard-blue: "BLUE"
+  scoreboard-kills: "K"
+  scoreboard-deaths: "D"
+  scoreboard-accuracy: "ACC"
+  scoreboard-captures: "CAP"
+  scoreboard-players: "PLAYERS"
+  scoreboard-place: "#"
 
   # The player list (Tab).
-  tab-header: "\n<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold>\n<#5F6368>{map}</#5F6368>\n\n<#FF4655><bold>RED  {red}</bold></#FF4655>     <white>{time}</white>     <#2E9BFF><bold>{blue}  BLUE</bold></#2E9BFF>\n"
+  tab-header-ffa: "\n<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold>\n<#5F6368>{mode} · {map}</#5F6368>\n\n<#FFD23F><bold>{leader}  {leader_kills}</bold></#FFD23F>     <white>{time}</white>\n"
+  tab-header: "\n<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold>\n<#5F6368>{mode} · {map}</#5F6368>\n\n<#FF4655><bold>RED  {red}</bold></#FF4655>     <white>{time}</white>     <#2E9BFF><bold>{blue}  BLUE</bold></#2E9BFF>\n"
   tab-footer: "\n<#9AA0A6>Press <white><key:key.swapOffhand></white> for the full scoreboard</#9AA0A6>\n"
 
   # PlaceholderAPI's %paintball_arena_status_<arena>%.

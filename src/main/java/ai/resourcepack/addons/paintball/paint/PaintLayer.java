@@ -1,7 +1,7 @@
 package ai.resourcepack.addons.paintball.paint;
 
 import ai.resourcepack.addons.paintball.content.Content;
-import ai.resourcepack.addons.paintball.team.Team;
+import ai.resourcepack.addons.paintball.team.Paint;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -58,15 +58,15 @@ public final class PaintLayer {
     }
 
     /** A ball of {@code team}'s paint hit {@code side} of {@code block} at {@code at}. */
-    public void splat(Team team, Block block, BlockFace side, Location at, double size) {
-        if (paintable(block)) decal(team, block, at, side, size);
+    public void splat(Paint paint, Block block, BlockFace side, Location at, double size) {
+        if (paintable(block)) decal(paint, block, at, side, size);
     }
 
     /**
      * A ball of {@code team}'s paint hit a painting or an item frame at
      * {@code at}: a splat on its front, kept inside its edges.
      */
-    public void splatOn(Team team, Hanging hanging, Location at, double size) {
+    public void splatOn(Paint paint, Hanging hanging, Location at, double size) {
         BoundingBox box = hanging.getBoundingBox();
         BlockFace side = hanging.getFacing();
         Axis normal = Axis.normalOf(side);
@@ -77,7 +77,7 @@ public final class PaintLayer {
         for (Axis a : axes) radius = Math.min(radius, (a.max(box) - a.min(box)) / 2);
         for (Axis a : axes) a.set(spot, Math.max(a.min(box) + radius, Math.min(a.max(box) - radius, a.get(spot))));
         double s = radius / PAINT_RADIUS;
-        if (s >= SMALLEST) place(team, spot, side, s);
+        if (s >= SMALLEST) place(paint, spot, side, s);
     }
 
     /** Paintings and item frames: what a ball breaks on and paints rather than passing through. */
@@ -93,7 +93,7 @@ public final class PaintLayer {
      * first. Measuring off the whole cube instead put paint on the cube's
      * faces in the air beside a fence post or above a slab.
      */
-    public void burst(Team team, Location center, double radius) {
+    public void burst(Paint paint, Location center, double radius) {
         World w = center.getWorld();
         int r = (int) Math.ceil(radius);
         Vector c = center.toVector();
@@ -130,12 +130,12 @@ public final class PaintLayer {
             Spot pick = seen.get(rnd.nextInt(seen.size()));
             double size = 1.3 + rnd.nextDouble() * 1.1;
             if (pick.hanging != null) {
-                splatOn(team, pick.hanging, pick.at.toLocation(w), size);
+                splatOn(paint, pick.hanging, pick.at.toLocation(w), size);
                 continue;
             }
             // Spread round the face of a whole cube; a smaller box's face is its own, and fit() centres on it.
             Vector at = full(pick.block) ? pick.at.clone().add(tangentJitter(pick.side, 0.35)) : pick.at;
-            decal(team, pick.block, at.toLocation(w), pick.side, size);
+            decal(paint, pick.block, at.toLocation(w), pick.side, size);
         }
     }
 
@@ -157,14 +157,14 @@ public final class PaintLayer {
         decals.clear();
     }
 
-    private void decal(Team team, Block block, Location at, BlockFace side, double size) {
+    private void decal(Paint paint, Block block, Location at, BlockFace side, double size) {
         Location fitted = at.clone();
         double s = fit(block, side, fitted, size);
-        if (s >= SMALLEST) place(team, fitted, side, s);
+        if (s >= SMALLEST) place(paint, fitted, side, s);
     }
 
     /** Lays a splat of size {@code s} flat on a surface facing {@code side}, centred on {@code fitted}. */
-    private void place(Team team, Location fitted, BlockFace side, double s) {
+    private void place(Paint paint, Location fitted, BlockFace side, double s) {
         World w = fitted.getWorld();
         ThreadLocalRandom rnd = ThreadLocalRandom.current();
         Vector n = side.getDirection();
@@ -172,7 +172,7 @@ public final class PaintLayer {
         // ones layer instead of flickering into each other.
         double lift = 0.004 + (layer++ % 12) * 0.0012;
         Location spot = fitted.add(n.clone().multiply(lift));
-        ItemStack item = content.item("splat_" + team.id() + "_" + (1 + rnd.nextInt(3)));
+        ItemStack item = content.item("splat_" + paint.id() + "_" + (1 + rnd.nextInt(3)));
         Quaternionf q = new Quaternionf().rotationTo(0, 0, 1, (float) n.getX(), (float) n.getY(), (float) n.getZ())
                 .rotateZ((float) (rnd.nextDouble() * Math.PI * 2));
         float scale = (float) s;

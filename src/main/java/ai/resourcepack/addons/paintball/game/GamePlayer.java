@@ -1,5 +1,6 @@
 package ai.resourcepack.addons.paintball.game;
 
+import ai.resourcepack.addons.paintball.team.Paint;
 import ai.resourcepack.addons.paintball.team.Team;
 import ai.resourcepack.addons.paintball.stats.StatLine;
 import org.bukkit.Bukkit;
@@ -12,7 +13,10 @@ import java.util.UUID;
 public final class GamePlayer {
     final UUID id;
     final String name;
+    /** Red or blue in a team mode; null in a free for all, and in the lobby before the first match. */
     Team team;
+    /** What they fire and wear: their team's colour, or in a free for all their own. Null until they play. */
+    Paint paint;
 
     /** The team they asked for in the lobby, or null for wherever they are needed; kept from match to match. */
     Team pick;
@@ -31,15 +35,15 @@ public final class GamePlayer {
     long protectedUntil;
     /** The tick they come back, or 0 while they are in. */
     long respawnAt;
-    /** Who splatted them last, and their team, for the HUD while they are out. */
+    /** Who splatted them last, and in what paint, for the HUD while they are out. */
     String splattedBy;
-    Team splattedByTeam;
+    Paint splattedByPaint;
     /** When they were splatted, and which of the screen splats they got. */
     long splattedAt;
     int splat = 1;
-    /** Who they splatted last, their team, and when, for the HUD's moment of glory. */
+    /** Who they splatted last, in what paint, and when, for the HUD's moment of glory. */
     String lastKill;
-    Team lastKillTeam;
+    Paint lastKillPaint;
     long lastKillAt;
     /** The hit marker is up until this tick. */
     long hitUntil;
@@ -76,6 +80,10 @@ public final class GamePlayer {
         return team;
     }
 
+    public Paint paint() {
+        return paint;
+    }
+
     public StatLine stats() {
         return stats;
     }
@@ -89,14 +97,15 @@ public final class GamePlayer {
         stats.deaths = 0;
         stats.shots = 0;
         stats.hits = 0;
+        stats.captures = 0;
         respawnAt = 0;
         protectedUntil = 0;
         reloading = 0;
         splattedBy = null;
-        splattedByTeam = null;
+        splattedByPaint = null;
         splattedAt = 0;
         lastKill = null;
-        lastKillTeam = null;
+        lastKillPaint = null;
         lastKillAt = 0;
         hitUntil = 0;
         aiming = false;

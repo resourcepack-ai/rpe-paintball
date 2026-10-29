@@ -6,6 +6,7 @@ import ai.resourcepack.addons.paintball.team.Team;
 import ai.resourcepack.addons.paintball.text.Text;
 import ai.resourcepack.addons.paintball.game.Game;
 import ai.resourcepack.addons.paintball.game.GamePlayer;
+import ai.resourcepack.addons.paintball.game.Mode;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -14,14 +15,24 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * The match scoreboard: the content folder's {@code dialogs/scoreboard.json},
- * drawn in ResourcePack AI Studio (both teams' tables with faces, kills, deaths
- * and accuracy under the score and the clock), filled in for whoever opens it.
- * F opens it during a match, and everybody gets it when the match ends.
+ * The match scoreboard, a dialog drawn in ResourcePack AI Studio per mode,
+ * filled in for whoever opens it. F opens it during a match, and everybody
+ * gets it when the match ends.
  *
- * <p>The tables are Studio lists named {@code red} and {@code blue}: row k reads
- * {@code {red_k}} (the name, and the face beside it), {@code {red_k_k}},
- * {@code {red_k_d}} and {@code {red_k_acc}}, and a row with no name is hidden.
+ * <ul>
+ *   <li>Team deathmatch, {@code dialogs/scoreboard.json}: both teams' tables
+ *   with faces, kills, deaths and accuracy under the score and the clock.</li>
+ *   <li>Capture the flag, {@code dialogs/scoreboard_ctf.json}: the same with
+ *   captures where accuracy was, and the captures as the score.</li>
+ *   <li>Free for all, {@code dialogs/scoreboard_ffa.json}: one table of
+ *   everybody, best first, under your kills and the leader's.</li>
+ * </ul>
+ *
+ * <p>The tables are Studio lists: {@code red} and {@code blue}, or {@code all}.
+ * Row k reads {@code {red_k}} (the name, and the face beside it),
+ * {@code {red_k_k}}, {@code {red_k_d}}, {@code {red_k_acc}},
+ * {@code {red_k_cap}} and {@code {all_k_place}}, and a row with no name is
+ * hidden. The column headings are values too ({@code pb_h_*}), from config.yml.
  */
 public final class Scoreboard {
     private final PaintballPlugin plugin;
@@ -45,29 +56,57 @@ public final class Scoreboard {
             case "scoreboard-defeat" -> "#ff4655";
             default -> "#ffffff";
         };
+        var m = plugin.messages();
+        Mode mode = game.mode();
         Map<String, String> values = new HashMap<>();
-        values.put("pb_title", plugin.messages().plain(key));
+        values.put("pb_title", m.plain(key));
         values.put("pb_title_colour", colour);
-        values.put("pb_red", String.valueOf(game.kills(Team.RED)));
-        values.put("pb_blue", String.valueOf(game.kills(Team.BLUE)));
         values.put("pb_time", game.clockText());
         values.put("pb_map", game.arena().name().toUpperCase());
-        for (Team t : Team.values()) {
+        values.put("pb_mode", m.plain("mode-" + mode.id()));
+        for (String h : List.of("red", "blue", "kills", "deaths", "accuracy", "captures", "players", "place")) {
+            values.put("pb_h_" + h, m.plain("scoreboard-" + h));
+        }
+        if (mode == Mode.FFA) {
+            List<GamePlayer> all = game.standings();
+            values.put("pb_you", String.valueOf(me == null ? 0 : me.stats().kills));
+            values.put("pb_leader", String.valueOf(all.isEmpty() ? 0 : all.get(0).stats().kills));
+            values.put("pb_leader_name", all.isEmpty() ? "" : all.get(0).name());
             List<Map<String, String>> rows = new ArrayList<>();
-            for (GamePlayer gp : game.roster(t)) {
-                if (rows.size() == 5) break;
-                Map<String, String> row = new HashMap<>();
-                row.put("", gp.name());
-                row.put("k", String.valueOf(gp.stats().kills));
-                row.put("d", String.valueOf(gp.stats().deaths));
-                row.put("acc", gp.stats().accuracy() + "%");
+            for (GamePlayer gp : all) {
+                if (rows.size() == 8) break;
+                Map<String, String> row = row(gp);
+                row.put("place", String.valueOf(game.placeOf(gp)));
                 rows.add(row);
             }
-            dialogs.listRows(p, t.id(), rows);
+            dialogs.listRows(p, "all", rows);
+        } else {
+            values.put("pb_red", String.valueOf(game.score(Team.RED)));
+            values.put("pb_blue", String.valueOf(game.score(Team.BLUE)));
+            for (Team t : Team.values()) {
+                List<Map<String, String>> rows = new ArrayList<>();
+                for (GamePlayer gp : game.roster(t)) {
+                    if (rows.size() == 5) break;
+                    rows.add(row(gp));
+                }
+                dialogs.listRows(p, t.id(), rows);
+            }
         }
-        if (!dialogs.show(p, plugin.settings().scoreboardId, values)) {
-            plugin.getLogger().warning("Could not open the scoreboard dialog " + plugin.settings().scoreboardId
+        String id = plugin.settings().scoreboard(mode);
+        if (!dialogs.show(p, id, values)) {
+            plugin.getLogger().warning("Could not open the scoreboard dialog " + id
                     + " for " + p.getName() + ". Is it in RP Engine's content (/rp reload)?");
         }
+    }
+
+    /** One player's row: name (and face), kills, deaths, accuracy and captures. */
+    private static Map<String, String> row(GamePlayer gp) {
+        Map<String, String> row = new HashMap<>();
+        row.put("", gp.name());
+        row.put("k", String.valueOf(gp.stats().kills));
+        row.put("d", String.valueOf(gp.stats().deaths));
+        row.put("acc", gp.stats().accuracy() + "%");
+        row.put("cap", String.valueOf(gp.stats().captures));
+        return row;
     }
 }

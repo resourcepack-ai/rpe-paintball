@@ -22,7 +22,8 @@ import java.util.Locale;
  *   <li>{@code arena_status_<arena>}, {@code arena_players_<arena>},
  *   {@code arena_plays_<arena>}, {@code arena_name_<arena>},
  *   {@code arena_red_<arena>}, {@code arena_blue_<arena>},
- *   {@code arena_time_<arena>}</li>
+ *   {@code arena_time_<arena>}, {@code arena_mode_<arena>},
+ *   {@code arena_leader_<arena>}</li>
  *   <li>{@code player_<stat>}: the player's own totals; {@code player_arena},
  *   {@code player_team}</li>
  *   <li>{@code leaderboard_<stat>_<n>}: who is n-th, and
@@ -81,11 +82,25 @@ public final class PaintballExpansion extends PlaceholderExpansion {
             case "players" -> String.valueOf(game == null ? 0 : game.size());
             case "plays" -> String.valueOf(plugin.stats().plays(arena.id()));
             case "name" -> arena.name();
-            case "red" -> String.valueOf(game == null || !game.played() ? 0 : game.kills(Team.RED));
-            case "blue" -> String.valueOf(game == null || !game.played() ? 0 : game.kills(Team.BLUE));
+            case "red" -> String.valueOf(game == null || !game.played() ? 0 : game.score(Team.RED));
+            case "blue" -> String.valueOf(game == null || !game.played() ? 0 : game.score(Team.BLUE));
+            case "mode" -> plugin.messages().plain("mode-" + (game != null ? game.mode() : plugin.modeOf(arena)).id());
+            case "leader" -> leader(game);
             case "time" -> game == null ? Text.clock(plugin.settings(arena).matchSeconds) : game.clockText();
             default -> null;
         };
+    }
+
+    /** Who is ahead: the leading team, or in a free for all the leading player; nothing while level or idle. */
+    private String leader(Game game) {
+        if (game == null || !game.played()) return "";
+        if (game.mode() == ai.resourcepack.addons.paintball.game.Mode.FFA) {
+            List<GamePlayer> top = game.standings();
+            return top.isEmpty() ? "" : top.get(0).name();
+        }
+        int red = game.score(Team.RED);
+        int blue = game.score(Team.BLUE);
+        return red == blue ? "" : (red > blue ? Team.RED : Team.BLUE).display();
     }
 
     /** Maintenance, Not Configured, Ready, Starting, In Game or Ending, in the server's words. */
@@ -110,7 +125,8 @@ public final class PaintballExpansion extends PlaceholderExpansion {
             if (game == null) return "";
             if (what.equals("arena")) return game.arena().name();
             GamePlayer gp = game.get(online.getUniqueId());
-            return gp == null || gp.team() == null ? "" : gp.team().display();
+            if (gp == null) return "";
+            return gp.team() != null ? gp.team().display() : gp.paint() != null ? gp.paint().display() : "";
         }
         StatsStore.Stat stat = StatsStore.Stat.parse(what);
         if (stat == null) return null;

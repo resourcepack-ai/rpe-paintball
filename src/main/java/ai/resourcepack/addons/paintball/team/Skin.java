@@ -2,13 +2,20 @@ package ai.resourcepack.addons.paintball.team;
 
 import net.kyori.adventure.text.format.TextColor;
 
-/** The marker's looks: one model, a texture each, and an aimed twin of each (items/markers.yml). */
+/**
+ * The marker's looks: one model, a texture each, and an aimed twin of each
+ * (items/markers.yml). The last three were added for free for all, so that
+ * each of its paint colours has a marker of its own.
+ */
 public enum Skin {
     EMBER("Ember", 0xFF4655),
     TIDE("Tide", 0x2E9BFF),
     TOXIC("Toxic", 0x7CFF4F),
     SUNSET("Sunset", 0xFF8A3D),
-    GOLD("Gold", 0xFFC94A);
+    GOLD("Gold", 0xFFC94A),
+    VIOLET("Violet", 0xA45CFF),
+    BUBBLEGUM("Bubblegum", 0xFF5CC8),
+    FROST("Frost", 0x3DE0E0);
 
     private final String display;
     private final int rgb;

@@ -35,6 +35,7 @@ public final class StatsStore {
         MATCHES(s -> s.matches, "matches", "played", "games"),
         SHOTS(s -> s.shots, "shots"),
         HITS(s -> s.hits, "hits"),
+        CAPTURES(s -> s.captures, "captures", "caps", "flags"),
         ACCURACY(StatLine::accuracy, "accuracy"),
         KD(s -> s.kills / (double) Math.max(1, s.deaths), "kd");
 
@@ -126,6 +127,7 @@ public final class StatsStore {
         e.total.deaths += match.deaths;
         e.total.shots += match.shots;
         e.total.hits += match.hits;
+        e.total.captures += match.captures;
         if (finished) {
             e.total.matches++;
             if (Boolean.TRUE.equals(won)) e.total.wins++;

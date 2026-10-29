@@ -3,7 +3,7 @@ package ai.resourcepack.addons.paintball.game;
 import ai.resourcepack.addons.paintball.content.Content;
 import ai.resourcepack.addons.paintball.config.Settings;
 import ai.resourcepack.addons.paintball.paint.PaintLayer;
-import ai.resourcepack.addons.paintball.team.Team;
+import ai.resourcepack.addons.paintball.team.Paint;
 import org.bukkit.Color;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
@@ -40,15 +40,15 @@ import java.util.concurrent.ThreadLocalRandom;
 final class Combat {
     private static final class Ball {
         final GamePlayer owner;
-        final Team team;
+        final Paint paint;
         Vector pos;
         Vector vel;
         int age;
         ItemDisplay display;
 
-        Ball(GamePlayer owner, Team team, Vector pos, Vector vel) {
+        Ball(GamePlayer owner, Paint paint, Vector pos, Vector vel) {
             this.owner = owner;
-            this.team = team;
+            this.paint = paint;
             this.pos = pos;
             this.vel = vel;
         }
@@ -56,16 +56,16 @@ final class Combat {
 
     private static final class Grenade {
         final GamePlayer owner;
-        final Team team;
+        final Paint paint;
         Vector pos;
         Vector vel;
         int fuse;
         float spin;
         ItemDisplay display;
 
-        Grenade(GamePlayer owner, Team team, Vector pos, Vector vel, int fuse) {
+        Grenade(GamePlayer owner, Paint paint, Vector pos, Vector vel, int fuse) {
             this.owner = owner;
-            this.team = team;
+            this.paint = paint;
             this.pos = pos;
             this.vel = vel;
             this.fuse = fuse;
@@ -154,15 +154,15 @@ final class Combat {
         Vector muzzle = eye.toVector().add(aim.clone().multiply(0.6))
                 .add(right.multiply(gp.aiming ? 0.0 : 0.24)).add(new Vector(0, gp.aiming ? -0.12 : -0.2, 0));
 
-        Ball b = new Ball(gp, gp.team, origin.clone(), dir.multiply(s().speed));
+        Ball b = new Ball(gp, gp.paint, origin.clone(), dir.multiply(s().speed));
         World w = p.getWorld();
         b.display = w.spawn(muzzle.toLocation(w), ItemDisplay.class, e -> {
             e.setPersistent(false);
-            e.setItemStack(content.item("ball_" + gp.team.id()));
+            e.setItemStack(content.item("ball_" + gp.paint.id()));
             e.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
             e.setBrightness(new Display.Brightness(15, 15));
             e.setGlowing(true);
-            e.setGlowColorOverride(gp.team.bukkitColor());
+            e.setGlowColorOverride(gp.paint.bukkitColor());
             e.setTeleportDuration(1);
             e.setViewRange(1.5f);
             e.addScoreboardTag("paintball");
@@ -267,11 +267,11 @@ final class Combat {
                 Location at = hit.getHitPosition().toLocation(w);
                 if (hit.getHitEntity() instanceof Player victim) {
                     GamePlayer gv = game.players.get(victim.getUniqueId());
-                    fx.splat(at, b.team, false);
+                    fx.splat(at, b.paint, false);
                     if (gv != null) game.hit(b.owner, gv, at, Weapon.MARKER);
                 } else if (hit.getHitEntity() instanceof Hanging h) {
-                    fx.splat(at, b.team, false);
-                    game.paint.splatOn(b.team, h, at, 0.9 + ThreadLocalRandom.current().nextDouble() * 0.6);
+                    fx.splat(at, b.paint, false);
+                    game.paint.splatOn(b.paint, h, at, 0.9 + ThreadLocalRandom.current().nextDouble() * 0.6);
                 } else if (hit.getHitBlock() != null) {
                     land(b, hit.getHitBlock(), hit.getHitBlockFace(), at);
                 }
@@ -287,7 +287,7 @@ final class Combat {
                 continue;
             }
             if (b.display != null && b.display.isValid()) b.display.teleport(b.pos.toLocation(w));
-            fx.trail(b.pos.toLocation(w), b.team);
+            fx.trail(b.pos.toLocation(w), b.paint);
         }
     }
 
@@ -297,8 +297,8 @@ final class Combat {
             return;
         }
         if (face == null) face = BlockFace.UP;
-        fx.splat(at, b.team, false);
-        game.paint.splat(b.team, block, face, at, 0.9 + ThreadLocalRandom.current().nextDouble() * 0.6);
+        fx.splat(at, b.paint, false);
+        game.paint.splat(b.paint, block, face, at, 0.9 + ThreadLocalRandom.current().nextDouble() * 0.6);
     }
 
     /** Whether a ball from {@code shooter} stops on {@code e}: an enemy, or a painting or frame it paints. */
@@ -306,11 +306,11 @@ final class Combat {
         return mayHit(shooter, e) || PaintLayer.hangsPaint(e);
     }
 
-    /** Whether a ball from {@code shooter} hits {@code e}: only players of the other team still in the match. */
+    /** Whether a ball from {@code shooter} hits {@code e}: only players on another side still in the match. */
     private boolean mayHit(GamePlayer shooter, Entity e) {
         if (!(e instanceof Player p)) return false;
         GamePlayer gp = game.players.get(p.getUniqueId());
-        return gp != null && !gp.left && gp.alive && gp.team != null && gp.team != shooter.team;
+        return gp != null && !gp.left && gp.alive && game.enemies(shooter, gp);
     }
 
     private static void kill(Ball b) {
@@ -322,14 +322,14 @@ final class Combat {
     void throwGrenade(GamePlayer gp, Player p) {
         Location eye = p.getEyeLocation();
         Vector vel = eye.getDirection().multiply(s().throwSpeed).add(new Vector(0, 0.18, 0)).add(p.getVelocity().multiply(0.5));
-        Grenade g = new Grenade(gp, gp.team, eye.toVector().add(eye.getDirection().multiply(0.4)), vel, s().fuseTicks);
+        Grenade g = new Grenade(gp, gp.paint, eye.toVector().add(eye.getDirection().multiply(0.4)), vel, s().fuseTicks);
         World w = p.getWorld();
         g.display = w.spawn(g.pos.toLocation(w), ItemDisplay.class, e -> {
             e.setPersistent(false);
-            e.setItemStack(content.item("grenade_" + gp.team.id()));
+            e.setItemStack(content.item("grenade_" + gp.paint.id()));
             e.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
             e.setGlowing(true);
-            e.setGlowColorOverride(gp.team.bukkitColor());
+            e.setGlowColorOverride(gp.paint.bukkitColor());
             e.setTeleportDuration(1);
             e.setInterpolationDuration(1);
             e.addScoreboardTag("paintball");
@@ -371,20 +371,20 @@ final class Combat {
                         new Vector3f(1, 1, 1), new Quaternionf()));
             }
             if (g.fuse % 4 == 0) w.spawnParticle(org.bukkit.Particle.DUST, g.pos.toLocation(w), 2, 0.05, 0.05, 0.05, 0,
-                    new org.bukkit.Particle.DustOptions(g.team.bukkitColor(), 0.9f));
+                    new org.bukkit.Particle.DustOptions(g.paint.bukkitColor(), 0.9f));
             if (g.fuse == 10) w.playSound(g.pos.toLocation(w), Sound.BLOCK_NOTE_BLOCK_HAT, 1f, 2f);
         }
     }
 
     private void burst(Grenade g, World w) {
         Location at = g.pos.toLocation(w);
-        fx.splat(at, g.team, true);
+        fx.splat(at, g.paint, true);
         at.getWorld().spawnParticle(org.bukkit.Particle.DUST_COLOR_TRANSITION, at, 50, 1.2, 0.8, 1.2, 0,
-                new org.bukkit.Particle.DustTransition(g.team.bukkitColor(), Color.WHITE, 1.4f));
-        game.paint.burst(g.team, at, 3.2);
+                new org.bukkit.Particle.DustTransition(g.paint.bukkitColor(), Color.WHITE, 1.4f));
+        game.paint.burst(g.paint, at, 3.2);
         double r = s().grenadeRadius;
         for (GamePlayer gv : new ArrayList<>(game.players.values())) {
-            if (gv.left || !gv.alive || gv.team == null || gv.team == g.team) continue;
+            if (gv.left || !gv.alive || !game.enemies(g.owner, gv)) continue;
             Player vp = gv.player();
             if (vp == null) continue;
             Location body = vp.getLocation().add(0, 1, 0);

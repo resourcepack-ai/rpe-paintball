@@ -49,7 +49,7 @@ permissions:
       paintball.arena.delete: true
       paintball.bypass.commands: true
   paintball.start:
-    description: /pb start - start a match now (it joins you first if you are not in).
+    description: /pb start [arena] [mode] - start a match now, in the arena's mode or another (it joins you first if you are not in).
     default: op
   paintball.stop:
     description: /pb stop - end a match, or empty a lobby.
@@ -61,7 +61,7 @@ permissions:
     description: /pb as <player> ... - run a subcommand as somebody else (for NPCs and console). Checked against THEIR permissions.
     default: op
   paintball.arena:
-    description: /pb arena setup - list, create, setwaiting, addspawn, clearspawns, wand and setbounds, enable, disable, tp, name, set (an arena's own settings).
+    description: /pb arena setup - list, create, setwaiting, addspawn, clearspawns, setflag, wand and setbounds, enable, disable, tp, name, set (an arena's own settings, its mode included).
     default: op
   paintball.arena.generate:
     description: /pb arena generate - build a whole field, replacing every block in a 31x14x57 box (two below your feet to eleven above) and building a glass waiting box over it, up to 17 above.

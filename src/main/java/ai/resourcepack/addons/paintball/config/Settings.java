@@ -1,11 +1,14 @@
 package ai.resourcepack.addons.paintball.config;
 
+import ai.resourcepack.addons.paintball.game.Mode;
+import ai.resourcepack.addons.paintball.team.Paint;
 import ai.resourcepack.addons.paintball.team.Skin;
 import org.bukkit.configuration.Configuration;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -13,13 +16,18 @@ import java.util.Map;
 /**
  * config.yml, read once into fields so the hot paths never touch YAML.
  *
- * <p>An arena can set any of the game's options for itself ({@code settings:}
- * under it in arenas.yml, or {@code /pb arena set}); {@link #layered} reads
- * those over config.yml, so an option the arena leaves alone is the server's.
+ * <p>What a match plays by is four layers, each over the one before:
+ * config.yml; config.yml's {@code modes.<mode>} for the mode being played; the
+ * arena's own settings ({@code settings:} under it in arenas.yml, or
+ * {@code /pb arena set}); and the arena's own {@code modes.<mode>}.
+ * {@link #layered} stacks them, so an option nobody changed is the server's.
  */
 public final class Settings {
     /** Top-level sections and options that are the server's, not an arena's. */
     private static final List<String> NOT_PER_ARENA = List.of("ui", "messages", "update-check");
+
+    /** What an arena plays when nothing says otherwise. */
+    public final Mode mode;
 
     public final int matchSeconds;
     public final int killLimit;
@@ -58,6 +66,19 @@ public final class Settings {
     public final Skin redSkin;
     public final Skin blueSkin;
 
+    /** Free for all: the colours handed out, in order, and the marker each one carries. */
+    public final List<Paint> ffaColours;
+    public final Map<Paint, Skin> ffaMarkers;
+
+    /** Capture the flag. See config.yml's {@code ctf:}. */
+    public final int captures;
+    public final int flagReturnTicks;
+    public final double carrierSpeed;
+    public final boolean needOwnFlag;
+    public final boolean carrierGlows;
+    public final boolean carrierThrows;
+    public final double flagReach;
+
     public final int feedTicks;
     public final int killBannerTicks;
     public final int hitMarkerTicks;
@@ -69,9 +90,15 @@ public final class Settings {
     public final java.util.Set<Integer> timeWarnings;
 
     public final String hudId;
+    public final String ffaHudId;
     public final String scoreboardId;
+    public final String ffaScoreboardId;
+    public final String ctfScoreboardId;
 
     public Settings(FileConfiguration c) {
+        Mode m = Mode.parse(c.getString("mode", "teams"));
+        mode = m == null ? Mode.TEAMS : m;
+
         matchSeconds = Math.max(20, c.getInt("match-seconds", 180));
         killLimit = Math.max(0, c.getInt("kill-limit", 0));
         freezeSeconds = Math.max(1, c.getInt("freeze-seconds", 3));
@@ -107,6 +134,27 @@ public final class Settings {
         redSkin = Skin.parse(c.getString("teams.red.marker", "ember"));
         blueSkin = Skin.parse(c.getString("teams.blue.marker", "tide"));
 
+        List<Paint> colours = new ArrayList<>();
+        for (String s : c.getStringList("ffa.colours")) {
+            Paint p = Paint.parse(s);
+            if (p != null && !colours.contains(p)) colours.add(p);
+        }
+        ffaColours = colours.isEmpty() ? List.of(Paint.values()) : List.copyOf(colours);
+        Map<Paint, Skin> markers = new EnumMap<>(Paint.class);
+        for (Paint p : Paint.values()) {
+            String skin = c.getString("ffa.markers." + p.id());
+            markers.put(p, skin == null ? p.skin() : Skin.parse(skin));
+        }
+        ffaMarkers = markers;
+
+        captures = Math.max(1, c.getInt("ctf.captures", 3));
+        flagReturnTicks = (int) Math.round(Math.max(0, c.getDouble("ctf.flag-return-seconds", 20)) * 20);
+        carrierSpeed = Math.max(0.2, Math.min(1.5, c.getDouble("ctf.carrier-speed", 0.85)));
+        needOwnFlag = c.getBoolean("ctf.need-own-flag", true);
+        carrierGlows = c.getBoolean("ctf.carrier-glows", true);
+        carrierThrows = c.getBoolean("ctf.carrier-can-throw", false);
+        flagReach = Math.max(0.5, c.getDouble("ctf.flag-reach", 1.3));
+
         feedTicks = (int) Math.round(Math.max(1, c.getDouble("hud.kill-feed-seconds", 8)) * 20);
         killBannerTicks = (int) Math.round(Math.max(0, c.getDouble("hud.kill-banner-seconds", 2.5)) * 20);
         hitMarkerTicks = Math.max(0, c.getInt("hud.hit-marker-ticks", 6));
@@ -116,14 +164,35 @@ public final class Settings {
         timeWarnings = java.util.Set.copyOf(c.getIntegerList("hud.time-warnings"));
 
         hudId = c.getString("ui.hud", "paintball:hud").trim();
+        ffaHudId = c.getString("ui.hud-ffa", "paintball:hud_ffa").trim();
         scoreboardId = c.getString("ui.scoreboard", "paintball:scoreboard").trim();
+        ffaScoreboardId = c.getString("ui.scoreboard-ffa", "paintball:scoreboard_ffa").trim();
+        ctfScoreboardId = c.getString("ui.scoreboard-ctf", "paintball:scoreboard_ctf").trim();
     }
 
-    /** The settings of an arena: its own options, then config.yml's for the rest. */
-    public static Settings layered(FileConfiguration global, Map<String, Object> own) {
+    /** The HUD a match of this mode draws. */
+    public String hud(Mode m) {
+        return m == Mode.FFA ? ffaHudId : hudId;
+    }
+
+    /** The scoreboard dialog a match of this mode opens. */
+    public String scoreboard(Mode m) {
+        return switch (m) {
+            case FFA -> ffaScoreboardId;
+            case CTF -> ctfScoreboardId;
+            default -> scoreboardId;
+        };
+    }
+
+    /**
+     * What a match of {@code mode} on an arena plays by: config.yml, its
+     * {@code modes.<mode>}, then the arena's own settings and the arena's own
+     * {@code modes.<mode>}, each over the one before.
+     */
+    public static Settings layered(FileConfiguration global, Map<String, Object> own, Mode mode) {
         // Copied rather than set as defaults: every read above names its own
         // fallback, and a fallback named in the call wins over a defaults
-        // section, so an option the arena left alone would be the jar's rather
+        // section, so an option nobody changed would be the jar's rather
         // than the server's.
         YamlConfiguration c = new YamlConfiguration();
         java.util.Set<String> paths = new java.util.LinkedHashSet<>(global.getKeys(true));
@@ -132,7 +201,19 @@ public final class Settings {
             if (path.startsWith("messages") || global.isConfigurationSection(path)) continue;
             c.set(path, global.get(path));
         }
-        for (Map.Entry<String, Object> e : own.entrySet()) c.set(e.getKey(), e.getValue());
+        String prefix = "modes." + mode.id() + ".";
+        for (String path : paths) {
+            if (path.startsWith(prefix) && !global.isConfigurationSection(path)) {
+                c.set(path.substring(prefix.length()), global.get(path));
+            }
+        }
+        for (Map.Entry<String, Object> e : own.entrySet()) {
+            if (!e.getKey().startsWith("modes.")) c.set(e.getKey(), e.getValue());
+        }
+        for (Map.Entry<String, Object> e : own.entrySet()) {
+            if (e.getKey().startsWith(prefix)) c.set(e.getKey().substring(prefix.length()), e.getValue());
+        }
+        c.set("mode", mode.id());
         return new Settings(c);
     }
 
@@ -144,25 +225,63 @@ public final class Settings {
             if (known.isConfigurationSection(path) || NOT_PER_ARENA.contains(path.split("\\.", 2)[0])) continue;
             out.add(path);
         }
+        // An arena can change a mode's own value without config.yml having one for it.
+        for (Mode m : Mode.values()) {
+            for (String path : new ArrayList<>(out)) {
+                if (path.startsWith("modes.") || path.equals("mode")) continue;
+                String per = "modes." + m.id() + "." + path;
+                if (!out.contains(per)) out.add(per);
+            }
+        }
         return out;
+    }
+
+    /** The value config.yml has for an option, for {@link #parse}; a mode's own options fall back to the plain one. */
+    public static Object example(Configuration config, String path) {
+        Object v = config.get(path);
+        if (v == null && path.startsWith("modes.")) {
+            String[] parts = path.split("\\.", 3);
+            if (parts.length == 3) v = config.get(parts[2]);
+        }
+        return v;
     }
 
     /**
      * {@code text} as a value for an option shaped like {@code example} (its
-     * value in config.yml): a whole number, a number, true/false, a list of
-     * whole numbers split by commas, or a word.
+     * value in config.yml): a whole number, a number, true/false, a list split
+     * by commas (of whole numbers or of words), or a word. The game mode and
+     * paint colours are checked by name.
      *
      * @throws IllegalArgumentException when it is not one
      */
-    public static Object parse(Object example, String text) {
+    public static Object parse(String path, Object example, String text) {
         String t = text.trim();
+        if (path.equals("mode")) {
+            Mode m = Mode.parse(t);
+            if (m == null) throw new IllegalArgumentException("teams, ffa or ctf, not " + t);
+            return m.id();
+        }
+        if (path.endsWith(".marker") || path.startsWith("ffa.markers.")) {
+            for (Skin s : Skin.values()) if (s.name().equalsIgnoreCase(t)) return s.name().toLowerCase(Locale.ROOT);
+            throw new IllegalArgumentException("a marker (" + names(Skin.values()) + "), not " + t);
+        }
         try {
             if (example instanceof Integer || example instanceof Long) return Integer.parseInt(t);
             if (example instanceof Number) return Double.parseDouble(t);
-            if (example instanceof List<?>) {
-                List<Integer> out = new ArrayList<>();
+            if (example instanceof List<?> list) {
+                boolean words = !list.isEmpty() && list.get(0) instanceof String;
+                List<Object> out = new ArrayList<>();
                 for (String part : t.replace("[", "").replace("]", "").split("[,\\s]+")) {
-                    if (!part.isEmpty()) out.add(Integer.parseInt(part));
+                    if (part.isEmpty()) continue;
+                    if (!words) {
+                        out.add(Integer.parseInt(part));
+                    } else if (path.equals("ffa.colours")) {
+                        Paint p = Paint.parse(part);
+                        if (p == null) throw new IllegalArgumentException("a colour (" + names(Paint.values()) + "), not " + part);
+                        out.add(p.id());
+                    } else {
+                        out.add(part);
+                    }
                 }
                 return out;
             }
@@ -174,5 +293,11 @@ public final class Settings {
             throw new IllegalArgumentException("true or false, not " + t);
         }
         return t;
+    }
+
+    private static String names(Enum<?>[] values) {
+        List<String> out = new ArrayList<>();
+        for (Enum<?> v : values) out.add(v.name().toLowerCase(Locale.ROOT));
+        return String.join(", ", out);
     }
 }

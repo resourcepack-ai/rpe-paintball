@@ -53,7 +53,7 @@ final class Nametags {
         for (GamePlayer gp : game.active()) {
             Player p = gp.player();
             // Out (a spectator, whom nobody can see) is no name either.
-            if (p == null || gp.team == null || !gp.alive || p.getGameMode() == GameMode.SPECTATOR) continue;
+            if (p == null || gp.paint == null || !gp.alive || p.getGameMode() == GameMode.SPECTATOR) continue;
             wearing.add(gp.id);
             Location at = p.getLocation().add(0, p.getHeight() + ABOVE, 0);
             TextDisplay tag = tags.get(gp.id);
@@ -67,7 +67,7 @@ final class Nametags {
             for (GamePlayer other : game.active()) {
                 Player viewer = other.player();
                 if (viewer == null) continue;
-                boolean may = other != gp && (other.team == gp.team || s.nametagsEnemies);
+                boolean may = other != gp && (game.allies(other, gp) || s.nametagsEnemies);
                 if (may != viewer.canSee(tag)) {
                     if (may) viewer.showEntity(game.plugin, tag);
                     else viewer.hideEntity(game.plugin, tag);
@@ -90,7 +90,7 @@ final class Nametags {
 
     private TextDisplay spawn(Location at, GamePlayer gp, Settings s) {
         String text = Text.legacy(Text.mm(s.nametagFormat
-                .replace("{team_colour}", gp.team.color().asHexString())
+                .replace("{team_colour}", gp.paint.color().asHexString())
                 .replace("{player}", Text.MM.escapeTags(gp.name))));
         return at.getWorld().spawn(at, TextDisplay.class, e -> {
             e.setPersistent(false);

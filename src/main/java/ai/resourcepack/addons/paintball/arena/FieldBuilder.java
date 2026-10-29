@@ -140,6 +140,8 @@ public final class FieldBuilder {
             for (int i = -2; i <= 2; i++) {
                 arena.addSpawn(t, new Location(w, cx + i * 2 + 0.5, cy, cz + s * 24 + 0.5, yaw, 0));
             }
+            // Capture the flag's flag: at the back of the base, in front of its wall.
+            arena.flag(t, new Location(w, cx + 0.5, cy, cz + s * 26 + 0.5, yaw, 0));
         }
         arena.enabled(true);
         setup.bounds(arena, new BoundingBox(cx - HALF_X + 1, cy - 1, cz - HALF_Z + 1, cx + HALF_X, cy + HEIGHT, cz + HALF_Z));

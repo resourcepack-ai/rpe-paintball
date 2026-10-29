@@ -51,8 +51,8 @@ public final class PaintballPlugin extends JavaPlugin {
     private ArenaSetup setup;
     private Scoreboard scoreboard;
     private ai.resourcepack.addons.paintball.stats.StatsStore stats;
-    /** Each arena's settings, read over config.yml's: by the arena itself, so a replaced arena is read afresh. */
-    private final java.util.Map<ai.resourcepack.addons.paintball.arena.Arena, Settings> arenaSettings = new java.util.IdentityHashMap<>();
+    /** Each arena's settings per mode, read over config.yml's: by the arena itself, so a replaced arena is read afresh. */
+    private final java.util.Map<ai.resourcepack.addons.paintball.arena.Arena, java.util.Map<ai.resourcepack.addons.paintball.game.Mode, Settings>> arenaSettings = new java.util.IdentityHashMap<>();
     /** Ticks since enable: Spigot has no current-tick counter of its own. */
     private long ticks;
 
@@ -237,10 +237,27 @@ public final class PaintballPlugin extends JavaPlugin {
         return settings;
     }
 
-    /** The settings a match on {@code arena} plays by: the options it sets for itself, then config.yml's. */
+    /** The mode an arena plays unless a match is started as another: its own, or config.yml's. */
+    public ai.resourcepack.addons.paintball.game.Mode modeOf(ai.resourcepack.addons.paintball.arena.Arena arena) {
+        Object own = arena == null ? null : arena.settings().get("mode");
+        ai.resourcepack.addons.paintball.game.Mode m = own == null ? null : ai.resourcepack.addons.paintball.game.Mode.parse(String.valueOf(own));
+        return m != null ? m : settings.mode;
+    }
+
+    /** The settings a match on {@code arena} plays by, in the mode it plays. */
     public Settings settings(ai.resourcepack.addons.paintball.arena.Arena arena) {
-        if (arena == null || arena.settings().isEmpty()) return settings;
-        return arenaSettings.computeIfAbsent(arena, a -> Settings.layered(getConfig(), a.settings()));
+        return settings(arena, modeOf(arena));
+    }
+
+    /**
+     * The settings a match of {@code mode} on {@code arena} plays by: config.yml,
+     * its {@code modes.<mode>}, then the arena's own options. Worked out once
+     * each and kept until something changes.
+     */
+    public Settings settings(ai.resourcepack.addons.paintball.arena.Arena arena, ai.resourcepack.addons.paintball.game.Mode mode) {
+        java.util.Map<String, Object> own = arena == null ? java.util.Map.of() : arena.settings();
+        return arenaSettings.computeIfAbsent(arena, a -> new java.util.EnumMap<>(ai.resourcepack.addons.paintball.game.Mode.class))
+                .computeIfAbsent(mode, m -> Settings.layered(getConfig(), own, m));
     }
 
     /** An arena's own options changed: read them again. */

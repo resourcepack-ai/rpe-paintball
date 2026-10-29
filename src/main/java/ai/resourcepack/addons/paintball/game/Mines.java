@@ -1,7 +1,7 @@
 package ai.resourcepack.addons.paintball.game;
 
 import ai.resourcepack.addons.paintball.config.Settings;
-import ai.resourcepack.addons.paintball.team.Team;
+import ai.resourcepack.addons.paintball.team.Paint;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.Sound;
@@ -34,14 +34,14 @@ final class Mines {
 
     private static final class Mine {
         final GamePlayer owner;
-        final Team team;
+        final Paint paint;
         final Location at;
         final long armedAt;
         final ItemDisplay display;
 
-        Mine(GamePlayer owner, Team team, Location at, long armedAt, ItemDisplay display) {
+        Mine(GamePlayer owner, Paint paint, Location at, long armedAt, ItemDisplay display) {
             this.owner = owner;
-            this.team = team;
+            this.paint = paint;
             this.at = at;
             this.armedAt = armedAt;
             this.display = display;
@@ -69,13 +69,13 @@ final class Mines {
         float spin = (float) (ThreadLocalRandom.current().nextDouble() * Math.PI * 2);
         ItemDisplay display = at.getWorld().spawn(at.clone().add(0, 0.06, 0), ItemDisplay.class, e -> {
             e.setPersistent(false);
-            e.setItemStack(game.content.item("mine_" + gp.team.id()));
+            e.setItemStack(game.content.item("mine_" + gp.paint.id()));
             e.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
             e.setTransformation(new Transformation(new Vector3f(), new Quaternionf().rotationY(spin),
                     new Vector3f(0.75f, 0.28f, 0.75f), new Quaternionf()));
             e.addScoreboardTag("paintball");
         });
-        mines.add(new Mine(gp, gp.team, at, game.now + s.mineArmTicks, display));
+        mines.add(new Mine(gp, gp.paint, at, game.now + s.mineArmTicks, display));
         gp.minesLeft--;
         at.getWorld().playSound(at, Sound.BLOCK_STONE_BUTTON_CLICK_ON, 0.8f, 1.4f);
         return true;
@@ -87,7 +87,7 @@ final class Mines {
             if (!mines.contains(m) || game.now < m.armedAt) continue;
             if (game.now == m.armedAt) m.at.getWorld().playSound(m.at, Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 2f);
             for (GamePlayer gv : game.active()) {
-                if (!gv.alive || gv.team == null || gv.team == m.team) continue;
+                if (!gv.alive || !game.enemies(m.owner, gv)) continue;
                 Player vp = gv.player();
                 if (vp == null || !vp.getWorld().equals(m.at.getWorld())) continue;
                 Location feet = vp.getLocation();
@@ -108,12 +108,12 @@ final class Mines {
         if (m.display.isValid()) m.display.remove();
         World w = m.at.getWorld();
         Location center = m.at.clone().add(0, 0.4, 0);
-        game.fx.splat(center, m.team, true);
+        game.fx.splat(center, m.paint, true);
         w.playSound(center, Sound.ENTITY_GENERIC_EXPLODE, 0.7f, 1.4f);
-        game.paint.burst(m.team, center, 3.2);
+        game.paint.burst(m.paint, center, 3.2);
         double r = game.settings().mineRadius;
         for (GamePlayer gv : new ArrayList<>(game.players.values())) {
-            if (gv.left || !gv.alive || gv.team == null || gv.team == m.team) continue;
+            if (gv.left || !gv.alive || !game.enemies(m.owner, gv)) continue;
             Player vp = gv.player();
             if (vp == null || !vp.getWorld().equals(w)) continue;
             Location body = vp.getLocation().add(0, 1, 0);

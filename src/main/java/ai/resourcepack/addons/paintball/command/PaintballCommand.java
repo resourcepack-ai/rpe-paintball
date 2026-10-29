@@ -7,6 +7,7 @@ import ai.resourcepack.addons.paintball.arena.ArenaStore;
 import ai.resourcepack.addons.paintball.arena.FieldBuilder;
 import ai.resourcepack.addons.paintball.config.Settings;
 import ai.resourcepack.addons.paintball.game.Game;
+import ai.resourcepack.addons.paintball.game.Mode;
 import ai.resourcepack.addons.paintball.team.Team;
 import ai.resourcepack.addons.paintball.text.Text;
 import org.bukkit.Bukkit;
@@ -84,15 +85,30 @@ public final class PaintballCommand implements TabExecutor {
                 else plugin.scoreboard().open(p, g);
             }
             case "start" -> {
+                // /pb start [arena] [mode]: either may be left out, and a mode alone is the sender's arena.
                 if (!sender.hasPermission(Perms.START)) return deny(sender, Perms.START);
-                Game g = gameFor(sender, args.length > 1 ? args[1] : null, true);
+                String arenaId = args.length > 1 ? args[1] : null;
+                Mode mode = args.length > 2 ? Mode.parse(args[2]) : null;
+                if (arenaId != null && plugin.arenas().get(arenaId) == null && Mode.parse(arenaId) != null) {
+                    mode = Mode.parse(arenaId);
+                    arenaId = null;
+                }
+                if (args.length > 2 && mode == null) {
+                    Text.send(sender, Text.error("/pb start [arena] [teams|ffa|ctf]"));
+                    return true;
+                }
+                Game g = gameFor(sender, arenaId, true);
                 if (g == null) return true;
+                Mode playing = mode != null ? mode : plugin.modeOf(g.arena());
+                String problem = g.whyNot(playing);
                 if (!g.arena().enabled()) {
                     Text.send(sender, plugin.messages().component("arena-closed", "arena", g.arena().name()));
                 } else if (g.live()) {
                     Text.send(sender, Text.error("A match is already on."));
-                } else if (g.start()) {
-                    Text.send(sender, Text.msg("Match on " + g.arena().name() + " starting."));
+                } else if (problem != null) {
+                    Text.send(sender, plugin.messages().component(problem, "arena", g.arena().name(), "id", g.arena().id()));
+                } else if (g.start(mode)) {
+                    Text.send(sender, Text.msg(plugin.messages().plain("mode-" + playing.id()) + " on " + g.arena().name() + " starting."));
                 }
             }
             case "stop", "end" -> {
@@ -260,6 +276,11 @@ public final class PaintballCommand implements TabExecutor {
                         else setup.clearSpawns(p, arena, t);
                     }
                     case "setbounds", "bounds" -> setup.setBounds(p, arena);
+                    case "setflag", "flag" -> {
+                        Team t = Team.parse(a.length > 2 ? a[2] : null);
+                        if (t == null) Text.send(p, Text.error("/pb arena setflag " + id + " <red|blue>"));
+                        else setup.setFlag(p, arena, t);
+                    }
                     case "enable", "open" -> setup.enable(p, arena, true);
                     case "disable", "close" -> setup.enable(p, arena, false);
                     case "tp", "goto" -> {
@@ -307,7 +328,7 @@ public final class PaintballCommand implements TabExecutor {
             return;
         }
         String option = a[2].toLowerCase(Locale.ROOT);
-        if (!Settings.arenaOptions(plugin.getConfig()).contains(option)) {
+        if (!Settings.arenaOptions(plugin.getConfig()).contains(option) && !option.equals("mode")) {
             Text.send(sender, Text.error("No option " + option + " an arena can set. Any of config.yml's but ui, messages and update-check; tab lists them."));
             return;
         }
@@ -319,7 +340,7 @@ public final class PaintballCommand implements TabExecutor {
         Object value = null;
         if (!text.equalsIgnoreCase("default")) {
             try {
-                value = Settings.parse(plugin.getConfig().get(option), text);
+                value = Settings.parse(option, Settings.example(plugin.getConfig(), option), text);
             } catch (IllegalArgumentException e) {
                 Text.send(sender, Text.error(option + ": " + e.getMessage()));
                 return;
@@ -392,7 +413,7 @@ public final class PaintballCommand implements TabExecutor {
         if (s.hasPermission(Perms.SCOREBOARD)) play.add("<white>/pb scoreboard</white> <#9AA0A6>(or F in a match or its lobby)");
         Text.send(s, Text.msg(String.join(DOT, play)));
         List<String> staff = new ArrayList<>();
-        if (s.hasPermission(Perms.START)) staff.add("<white>/pb start</white> <#9AA0A6>(works alone)</#9AA0A6>");
+        if (s.hasPermission(Perms.START)) staff.add("<white>/pb start [arena] [teams|ffa|ctf]</white> <#9AA0A6>(works alone)</#9AA0A6>");
         if (s.hasPermission(Perms.STOP)) staff.add("<white>/pb stop</white>");
         if (s.hasPermission(Perms.RELOAD)) staff.add("<white>/pb reload</white>");
         if (s.hasPermission(Perms.AS)) staff.add("<white>/pb as <player> ...</white>");
@@ -406,7 +427,7 @@ public final class PaintballCommand implements TabExecutor {
     }
 
     private static final List<String> ARENA_SUBCOMMANDS = List.of("list", "generate", "create", "setwaiting", "addspawn",
-            "clearspawns", "wand", "setbounds", "enable", "disable", "tp", "name", "set", "delete");
+            "clearspawns", "setflag", "wand", "setbounds", "enable", "disable", "tp", "name", "set", "delete");
 
     /** The arena subcommands a sender may run, in the order help and tab-completion show them. */
     private static List<String> arenaSubcommands(CommandSender s) {
@@ -438,6 +459,7 @@ public final class PaintballCommand implements TabExecutor {
                     // A closed arena can be stopped but not joined or started, so only stop offers it.
                     if (sender.hasPermission(need)) {
                         for (Arena a : plugin.arenas().all()) if (a.enabled() || sub.equals("stop")) out.add(a.id());
+                        if (sub.equals("start")) for (Mode m : Mode.values()) out.add(m.id());
                     }
                 }
                 case "team", "pick" -> {
@@ -450,17 +472,24 @@ public final class PaintballCommand implements TabExecutor {
                 default -> {
                 }
             }
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("start") && sender.hasPermission(Perms.START)) {
+            for (Mode m : Mode.values()) out.add(m.id());
         } else if (args.length == 3 && args[0].equalsIgnoreCase("arena") && sender.hasPermission(arenaPermission(args[1]))
                 && !List.of("list", "wand", "create", "generate").contains(args[1].toLowerCase(Locale.ROOT))) {
             plugin.arenas().all().forEach(a -> out.add(a.id()));
         } else if (args.length == 4 && args[0].equalsIgnoreCase("arena") && sender.hasPermission(Perms.ARENA)) {
             String op = args[1].toLowerCase(Locale.ROOT);
-            if (op.equals("addspawn") || op.equals("clearspawns")) out.addAll(List.of("red", "blue"));
+            if (op.equals("addspawn") || op.equals("clearspawns") || op.equals("setflag")) out.addAll(List.of("red", "blue"));
             if (op.equals("set")) out.addAll(Settings.arenaOptions(plugin.getConfig()));
         } else if (args.length == 5 && args[0].equalsIgnoreCase("arena") && args[1].equalsIgnoreCase("set")
                 && sender.hasPermission(Perms.ARENA)) {
-            Object global = plugin.getConfig().get(args[3].toLowerCase(Locale.ROOT));
-            if (global != null) out.add(String.valueOf(global).replace(" ", ""));
+            String option = args[3].toLowerCase(Locale.ROOT);
+            if (option.equals("mode")) {
+                for (Mode m : Mode.values()) out.add(m.id());
+            } else {
+                Object global = Settings.example(plugin.getConfig(), option);
+                if (global != null) out.add(String.valueOf(global).replace(" ", ""));
+            }
             out.add("default");
         }
         String typed = args[args.length - 1].toLowerCase(Locale.ROOT);

@@ -52,6 +52,11 @@ public enum Team {
         return bar;
     }
 
+    /** The paint the team plays in. */
+    public Paint paint() {
+        return this == RED ? Paint.RED : Paint.BLUE;
+    }
+
     public Team other() {
         return this == RED ? BLUE : RED;
     }

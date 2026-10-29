@@ -2,6 +2,7 @@ package ai.resourcepack.addons.paintball.game;
 
 import ai.resourcepack.addons.paintball.content.Content;
 import ai.resourcepack.addons.paintball.config.Messages;
+import ai.resourcepack.addons.paintball.team.Paint;
 import ai.resourcepack.addons.paintball.team.Skin;
 import ai.resourcepack.addons.paintball.team.Team;
 import ai.resourcepack.addons.paintball.text.Text;
@@ -33,10 +34,6 @@ public final class Loadout {
         LOBBY_KEY = new NamespacedKey(plugin, "lobby");
     }
 
-    /** Each team carries its own colourway of the one marker model. */
-    static Skin skin(ai.resourcepack.addons.paintball.config.Settings s, Team team) {
-        return team == Team.BLUE ? s.blueSkin : s.redSkin;
-    }
 
     /** The grenade's cooldown group: its recharge greys out the grenade and nothing else (the marker is paper too). */
     public static final NamespacedKey GRENADE_COOLDOWN = new NamespacedKey("paintball", "grenade");
@@ -135,8 +132,8 @@ public final class Loadout {
         return withComponents(item, fires ? MARKER_HANDS + "," + MARKER_TRIGGER : MARKER_HANDS);
     }
 
-    static ItemStack mask(Content content, Team team) {
-        ItemStack item = content.item("mask_" + team.id());
+    static ItemStack mask(Content content, Paint paint) {
+        ItemStack item = content.item("mask_" + paint.id());
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
         // Worn on the head: the model is drawn there, and the goggles' frame is
@@ -153,10 +150,10 @@ public final class Loadout {
         return item;
     }
 
-    static ItemStack armour(Material material, Team team) {
+    static ItemStack armour(Material material, Paint paint) {
         ItemStack item = new ItemStack(material);
         if (item.getItemMeta() instanceof LeatherArmorMeta meta) {
-            meta.setColor(team.bukkitColor());
+            meta.setColor(paint.bukkitColor());
             meta.setUnbreakable(true);
             meta.setHideTooltip(true);
             item.setItemMeta(meta);
@@ -164,8 +161,8 @@ public final class Loadout {
         return item;
     }
 
-    static ItemStack grenade(Content content, Team team, int cooldownTicks) {
-        ItemStack item = content.item("grenade_" + team.id());
+    static ItemStack grenade(Content content, Paint paint, int cooldownTicks) {
+        ItemStack item = content.item("grenade_" + paint.id());
         ItemMeta meta = item.getItemMeta();
         if (meta == null) return item;
         meta.setMaxStackSize(1);
@@ -178,23 +175,23 @@ public final class Loadout {
     }
 
     /** The mines a player has still to set, as one stack. */
-    static ItemStack mine(Content content, Team team, int left) {
-        ItemStack item = content.item("mine_" + team.id());
+    static ItemStack mine(Content content, Paint paint, int left) {
+        ItemStack item = content.item("mine_" + paint.id());
         item.setAmount(Math.max(1, Math.min(99, left)));
         return item;
     }
 
-    /** Dresses a player for the match: marker in hand, grenade beside it, any mines left, team mask and suit. */
-    static void equip(Content content, ai.resourcepack.addons.paintball.config.Settings s, Player p, GamePlayer gp) {
+    /** Dresses a player for the match: marker in hand, grenade beside it, any mines left, mask and suit in their paint. */
+    static void equip(Content content, ai.resourcepack.addons.paintball.config.Settings s, Player p, GamePlayer gp, Skin skin) {
         PlayerInventory inv = p.getInventory();
         inv.clear();
-        inv.setItem(0, marker(content, skin(s, gp.team)));
-        inv.setItem(1, grenade(content, gp.team, s.grenadeCooldownTicks));
-        if (gp.minesLeft > 0) inv.setItem(2, mine(content, gp.team, gp.minesLeft));
-        inv.setHelmet(mask(content, gp.team));
-        inv.setChestplate(armour(Material.LEATHER_CHESTPLATE, gp.team));
-        inv.setLeggings(armour(Material.LEATHER_LEGGINGS, gp.team));
-        inv.setBoots(armour(Material.LEATHER_BOOTS, gp.team));
+        inv.setItem(0, marker(content, skin));
+        inv.setItem(1, grenade(content, gp.paint, s.grenadeCooldownTicks));
+        if (gp.minesLeft > 0) inv.setItem(2, mine(content, gp.paint, gp.minesLeft));
+        inv.setHelmet(mask(content, gp.paint));
+        inv.setChestplate(armour(Material.LEATHER_CHESTPLATE, gp.paint));
+        inv.setLeggings(armour(Material.LEATHER_LEGGINGS, gp.paint));
+        inv.setBoots(armour(Material.LEATHER_BOOTS, gp.paint));
         inv.setHeldItemSlot(0);
     }
 
@@ -206,18 +203,19 @@ public final class Loadout {
     public static final String PICK_RED = "pick_red";
     public static final String PICK_BLUE = "pick_blue";
 
-    /** The marker's name in the HUD, from its skin. */
-    static String skinName(ai.resourcepack.addons.paintball.config.Settings s, GamePlayer gp) {
-        return skin(s, gp.team).display().toUpperCase();
-    }
-
-    /** In the lobby: the marker to look at, a side to pick (lit while picked; again for neither), the last scoreboard, and the way out. */
-    static void lobby(Content content, Messages messages, Player p, Team pick) {
+    /**
+     * In the lobby: the marker to look at, a side to pick (lit while picked;
+     * again for neither) when the next match has teams, the last scoreboard,
+     * and the way out.
+     */
+    static void lobby(Content content, Messages messages, Player p, Team pick, boolean teams) {
         PlayerInventory inv = p.getInventory();
         inv.clear();
         inv.setItem(0, marker(content, Skin.EMBER, false, false));
-        inv.setItem(3, picked(lobbyItem(new ItemStack(Material.RED_CONCRETE), PICK_RED, messages, "item-team-red"), pick == Team.RED));
-        inv.setItem(5, picked(lobbyItem(new ItemStack(Material.BLUE_CONCRETE), PICK_BLUE, messages, "item-team-blue"), pick == Team.BLUE));
+        if (teams) {
+            inv.setItem(3, picked(lobbyItem(new ItemStack(Material.RED_CONCRETE), PICK_RED, messages, "item-team-red"), pick == Team.RED));
+            inv.setItem(5, picked(lobbyItem(new ItemStack(Material.BLUE_CONCRETE), PICK_BLUE, messages, "item-team-blue"), pick == Team.BLUE));
+        }
         inv.setItem(7, lobbyItem(new ItemStack(Material.GOLD_INGOT), SCOREBOARD, messages, "item-scoreboard"));
         inv.setItem(8, lobbyItem(new ItemStack(Material.BARRIER), LEAVE, messages, "item-leave"));
         inv.setHeldItemSlot(0);

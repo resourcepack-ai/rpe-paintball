@@ -1,7 +1,7 @@
 package ai.resourcepack.addons.paintball.game;
 
 import ai.resourcepack.addons.paintball.content.Content;
-import ai.resourcepack.addons.paintball.team.Team;
+import ai.resourcepack.addons.paintball.team.Paint;
 import org.bukkit.Color;
 import org.bukkit.FireworkEffect;
 import org.bukkit.Location;
@@ -48,17 +48,17 @@ final class Fx {
     }
 
     /** A ball breaking on something: a puff of its colour and a wet slap. */
-    void splat(Location at, Team team, boolean big) {
-        Color c = team.bukkitColor();
+    void splat(Location at, Paint paint, boolean big) {
+        Color c = paint.bukkitColor();
         at.getWorld().spawnParticle(Particle.DUST, at, big ? 40 : 12, big ? 0.6 : 0.12, big ? 0.6 : 0.12, big ? 0.6 : 0.12, 0,
                 new Particle.DustOptions(c, big ? 1.6f : 1.1f));
-        ItemStack ball = content.item("ball_" + team.id());
+        ItemStack ball = content.item("ball_" + paint.id());
         at.getWorld().spawnParticle(Particle.ITEM, at, big ? 30 : 6, 0.05, 0.05, 0.05, big ? 0.35 : 0.12, ball);
         content.sound(at, big ? "burst" : "splat", big ? 1.2f : 0.55f, wobble(1f, 0.12f), Sound.ENTITY_SLIME_SQUISH_SMALL);
     }
 
-    void trail(Location at, Team team) {
-        at.getWorld().spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, new Particle.DustOptions(team.bukkitColor(), 0.6f));
+    void trail(Location at, Paint paint) {
+        at.getWorld().spawnParticle(Particle.DUST, at, 1, 0, 0, 0, 0, new Particle.DustOptions(paint.bukkitColor(), 0.6f));
     }
 
     void splash(Location at) {
@@ -112,11 +112,11 @@ final class Fx {
         }
     }
 
-    void firework(Location at, Team team) {
+    void firework(Location at, Paint paint) {
         at.getWorld().spawn(at, Firework.class, f -> {
             FireworkMeta meta = f.getFireworkMeta();
             meta.addEffect(FireworkEffect.builder().with(FireworkEffect.Type.BALL_LARGE)
-                    .withColor(team.bukkitColor(), Color.WHITE).withFade(team.bukkitColor()).trail(true).build());
+                    .withColor(paint.bukkitColor(), Color.WHITE).withFade(paint.bukkitColor()).trail(true).build());
             meta.setPower(1);
             f.setFireworkMeta(meta);
         });
