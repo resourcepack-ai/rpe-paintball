@@ -212,6 +212,32 @@ void scene_1(vec2 p, vec2 screen, out float d, out vec3 col, out float shapeAlph
     d = opUnion(d, d4);
 }
 
+// ---- Go Karts HUD (signature 2, full screen) ----
+// Drawn at rpeScreen: the fragment's own position in GUI pixels, which the
+// vertex shader interpolates across the glyph it stretched over the screen.
+// No texel lookup and no canvas to clip to.
+
+// d: distance to the composed surface. col: its colour at this fragment.
+void scene_2(vec2 p, vec2 screen, out float d, out vec3 col, out float shapeAlpha) {
+    vec2 stretchK = screen / vec2(640.0, 360.0);
+    float stretchS = min(stretchK.x, stretchK.y);
+    d = 1e6;
+    col = vec3(0.0);
+    shapeAlpha = 0.0;
+
+    // roundedBox #1 (union)
+    float d0 = sdRoundedBox((p - (vec2(1.0, 0.5) * screen + vec2(-58.0, -3.0))), (vec2(52.0, 44.0)), (3.0));
+    col = mix(col, vec3(0.051, 0.0667, 0.0902), step(d0, d));
+    shapeAlpha = mix(shapeAlpha, 0.42, step(d0, d));
+    d = opUnion(d, d0);
+
+    // roundedBox #2 (union)
+    float d1 = sdRoundedBox((p - (vec2(1.0, 0.0) * screen + vec2(-36.0, 30.0))), (vec2(32.0, 24.0)), (3.0));
+    col = mix(col, vec3(0.051, 0.0667, 0.0902), step(d1, d));
+    shapeAlpha = mix(shapeAlpha, 0.42, step(d1, d));
+    d = opUnion(d, d1);
+}
+
 void dispatch(int id, vec2 cell, vec2 sub, out float d, out vec3 col, out float a) {
     d = 1e6;
     col = vec3(0.0);
@@ -231,6 +257,15 @@ void dispatch(int id, vec2 cell, vec2 sub, out float d, out vec3 col, out float 
         float stretchS = min(stretchK.x, stretchK.y);
         scene_1(rpeScreen.xy, screen, d, col, a);
         float feather = max(max(max(max(max(1.0, 1.0), 1.0), 1.0), 1.0), 1.0);
+        a *= 1.0 - smoothstep(-feather * 0.5, feather * 0.5, d);
+        return;
+    }
+    if (id == 2) {
+        vec2 screen = rpeScreen.zw;
+        vec2 stretchK = screen / vec2(640.0, 360.0);
+        float stretchS = min(stretchK.x, stretchK.y);
+        scene_2(rpeScreen.xy, screen, d, col, a);
+        float feather = max(max(1.0, 1.0), 1.0);
         a *= 1.0 - smoothstep(-feather * 0.5, feather * 0.5, d);
         return;
     }

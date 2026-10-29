@@ -1,6 +1,69 @@
 {
  "providers": [
   {
+   "type": "bitmap",
+   "file": "paintball:font/rpe_bar_64x4.png",
+   "ascent": 3,
+   "height": 4,
+   "chars": [
+    ""
+   ]
+  },
+  {
+   "type": "bitmap",
+   "file": "paintball:font/rpe_bar_32x4.png",
+   "ascent": 3,
+   "height": 4,
+   "chars": [
+    ""
+   ]
+  },
+  {
+   "type": "bitmap",
+   "file": "paintball:font/rpe_bar_16x4.png",
+   "ascent": 3,
+   "height": 4,
+   "chars": [
+    ""
+   ]
+  },
+  {
+   "type": "bitmap",
+   "file": "paintball:font/rpe_bar_8x4.png",
+   "ascent": 3,
+   "height": 4,
+   "chars": [
+    ""
+   ]
+  },
+  {
+   "type": "bitmap",
+   "file": "paintball:font/rpe_bar_4x4.png",
+   "ascent": 3,
+   "height": 4,
+   "chars": [
+    ""
+   ]
+  },
+  {
+   "type": "bitmap",
+   "file": "paintball:font/rpe_bar_2x4.png",
+   "ascent": 3,
+   "height": 4,
+   "chars": [
+    ""
+   ]
+  },
+  {
+   "type": "bitmap",
+   "file": "paintball:font/rpe_bar_1x4.png",
+   "ascent": 3,
+   "height": 4,
+   "chars": [
+    ""
+   ]
+  },
+  {
    "type": "space",
    "advances": {
     "": 1,
@@ -41,6 +104,15 @@
    "height": 8,
    "chars": [
     ""
+   ]
+  },
+  {
+   "type": "bitmap",
+   "file": "paintball:font/rpe_shader_2.png",
+   "ascent": 7,
+   "height": 8,
+   "chars": [
+    ""
    ]
   }
  ]
