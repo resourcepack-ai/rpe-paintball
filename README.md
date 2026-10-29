@@ -1,9 +1,12 @@
 # Paintball
 
-5v5 paintball for Minecraft servers, built on
-[RP Engine](https://github.com/resourcepack-ai/rp-engine). One mode: a hit
-splats you, you're back in three seconds, and the team with more kills when the
-clock runs out wins.
+Paintball for Minecraft servers, built on
+[RP Engine](https://github.com/resourcepack-ai/rp-engine). A hit splats you and
+you're back in a few seconds. It plays three ways, chosen per arena: **team
+deathmatch** (red against blue, most splats wins), **free for all** (everybody
+for themselves, each in one of eight paint colours, first to 15), and
+**capture the flag** (take the other team's flag from its base and bring it
+home to yours, first to 3).
 
 It is an RP Engine addon, and it uses nothing but the engine's public API
 (`ai.resourcepack.engine.api`). Everything a player sees, from the marker in
@@ -37,7 +40,7 @@ worlds is found.
 |---|---|
 | `/pb join` | Into the lobby (the waiting box over the field) |
 | `/pb team red\|blue\|auto` | The side you'd like, from the next match; the red and blue items in the lobby's hotbar do the same. Picks are kept within one player of even: whoever picked a crowded side last is moved, and told |
-| `/pb start` | Staff: starts the match now, even if you're alone (it joins you first) |
+| `/pb start [arena] [teams\|ffa\|ctf]` | Staff: starts the match now, in the arena's mode or another, even if you're alone (it joins you first) |
 | `/pb stop` | Staff: ends the match (scoreboard, then back to the lobby); in the lobby, sends everybody home |
 | `/pb leave` | Out, with your inventory and position back |
 | **F** or `/pb scoreboard` | The match scoreboard |
@@ -58,6 +61,10 @@ sets it up. From the console: `/pb arena generate <id> at <world> <x> <y> <z> [n
 By hand: `create`, `setwaiting`, `addspawn <red|blue>`, `wand` + `setbounds`, `enable`.
 `/pb arena list` shows every arena and what it still needs; `/pb help` lists the
 rest (`disable`, `clearspawns`, `tp`, `name`, `set`, `delete`).
+
+`/pb arena set <id> mode <teams|ffa|ctf>` is what an arena plays. Capture the
+flag needs a place for each flag: a generated field has them, and by hand it is
+`/pb arena setflag <id> <red|blue>` where you stand.
 
 `/pb arena set <id> <option> <value>` gives one arena its own value for any of
 `config.yml`'s game options (`match-seconds`, `kill-limit`, `marker.hopper`,

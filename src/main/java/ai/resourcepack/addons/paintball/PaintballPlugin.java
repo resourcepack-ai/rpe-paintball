@@ -101,7 +101,7 @@ public final class PaintballPlugin extends JavaPlugin {
         ai.resourcepack.common.banner.StartupBanner banner = ai.resourcepack.common.banner.StartupBanner.begin(this)
                 .name("Paintball")
                 .addonOf("RP Engine")
-                .tagline("Team paintball with a full-screen HUD.")
+                .tagline("Paintball: teams, free for all and capture the flag.")
                 .docs("https://resourcepack.ai/docs/rp-engine/paintball")
                 .updates(updates);
         Plugin found = getServer().getPluginManager().getPlugin("RPEngine");

@@ -2,7 +2,7 @@ name: RPEPaintball
 main: ai.resourcepack.addons.paintball.PaintballPlugin
 version: ${version}
 api-version: '1.21.11'
-description: 5v5 paintball for RP Engine - one hit and you're out for three seconds, most kills wins.
+description: Paintball for RP Engine - team deathmatch, free for all and capture the flag. One hit and you're out for a few seconds.
 author: ResourcePack AI
 # Hard, not soft: the marker, the paint, the HUD and the scoreboard are all
 # RP Engine content. This plugin is the game on top.

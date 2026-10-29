@@ -870,7 +870,7 @@ public final class Game {
     public void toggleAim(Player p) {
         GamePlayer gp = players.get(p.getUniqueId());
         if (gp == null || phase != Phase.LIVE || !gp.alive || now - gp.aimChangedAt < 4) return;
-        if (!gp.aiming && gp.reloading > 0) return;
+        if (!gp.aiming && (gp.reloading > 0 || flags.carrying(gp))) return;
         aim(gp, p, !gp.aiming);
     }
 
