@@ -70,7 +70,16 @@ final class Flags {
 
     Flags(Game game) {
         this.game = game;
+    }
+
+    /**
+     * Made on first use, not in the constructor: Game builds its Flags in a
+     * field initialiser, which runs before Game's constructor sets
+     * {@code plugin}.
+     */
+    private NamespacedKey carryKey() {
         if (CARRY_KEY == null) CARRY_KEY = new NamespacedKey(game.plugin, "carry");
+        return CARRY_KEY;
     }
 
     /** Both flags up at their bases, for a new match. */
@@ -182,7 +191,7 @@ final class Flags {
         if (s.carrierGlows) p.setGlowing(true);
         AttributeInstance speed = p.getAttribute(Attribute.MOVEMENT_SPEED);
         if (speed != null && s.carrierSpeed != 1.0) {
-            speed.addModifier(new AttributeModifier(CARRY_KEY, s.carrierSpeed - 1.0,
+            speed.addModifier(new AttributeModifier(carryKey(), s.carrierSpeed - 1.0,
                     AttributeModifier.Operation.MULTIPLY_SCALAR_1, EquipmentSlotGroup.ANY));
         }
         // No sights while carrying: a flag on your back and a scope at your eye do not go together.
@@ -222,7 +231,7 @@ final class Flags {
         AttributeInstance speed = p.getAttribute(Attribute.MOVEMENT_SPEED);
         if (speed == null) return;
         for (AttributeModifier m : new java.util.ArrayList<>(speed.getModifiers())) {
-            if (CARRY_KEY.equals(m.getKey())) speed.removeModifier(m);
+            if (carryKey().equals(m.getKey())) speed.removeModifier(m);
         }
     }
 
