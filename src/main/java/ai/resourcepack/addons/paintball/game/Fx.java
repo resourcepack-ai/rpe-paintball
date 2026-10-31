@@ -100,6 +100,29 @@ final class Fx {
         p.playSound(p.getLocation(), Sound.BLOCK_NOTE_BLOCK_PLING, 0.9f, pitch);
     }
 
+    /** The edge of a safe zone, in its owner's paint, drawn only for them. */
+    void safeZone(Player p, Location centre, double r, boolean square, Paint paint) {
+        Particle.DustOptions dust = new Particle.DustOptions(paint == null ? Color.WHITE : paint.bukkitColor(), 1.0f);
+        double y = centre.getY() + 0.15;
+        int points = Math.max(12, (int) Math.round(r * (square ? 8 : 2 * Math.PI)));
+        for (int i = 0; i < points; i++) {
+            double x;
+            double z;
+            if (square) {
+                double t = i * 8.0 / points;
+                int side = (int) (t / 2);
+                double along = (t % 2) - 1;
+                x = side == 0 ? along * r : side == 1 ? r : side == 2 ? -along * r : -r;
+                z = side == 0 ? -r : side == 1 ? along * r : side == 2 ? r : -along * r;
+            } else {
+                double a = i * 2 * Math.PI / points;
+                x = Math.cos(a) * r;
+                z = Math.sin(a) * r;
+            }
+            p.spawnParticle(Particle.DUST, centre.getX() + x, y, centre.getZ() + z, 1, 0, 0, 0, 0, dust);
+        }
+    }
+
     void protectedHit(Location at) {
         at.getWorld().spawnParticle(Particle.ENCHANTED_HIT, at, 6, 0.1, 0.1, 0.1, 0.1);
     }

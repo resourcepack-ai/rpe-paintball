@@ -357,7 +357,7 @@ final class Bots {
         GamePlayer best = null;
         double nearest = SIGHT * SIGHT;
         for (GamePlayer o : game.active()) {
-            if (!o.alive || !game.enemies(gp, o) || game.now < o.protectedUntil) continue;
+            if (!o.alive || !game.enemies(gp, o) || game.isProtected(o)) continue;
             LivingEntity them = o.body();
             if (them == null || !them.getWorld().equals(eye.getWorld())) continue;
             if (them instanceof Player p && p.getGameMode() == org.bukkit.GameMode.SPECTATOR) continue;

@@ -36,6 +36,9 @@ public final class Settings {
     /** While a player is out, the camera circles whoever splatted them. */
     public final boolean killerCamera;
     public final int protectionTicks;
+    /** The safe zone round the spawn a player came in at: its size in blocks (0 for none), and whether it is a square. */
+    public final double protectionRadius;
+    public final boolean protectionSquare;
     public final int grenadeCooldownTicks;
     /** Whether a respawn brings the grenade straight back. */
     public final boolean grenadeResetOnRespawn;
@@ -116,6 +119,8 @@ public final class Settings {
         respawnTicks = (int) Math.round(Math.max(0.5, c.getDouble("respawn-seconds", 3)) * 20);
         killerCamera = c.getBoolean("killer-camera", true);
         protectionTicks = (int) Math.round(Math.max(0, c.getDouble("spawn-protection-seconds", 1.5)) * 20);
+        protectionRadius = Math.max(0, c.getDouble("spawn-protection-radius", 0));
+        protectionSquare = "square".equalsIgnoreCase(c.getString("spawn-protection-shape", "circle").trim());
         grenadeCooldownTicks = (int) Math.round(Math.max(0, c.getDouble("grenade.cooldown-seconds", 15)) * 20);
         grenadeResetOnRespawn = c.getBoolean("grenade.reset-on-respawn", false);
         endSeconds = Math.max(3, c.getInt("end-seconds", 12));

@@ -38,6 +38,8 @@ public final class GamePlayer {
     /** Mines still to set this match. */
     int minesLeft;
     long protectedUntil;
+    /** The spawn they came in at, while they are still in its safe zone (spawn-protection-radius); null once they leave it. */
+    Location safeZone;
     /** The tick they come back, or 0 while they are in. */
     long respawnAt;
     /** Who splatted them last, and in what paint, for the HUD while they are out. */
@@ -119,6 +121,7 @@ public final class GamePlayer {
         stats.captures = 0;
         respawnAt = 0;
         protectedUntil = 0;
+        safeZone = null;
         reloading = 0;
         splattedBy = null;
         splattedByPaint = null;

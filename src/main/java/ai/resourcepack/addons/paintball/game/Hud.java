@@ -293,7 +293,7 @@ final class Hud {
         // The line under the score.
         String status = "";
         if (game.phase == Game.Phase.FREEZE) status = m.plain("hud-get-ready");
-        else if (armed && game.now < gp.protectedUntil) status = m.plain("hud-protected");
+        else if (armed && game.isProtected(gp)) status = m.plain("hud-protected");
         else if (armed && game.mode == Mode.CTF) {
             status = game.flags.carrying(gp) ? m.plain("hud-ctf-carrying")
                     : m.plain("hud-ctf-first-to", "captures", String.valueOf(s.captures));

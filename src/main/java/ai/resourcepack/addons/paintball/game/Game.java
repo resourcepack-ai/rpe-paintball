@@ -492,6 +492,7 @@ public final class Game {
             if (phase != Phase.LIVE) return;
         }
         for (GamePlayer gp : active()) {
+            if (gp.alive) tickSafeZone(gp);
             if (gp.isBot()) {
                 if (gp.alive) bots.tick(gp);
                 else if (gp.respawnAt > 0 && now >= gp.respawnAt) spawnBot(gp, false);
@@ -637,6 +638,7 @@ public final class Game {
         gp.protectedUntil = first ? 0 : now + s.protectionTicks;
         aim(gp, p, false);
         Location at = first ? slotFor(gp) : spawnFor(gp);
+        gp.safeZone = s.protectionRadius > 0 ? at.clone() : null;
         killCam.stop(gp, p);
         if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
         p.setGameMode(GameMode.ADVENTURE);
@@ -664,6 +666,7 @@ public final class Game {
         gp.protectedUntil = first ? 0 : now + s.protectionTicks;
         Location at = first ? slotFor(gp) : spawnFor(gp);
         gp.lastInside = at;
+        gp.safeZone = s.protectionRadius > 0 ? at.clone() : null;
         if (bots.place(gp, at)) hud.refreshTeams();
     }
 
@@ -709,10 +712,42 @@ public final class Game {
 
     // ---- hits ----------------------------------------------------------------------
 
+    /** Whether nothing can splat {@code gp} now: just back, or still in their spawn's safe zone. */
+    boolean isProtected(GamePlayer gp) {
+        return now < gp.protectedUntil || gp.safeZone != null;
+    }
+
+    /**
+     * Once a tick for each player in: out of the safe zone ends it, and
+     * whoever is still in it sees its border.
+     */
+    private void tickSafeZone(GamePlayer gp) {
+        if (gp.safeZone == null) return;
+        org.bukkit.entity.LivingEntity body = gp.body();
+        if (body == null) return;
+        Settings s = settings();
+        Location at = body.getLocation();
+        double dx = at.getX() - gp.safeZone.getX();
+        double dz = at.getZ() - gp.safeZone.getZ();
+        double r = s.protectionRadius;
+        boolean inside = at.getWorld().equals(gp.safeZone.getWorld()) && Math.abs(at.getY() - gp.safeZone.getY()) <= Math.max(3, r)
+                && (s.protectionSquare ? Math.abs(dx) <= r && Math.abs(dz) <= r : dx * dx + dz * dz <= r * r);
+        if (!inside) {
+            gp.safeZone = null;
+            return;
+        }
+        if (now % 10 == 0 && body instanceof Player p) fx.safeZone(p, gp.safeZone, r, s.protectionSquare, gp.paint);
+    }
+
+    /** They fired, threw or set a mine: no longer safe in their spawn's zone. */
+    void leaveSafeZone(GamePlayer gp) {
+        gp.safeZone = null;
+    }
+
     /** {@code shooter} hit {@code victim}: one hit and they are splatted. */
     void hit(GamePlayer shooter, GamePlayer victim, Location at, Weapon weapon) {
         if (phase != Phase.LIVE || !victim.alive || victim.left || !enemies(shooter, victim)) return;
-        if (now < victim.protectedUntil) {
+        if (isProtected(victim)) {
             fx.protectedHit(at);
             return;
         }
@@ -956,6 +991,7 @@ public final class Game {
         // The grenade stays in the hotbar and recharges, greyed out by the game's own cooldown sweep.
         int cooldown = settings().grenadeCooldownTicks;
         gp.grenadeReadyAt = now + cooldown;
+        leaveSafeZone(gp);
         combat.throwGrenade(gp, p);
         if (cooldown > 0) p.setCooldown(Loadout.grenade(content, gp.paint, cooldown), cooldown);
     }
@@ -969,6 +1005,7 @@ public final class Game {
         if (gp == null || phase != Phase.LIVE || !gp.alive || gp.paint == null) return;
         if (flags.carrying(gp) && !settings().carrierThrows) return;
         if (!mines.place(gp, p, block, face)) return;
+        leaveSafeZone(gp);
         var inv = p.getInventory();
         for (int slot = 0; slot < 9; slot++) {
             if (!Loadout.isMine(content, inv.getItem(slot))) continue;

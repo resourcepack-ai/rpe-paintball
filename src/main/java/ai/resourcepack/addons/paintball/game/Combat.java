@@ -154,6 +154,7 @@ final class Combat {
 
     /** A ball on its way from {@code eye} along {@code dir}. */
     private void launch(GamePlayer gp, Location eye, Vector dir, boolean aiming) {
+        game.leaveSafeZone(gp);
         Vector aim = eye.getDirection();
         Vector origin = eye.toVector();
 

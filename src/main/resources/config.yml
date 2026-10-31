@@ -23,7 +23,14 @@ respawn-seconds: 3
 # While you're out, the camera circles whoever splatted you. false leaves you a
 # free spectator where you fell.
 killer-camera: true
+# A player just back at a spawn can't be splatted for this long.
 spawn-protection-seconds: 1.5
+# And, with a radius, for as long as they stay inside this many blocks of the
+# spawn they came in at, however long that is: a circle round it, or a square.
+# Firing, throwing a grenade or setting a mine ends it, so nobody shoots out of
+# a safe zone. The border is drawn for whoever is inside. 0 for none.
+spawn-protection-radius: 0
+spawn-protection-shape: circle
 # How long the final scoreboard stays up before everybody is back in the lobby.
 end-seconds: 12
 
