@@ -28,7 +28,8 @@ spawn-protection-seconds: 1.5
 # And, with a radius, for as long as they stay inside this many blocks of the
 # spawn they came in at, however long that is: a circle round it, or a square.
 # Firing, throwing a grenade or setting a mine ends it, so nobody shoots out of
-# a safe zone. The border is drawn for whoever is inside. 0 for none.
+# a safe zone, and nobody can set a mine in the other side's. The border is
+# drawn for whoever is inside. 0 for none.
 spawn-protection-radius: 0
 spawn-protection-shape: circle
 # How long the final scoreboard stays up before everybody is back in the lobby.
@@ -241,6 +242,7 @@ messages:
   # The HUD's words. Plain text: the HUD draws them in its own colours.
   hud-get-ready: "GET READY"
   hud-protected: "PROTECTED"
+  mine-in-spawn: "<#FF5C5C>Not in their spawn"
   hud-first-to: "FIRST TO {kills}"
   hud-reloading: "RELOADING"
   hud-marker: "{skin} MARKER"

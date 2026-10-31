@@ -726,17 +726,29 @@ public final class Game {
         org.bukkit.entity.LivingEntity body = gp.body();
         if (body == null) return;
         Settings s = settings();
-        Location at = body.getLocation();
-        double dx = at.getX() - gp.safeZone.getX();
-        double dz = at.getZ() - gp.safeZone.getZ();
-        double r = s.protectionRadius;
-        boolean inside = at.getWorld().equals(gp.safeZone.getWorld()) && Math.abs(at.getY() - gp.safeZone.getY()) <= Math.max(3, r)
-                && (s.protectionSquare ? Math.abs(dx) <= r && Math.abs(dz) <= r : dx * dx + dz * dz <= r * r);
-        if (!inside) {
+        if (!inSafeZone(body.getLocation(), gp.safeZone)) {
             gp.safeZone = null;
             return;
         }
-        if (now % 10 == 0 && body instanceof Player p) fx.safeZone(p, gp.safeZone, r, s.protectionSquare, gp.paint);
+        if (now % 10 == 0 && body instanceof Player p) fx.safeZone(p, gp.safeZone, s.protectionRadius, s.protectionSquare, gp.paint);
+    }
+
+    /** Whether {@code at} is inside the safe zone round the spawn at {@code centre}: the circle or square, and near its height. */
+    private boolean inSafeZone(Location at, Location centre) {
+        Settings s = settings();
+        double r = s.protectionRadius;
+        if (r <= 0 || centre == null || at.getWorld() == null || !at.getWorld().equals(centre.getWorld())) return false;
+        double dx = at.getX() - centre.getX();
+        double dz = at.getZ() - centre.getZ();
+        return Math.abs(at.getY() - centre.getY()) <= Math.max(3, r)
+                && (s.protectionSquare ? Math.abs(dx) <= r && Math.abs(dz) <= r : dx * dx + dz * dz <= r * r);
+    }
+
+    /** Whether {@code at} is in a safe zone of somebody {@code gp} plays against: the other team's spawns, or in a free for all any spawn. */
+    private boolean inEnemySafeZone(GamePlayer gp, Location at) {
+        List<Location> spawns = gp.team != null ? arena.spawns(gp.team.other()) : spawnsFor(gp);
+        for (Location spawn : spawns) if (inSafeZone(at, spawn)) return true;
+        return false;
     }
 
     /** They fired, threw or set a mine: no longer safe in their spawn's zone. */
@@ -1004,6 +1016,11 @@ public final class Game {
         GamePlayer gp = players.get(p.getUniqueId());
         if (gp == null || phase != Phase.LIVE || !gp.alive || gp.paint == null) return;
         if (flags.carrying(gp) && !settings().carrierThrows) return;
+        if (block != null && inEnemySafeZone(gp, block.getLocation().add(0.5, 1, 0.5))) {
+            // Spawn protection would be for nothing with a mine waiting at the spawn.
+            Text.actionBar(p, messages().component("mine-in-spawn"));
+            return;
+        }
         if (!mines.place(gp, p, block, face)) return;
         leaveSafeZone(gp);
         var inv = p.getInventory();
