@@ -202,16 +202,39 @@ public final class Loadout {
     public static final String SCOREBOARD = "scoreboard";
     public static final String PICK_RED = "pick_red";
     public static final String PICK_BLUE = "pick_blue";
+    public static final String COLOUR = "colour";
 
     /**
      * In the lobby: the marker to look at, a side to pick (lit while picked;
      * again for neither) when the next match has teams, the last scoreboard,
      * and the way out.
      */
-    static void lobby(Content content, Messages messages, Player p, Team pick, boolean teams) {
+    /**
+     * The lobby's hotbar. With {@code colours} the marker in it is the colour
+     * picker, in the colour chosen ({@code colour}, null for none yet) and
+     * carrying that colour's marker ({@code skin}); a right-click moves it on.
+     */
+    static void lobby(Content content, Messages messages, Player p, Team pick, boolean teams,
+                      boolean colours, Paint colour, Skin skin) {
         PlayerInventory inv = p.getInventory();
         inv.clear();
-        inv.setItem(0, marker(content, Skin.EMBER, false, false));
+        if (colours) {
+            ItemStack picker = marker(content, skin, false, false);
+            ItemMeta meta = picker.getItemMeta();
+            if (meta != null) {
+                String hex = colour == null ? "#E8EAED" : colour.color().asHexString();
+                String name = colour == null ? "Any" : colour.display();
+                // The marker's own name would win over the item name.
+                meta.setDisplayName(null);
+                meta.setItemName(Text.legacy(messages.component("item-colour", "colour", hex, "name", name)));
+                meta.setLore(List.of(Text.legacy(messages.component("item-colour-lore")), "", Text.legacy(messages.component("item-use"))));
+                meta.getPersistentDataContainer().set(LOBBY_KEY, PersistentDataType.STRING, COLOUR);
+                picker.setItemMeta(meta);
+            }
+            inv.setItem(0, picker);
+        } else {
+            inv.setItem(0, marker(content, Skin.EMBER, false, false));
+        }
         if (teams) {
             inv.setItem(3, picked(lobbyItem(new ItemStack(Material.RED_CONCRETE), PICK_RED, messages, "item-team-red"), pick == Team.RED));
             inv.setItem(5, picked(lobbyItem(new ItemStack(Material.BLUE_CONCRETE), PICK_BLUE, messages, "item-team-blue"), pick == Team.BLUE));

@@ -21,17 +21,21 @@ commands:
 # parents: they grant everything under them, and nothing checks them directly.
 permissions:
   paintball.play:
-    description: Everything a player does - join, pick a team, the scoreboard. A parent; nothing checks it.
+    description: Everything a player does - join, pick a team and a colour, the scoreboard. A parent; nothing checks it.
     default: true
     children:
       paintball.join: true
       paintball.team: true
+      paintball.colour: true
       paintball.scoreboard: true
   paintball.join:
     description: /pb join - into an arena's lobby.
     default: true
   paintball.team:
     description: /pb team, and the red and blue items in the lobby's hotbar.
+    default: true
+  paintball.colour:
+    description: /pb colour, and the marker in the lobby's hotbar, which picks your colour.
     default: true
   paintball.scoreboard:
     description: /pb scoreboard, F while in a match or its lobby, and the lobby's scoreboard item.

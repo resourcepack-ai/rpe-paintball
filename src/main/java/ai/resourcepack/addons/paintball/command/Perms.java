@@ -21,6 +21,8 @@ public final class Perms {
     public static final String JOIN = "paintball.join";
     /** {@code /pb team} and the lobby's red and blue items. */
     public static final String TEAM = "paintball.team";
+    /** {@code /pb colour} and the lobby's marker, which picks a colour. */
+    public static final String COLOUR = "paintball.colour";
     /** {@code /pb scoreboard}, F in a match and the lobby's scoreboard item. */
     public static final String SCOREBOARD = "paintball.scoreboard";
 
@@ -47,7 +49,7 @@ public final class Perms {
     public static final String UPDATE = "paintball.update";
 
     /** What {@code paintball.play} grants. */
-    public static final List<String> PLAY = List.of(JOIN, TEAM, SCOREBOARD);
+    public static final List<String> PLAY = List.of(JOIN, TEAM, COLOUR, SCOREBOARD);
     /** What {@code paintball.admin} grants. */
     public static final List<String> ADMIN = List.of(START, STOP, RELOAD, AS, ARENA, ARENA_GENERATE, ARENA_DELETE, BYPASS_COMMANDS);
 }

@@ -10,6 +10,7 @@ import ai.resourcepack.addons.paintball.game.Game;
 import ai.resourcepack.addons.paintball.game.Mode;
 import ai.resourcepack.addons.paintball.game.Nametags;
 import ai.resourcepack.addons.paintball.team.Team;
+import ai.resourcepack.addons.paintball.team.Paint;
 import ai.resourcepack.addons.paintball.text.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -75,6 +76,21 @@ public final class PaintballCommand implements TabExecutor {
                     Text.send(p, Text.error("/pb team <red|blue|auto>"));
                 } else {
                     g.pick(p, t, false);
+                }
+            }
+            case "colour", "color" -> {
+                if (!sender.hasPermission(Perms.COLOUR)) return deny(sender, Perms.COLOUR);
+                Player p = player(sender);
+                if (p == null) return true;
+                Game g = plugin.games().of(p);
+                String which = args.length > 1 ? args[1].toLowerCase(Locale.ROOT) : "";
+                Paint c = Paint.parse(which);
+                if (g == null) {
+                    Text.send(p, Text.error("Join first: <white>/pb join"));
+                } else if (c == null && !List.of("auto", "random", "any").contains(which)) {
+                    Text.send(p, Text.error("/pb colour <" + colourNames() + "|auto>"));
+                } else {
+                    g.colour(p, c, false);
                 }
             }
             case "scoreboard", "sb", "score", "top" -> {
@@ -405,11 +421,18 @@ public final class PaintballCommand implements TabExecutor {
 
     private static final String DOT = " <#9AA0A6>·</#9AA0A6> ";
 
+    private static String colourNames() {
+        List<String> out = new ArrayList<>();
+        for (Paint c : Paint.values()) out.add(c.id());
+        return String.join("|", out);
+    }
+
     /** The help a sender is shown: only the commands they may run. */
     private static void help(CommandSender s) {
         List<String> play = new ArrayList<>();
         if (s.hasPermission(Perms.JOIN)) play.add("<white>/pb join</white>");
         if (s.hasPermission(Perms.TEAM)) play.add("<white>/pb team <red|blue|auto></white>");
+        if (s.hasPermission(Perms.COLOUR)) play.add("<white>/pb colour <colour|auto></white>");
         play.add("<white>/pb leave</white>");
         if (s.hasPermission(Perms.SCOREBOARD)) play.add("<white>/pb scoreboard</white> <#9AA0A6>(or F in a match or its lobby)");
         Text.send(s, Text.msg(String.join(DOT, play)));
@@ -445,6 +468,7 @@ public final class PaintballCommand implements TabExecutor {
         if (args.length == 1) {
             if (sender.hasPermission(Perms.JOIN)) out.add("join");
             if (sender.hasPermission(Perms.TEAM)) out.add("team");
+            if (sender.hasPermission(Perms.COLOUR)) out.add("colour");
             out.add("leave");
             if (sender.hasPermission(Perms.SCOREBOARD)) out.add("scoreboard");
             if (sender.hasPermission(Perms.START)) out.add("start");
@@ -465,6 +489,12 @@ public final class PaintballCommand implements TabExecutor {
                 }
                 case "team", "pick" -> {
                     if (sender.hasPermission(Perms.TEAM)) out.addAll(List.of("red", "blue", "auto"));
+                }
+                case "colour", "color" -> {
+                    if (sender.hasPermission(Perms.COLOUR)) {
+                        for (Paint c : Paint.values()) out.add(c.id());
+                        out.add("auto");
+                    }
                 }
                 case "arena" -> out.addAll(arenaSubcommands(sender));
                 case "as" -> {

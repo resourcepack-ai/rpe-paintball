@@ -39,6 +39,7 @@ worlds is found.
 | | |
 |---|---|
 | `/pb join` | Into the lobby (the waiting box over the field) |
+| `/pb colour <colour>\|auto` | Your colour, from the next match, out of `ffa.colours`; the marker in the lobby's hotbar does the same (right-click for the next). Your paint in a free for all; in a team match your marker, while your paint stays your team's. `colour-pick: false` turns it off |
 | `/pb team red\|blue\|auto` | The side you'd like, from the next match; the red and blue items in the lobby's hotbar do the same. Picks are kept within one player of even: whoever picked a crowded side last is moved, and told |
 | `/pb start [arena] [teams\|ffa\|ctf]` | Staff: starts the match now, in the arena's mode or another, even if you're alone (it joins you first) |
 | `/pb stop` | Staff: ends the match (scoreboard, then back to the lobby); in the lobby, sends everybody home |
@@ -126,9 +127,10 @@ can be stuck in a match.
 
 | Permission | Default | |
 |---|---|---|
-| `paintball.play` | everyone | All three below |
+| `paintball.play` | everyone | All four below |
 | `paintball.join` | everyone | `/pb join` |
 | `paintball.team` | everyone | `/pb team`, and the red and blue items in the lobby |
+| `paintball.colour` | everyone | `/pb colour`, and the marker in the lobby, which picks your colour |
 | `paintball.scoreboard` | everyone | `/pb scoreboard`, F in a match or its lobby, and the lobby's scoreboard item |
 | `paintball.admin` | op | Every node below |
 | `paintball.start` | op | `/pb start`; also changes the lobby's "waiting for an op" hint to "start whenever you like" |

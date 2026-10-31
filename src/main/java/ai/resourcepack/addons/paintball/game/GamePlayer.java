@@ -22,6 +22,10 @@ public final class GamePlayer {
     Team pick;
     /** When they last picked, so whoever picked a crowded side last is the one moved. */
     long pickedAt;
+    /** The colour they chose (/pb colour), or null for whichever is given; kept from match to match. */
+    Paint colourPick;
+    /** In a team match, the colour of the marker they carry, from their choice when they came in; null for their team's. */
+    Paint markerColour;
 
     boolean alive;
     int ammo;

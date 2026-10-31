@@ -141,11 +141,18 @@ public final class Game {
         return shooter.paint != null && victim.paint != null && !allies(shooter, victim);
     }
 
-    /** The marker a player carries: their team's, or in a free for all their colour's. */
+    /** The marker a player carries: their team's, or the colour they chose's, or in a free for all their colour's. */
     Skin skinOf(GamePlayer gp) {
         Settings s = settings();
         if (mode == Mode.FFA && gp.paint != null) return s.ffaMarkers.get(gp.paint);
+        if (gp.markerColour != null) return s.ffaMarkers.get(gp.markerColour);
         return gp.team == Team.BLUE ? s.blueSkin : s.redSkin;
+    }
+
+    /** The colour {@code gp} chose, if they may have it here: colour-pick on and it one of ffa.colours. */
+    private Paint chosenColour(GamePlayer gp) {
+        Settings s = settings();
+        return s.colourPick && gp.colourPick != null && s.ffaColours.contains(gp.colourPick) ? gp.colourPick : null;
     }
 
     /** A team's score: kills, or in capture the flag captures. */
@@ -238,12 +245,14 @@ public final class Game {
                 // Mid-match: straight onto the smaller team.
                 gp.team = smallerTeam();
                 gp.paint = gp.team.paint();
+                gp.markerColour = chosenColour(gp);
                 hud.refreshTeams();
                 spawn(gp, p, true);
                 broadcast(messages().component("joined-team", "player", p.getName(),
                         "colour", gp.team.color().asHexString(), "team", gp.team.display()));
             } else {
-                gp.paint = freestPaint();
+                Paint chosen = chosenColour(gp);
+                gp.paint = chosen != null ? chosen : freestPaint();
                 hud.refreshTeams();
                 spawn(gp, p, true);
                 broadcast(messages().component("joined-ffa", "player", p.getName(),
@@ -292,7 +301,52 @@ public final class Game {
         p.setGameMode(GameMode.ADVENTURE);
         Nametags.teleport(p, arena.waiting());
         PlayerSnapshot.reset(p);
-        Loadout.lobby(content, messages(), p, gp.pick, lobbyMode().teams());
+        lobbyHotbar(p, gp);
+    }
+
+    /** The lobby's hotbar, with the team items in a team mode and the colour picker where colours are chosen. */
+    private void lobbyHotbar(Player p, GamePlayer gp) {
+        Settings s = settings();
+        Paint colour = s.ffaColours.contains(gp.colourPick) ? gp.colourPick : null;
+        Loadout.lobby(content, messages(), p, gp.pick, lobbyMode().teams(), s.colourPick && p.hasPermission(Perms.COLOUR),
+                colour, colour == null ? Skin.EMBER : s.ffaMarkers.get(colour));
+    }
+
+    /**
+     * A colour chosen in the lobby or by command, used from the next match
+     * dealt: {@code null} for whichever is given. With {@code cycle} (the
+     * lobby's marker) it is the one after their current choice instead,
+     * through ffa.colours and back to none.
+     */
+    public void colour(Player p, Paint colour, boolean cycle) {
+        GamePlayer gp = players.get(p.getUniqueId());
+        if (gp == null) return;
+        Settings s = settings();
+        if (!s.colourPick) {
+            Text.send(p, messages().component("colour-off"));
+            return;
+        }
+        if (cycle) {
+            List<Paint> order = s.ffaColours;
+            int at = gp.colourPick == null ? -1 : order.indexOf(gp.colourPick);
+            colour = at + 1 < order.size() ? order.get(at + 1) : null;
+        }
+        if (colour != null && !s.ffaColours.contains(colour)) colour = null;
+        gp.colourPick = colour;
+        // The hotbar says it at once; chat says it when it came from the command.
+        if (!cycle) {
+            if (colour == null) {
+                Text.send(p, messages().component("colour-random"));
+            } else {
+                Text.send(p, messages().component(live() ? "colour-picked-next" : "colour-picked",
+                        "colour", colour.color().asHexString(), "name", colour.display()));
+            }
+        }
+        if (!live() && p.getGameMode() != GameMode.SPECTATOR) {
+            int held = p.getInventory().getHeldItemSlot();
+            lobbyHotbar(p, gp);
+            p.getInventory().setHeldItemSlot(held);
+        }
     }
 
     /** The colour the fewest players have, in config.yml's order: for whoever joins a free for all. */
@@ -329,7 +383,7 @@ public final class Game {
         }
         if (!live() && p.getGameMode() != GameMode.SPECTATOR) {
             int held = p.getInventory().getHeldItemSlot();
-            Loadout.lobby(content, messages(), p, gp.pick, lobbyMode().teams());
+            lobbyHotbar(p, gp);
             p.getInventory().setHeldItemSlot(held);
         }
     }
@@ -479,14 +533,20 @@ public final class Game {
         List<GamePlayer> moved = new ArrayList<>();
         if (mode.teams()) {
             moved = deal(list);
-            for (GamePlayer gp : list) gp.paint = gp.team.paint();
-        } else {
-            Collections.shuffle(list);
-            List<Paint> colours = settings().ffaColours;
-            for (int i = 0; i < list.size(); i++) {
-                list.get(i).team = null;
-                list.get(i).paint = colours.get(i % colours.size());
+            for (GamePlayer gp : list) {
+                gp.paint = gp.team.paint();
+                gp.markerColour = chosenColour(gp);
             }
+        } else {
+            // Whoever chose a colour has it; everybody else is given the one
+            // fewest players have, in ffa.colours' order.
+            Collections.shuffle(list);
+            for (GamePlayer gp : list) {
+                gp.team = null;
+                gp.markerColour = null;
+                gp.paint = chosenColour(gp);
+            }
+            for (GamePlayer gp : list) if (gp.paint == null) gp.paint = freestPaint();
         }
         for (GamePlayer gp : list) {
             gp.reset();

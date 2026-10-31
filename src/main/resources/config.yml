@@ -96,6 +96,12 @@ ffa:
     pink: bubblegum
     cyan: frost
 
+# Whether players choose their colour, with /pb colour or the marker in the
+# lobby's hotbar, out of ffa.colours: in a free for all it is their paint, and
+# in a team match their marker, while their paint stays their team's. Kept from
+# match to match; anybody who has not chosen is given one as before.
+colour-pick: true
+
 # Capture the flag: take the other team's flag from its base and bring it to
 # yours. Spawns are the arena's; the flags stand where /pb arena setflag put
 # them (a generated field has them already).
@@ -194,6 +200,10 @@ messages:
   picked: "{prefix}You'll play for <{colour}>{team}</{colour}>."
   picked-next: "{prefix}You'll play for <{colour}>{team}</{colour}> from the next match."
   picked-random: "{prefix}You'll play wherever you're needed."
+  colour-picked: "{prefix}Your colour is <{colour}>{name}</{colour}>: your paint in a free for all, your marker in a team match."
+  colour-picked-next: "{prefix}Your colour is <{colour}>{name}</{colour}> from the next match."
+  colour-random: "{prefix}You'll be given a colour."
+  colour-off: "{prefix}Colours aren't chosen here."
   pick-moved: "{prefix}Too many picked <{from_colour}>{from}</{from_colour}>, so you're on <{colour}>{team}</{colour}> this match."
   pick-none: "RANDOM"
 
@@ -290,6 +300,8 @@ messages:
   item-team-red-lore: "<#9AA0A6>From the next match. Sides are kept even"
   item-team-blue: "<bold><#2E9BFF>Play for Blue"
   item-team-blue-lore: "<#9AA0A6>From the next match. Sides are kept even"
+  item-colour: "<bold><{colour}>Colour: {name}"
+  item-colour-lore: "<#9AA0A6>Your paint in a free for all, your marker in a team match"
   item-leave: "<bold><#FFD23F>Leave"
   item-leave-lore: "<#9AA0A6>Back to where you were"
   item-use: "<#5F6368>Right-click"

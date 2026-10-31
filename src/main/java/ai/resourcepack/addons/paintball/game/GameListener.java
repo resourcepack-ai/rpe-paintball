@@ -160,6 +160,9 @@ public final class GameListener implements Listener {
                 case Loadout.PICK_BLUE -> {
                     if (p.hasPermission(Perms.TEAM)) g.pick(p, ai.resourcepack.addons.paintball.team.Team.BLUE, true);
                 }
+                case Loadout.COLOUR -> {
+                    if (p.hasPermission(Perms.COLOUR)) g.colour(p, null, true);
+                }
                 default -> {
                 }
             }

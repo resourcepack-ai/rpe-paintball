@@ -70,6 +70,8 @@ public final class Settings {
 
     /** Free for all: the colours handed out, in order, and the marker each one carries. */
     public final List<Paint> ffaColours;
+    /** Whether players choose their colour out of {@link #ffaColours}. */
+    public final boolean colourPick;
     public final Map<Paint, Skin> ffaMarkers;
 
     /** Capture the flag. See config.yml's {@code ctf:}. */
@@ -143,6 +145,7 @@ public final class Settings {
             if (p != null && !colours.contains(p)) colours.add(p);
         }
         ffaColours = colours.isEmpty() ? List.of(Paint.values()) : List.copyOf(colours);
+        colourPick = c.getBoolean("colour-pick", true);
         Map<Paint, Skin> markers = new EnumMap<>(Paint.class);
         for (Paint p : Paint.values()) {
             String skin = c.getString("ffa.markers." + p.id());
