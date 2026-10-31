@@ -41,7 +41,7 @@ final class KillCam {
     }
 
     /** {@code victim} was splatted by {@code killer}: the camera goes up beside the killer, on the victim's side. */
-    void start(GamePlayer victim, Player vp, Player killer) {
+    void start(GamePlayer victim, Player vp, Entity killer) {
         stop(victim, vp);
         Location focus = focus(killer);
         Location from = vp.getLocation();
@@ -61,7 +61,7 @@ final class KillCam {
     /** Once a tick while they are out: round a little further, and still looking through it. */
     void tick(GamePlayer gp, Player p) {
         if (gp.camera == null) return;
-        Player killer = gp.camOn == null ? null : Bukkit.getPlayer(gp.camOn);
+        Entity killer = gp.camOn == null ? null : Bukkit.getEntity(gp.camOn);
         if (killer == null || !gp.camera.isValid() || !killer.getWorld().equals(gp.camera.getWorld())) {
             // Gone: the rest of the wait is the free spectator it used to be.
             stop(gp, p);
@@ -84,7 +84,7 @@ final class KillCam {
     }
 
     /** What the camera looks at: the killer's chest. */
-    private static Location focus(Player killer) {
+    private static Location focus(Entity killer) {
         return killer.getLocation().add(0, 1.2, 0);
     }
 

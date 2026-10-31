@@ -64,6 +64,7 @@ public final class Game {
     final Nametags nametags = new Nametags(this);
     final Mines mines = new Mines(this);
     final Flags flags = new Flags(this);
+    final Bots bots = new Bots(this);
     private final GameManager manager;
 
     Phase phase = Phase.WAITING;
@@ -199,8 +200,20 @@ public final class Game {
         return out;
     }
 
+    /** How many people are in it: bots are not counted. */
     public int size() {
-        return active().size();
+        int n = 0;
+        for (GamePlayer gp : active()) if (!gp.isBot()) n++;
+        return n;
+    }
+
+    /** Who {@code e} is in this match: a player in it, or a bot's figure; null for anything else. */
+    GamePlayer of(org.bukkit.entity.Entity e) {
+        if (e instanceof Player p) {
+            GamePlayer gp = players.get(p.getUniqueId());
+            return gp != null && !gp.isBot() ? gp : null;
+        }
+        return Bots.isFigure(e) ? bots.of(e) : null;
     }
 
     public GamePlayer get(UUID id) {
@@ -250,6 +263,7 @@ public final class Game {
                 spawn(gp, p, true);
                 broadcast(messages().component("joined-team", "player", p.getName(),
                         "colour", gp.team.color().asHexString(), "team", gp.team.display()));
+                bots.fill();
             } else {
                 Paint chosen = chosenColour(gp);
                 gp.paint = chosen != null ? chosen : freestPaint();
@@ -257,6 +271,7 @@ public final class Game {
                 spawn(gp, p, true);
                 broadcast(messages().component("joined-ffa", "player", p.getName(),
                         "colour", gp.paint.color().asHexString()));
+                bots.fill();
             }
         } else {
             toLobby(p, gp);
@@ -282,6 +297,7 @@ public final class Game {
             close();
             return;
         }
+        if (live()) bots.fill();
         hud.refreshTeams();
     }
 
@@ -350,7 +366,7 @@ public final class Game {
     }
 
     /** The colour the fewest players have, in config.yml's order: for whoever joins a free for all. */
-    private Paint freestPaint() {
+    Paint freestPaint() {
         List<Paint> colours = settings().ffaColours;
         Paint best = colours.get(0);
         int fewest = Integer.MAX_VALUE;
@@ -448,8 +464,8 @@ public final class Game {
                             : champion != null ? List.of(champion) : List.of();
                     if (!winners.isEmpty()) {
                         GamePlayer w = winners.get((int) (now / 20 % winners.size()));
-                        Player wp = w.player();
-                        if (wp != null && w.paint != null) fx.firework(wp.getLocation().add(0, 1, 0), w.paint);
+                        org.bukkit.entity.LivingEntity wp = w.body();
+                        if (wp != null && (w.alive || !w.isBot()) && w.paint != null) fx.firework(wp.getLocation().add(0, 1, 0), w.paint);
                     }
                 }
                 if (timer <= 0 && !backToLobby()) return;
@@ -476,6 +492,11 @@ public final class Game {
             if (phase != Phase.LIVE) return;
         }
         for (GamePlayer gp : active()) {
+            if (gp.isBot()) {
+                if (gp.alive) bots.tick(gp);
+                else if (gp.respawnAt > 0 && now >= gp.respawnAt) spawnBot(gp, false);
+                continue;
+            }
             Player p = gp.player();
             if (p == null) continue;
             if (gp.alive) {
@@ -529,6 +550,7 @@ public final class Game {
         mode = m;
         nextMode = null;
         players.values().removeIf(gp -> gp.left);
+        bots.clear();
         List<GamePlayer> list = new ArrayList<>(active());
         List<GamePlayer> moved = new ArrayList<>();
         if (mode.teams()) {
@@ -548,6 +570,8 @@ public final class Game {
             }
             for (GamePlayer gp : list) if (gp.paint == null) gp.paint = freestPaint();
         }
+        // After the people, so a bot takes the place nobody did.
+        bots.fill();
         for (GamePlayer gp : list) {
             gp.reset();
             gp.minesLeft = settings().minesPerMatch;
@@ -579,6 +603,10 @@ public final class Game {
         clock = settings().matchSeconds * 20;
         hud.refreshTeams();
         for (GamePlayer gp : active()) {
+            if (gp.isBot()) {
+                spawnBot(gp, true);
+                continue;
+            }
             Player p = gp.player();
             if (p == null) continue;
             spawn(gp, p, true);
@@ -626,6 +654,19 @@ public final class Game {
         if (!first) fx.respawned(p);
     }
 
+    /** A bot onto the field, as {@link #spawn} puts a player there. */
+    void spawnBot(GamePlayer gp, boolean first) {
+        Settings s = settings();
+        gp.alive = true;
+        gp.respawnAt = 0;
+        gp.ammo = s.hopper;
+        gp.reloading = 0;
+        gp.protectedUntil = first ? 0 : now + s.protectionTicks;
+        Location at = first ? slotFor(gp) : spawnFor(gp);
+        gp.lastInside = at;
+        if (bots.place(gp, at)) hud.refreshTeams();
+    }
+
     /** At the start, everybody gets their own spawn point in turn. */
     private Location slotFor(GamePlayer gp) {
         List<Location> spawns = spawnsFor(gp);
@@ -639,7 +680,7 @@ public final class Game {
      * Where a player comes back: one of their team's spawns at random, or in
      * a free for all whichever spawn is furthest from everybody still in.
      */
-    private Location spawnFor(GamePlayer gp) {
+    Location spawnFor(GamePlayer gp) {
         List<Location> spawns = spawnsFor(gp);
         if (gp.team != null) return spawns.get((int) (Math.random() * spawns.size()));
         Location best = spawns.get(0);
@@ -647,7 +688,7 @@ public final class Game {
         for (Location at : spawns) {
             double nearest = Double.MAX_VALUE;
             for (GamePlayer o : active()) {
-                Player op = o == gp || !o.alive ? null : o.player();
+                org.bukkit.entity.LivingEntity op = o == gp || !o.alive ? null : o.body();
                 if (op != null && op.getWorld().equals(at.getWorld())) nearest = Math.min(nearest, op.getLocation().distanceSquared(at));
             }
             if (nearest > furthest) {
@@ -694,16 +735,18 @@ public final class Game {
 
         Player vp = victim.player();
         Player sp = shooter.player();
+        org.bukkit.entity.LivingEntity killer = shooter.body();
         fx.splatted(vp);
         fx.hitConfirm(sp);
         flags.drop(victim);
+        if (victim.isBot()) bots.splat(victim);
         if (vp != null) {
             // The paint on their screen and who did it are both the HUD's.
             aim(victim, vp, false);
             fx.knockedOut(vp);
             vp.getInventory().clear();
             vp.setGameMode(GameMode.SPECTATOR);
-            if (settings().killerCamera && sp != null && sp.getWorld().equals(vp.getWorld())) killCam.start(victim, vp, sp);
+            if (settings().killerCamera && killer != null && killer.getWorld().equals(vp.getWorld())) killCam.start(victim, vp, killer);
         }
         hud.refreshScores();
         int limit = settings().killLimit;
@@ -768,7 +811,7 @@ public final class Game {
     private void record() {
         var stats = plugin.stats();
         for (GamePlayer gp : players.values()) {
-            if (gp.paint == null) continue;
+            if (gp.paint == null || gp.isBot()) continue;
             stats.record(gp.id, gp.name, gp.stats, !gp.left, gp.left ? null : won(gp));
         }
         stats.played(arena.id());
@@ -806,6 +849,7 @@ public final class Game {
         flags.clear();
         paint.clear();
         players.values().removeIf(gp -> gp.left);
+        bots.clear();
         for (GamePlayer gp : active()) {
             Player p = gp.player();
             if (p != null) toLobby(p, gp);
@@ -821,6 +865,7 @@ public final class Game {
         flags.clear();
         paint.clear();
         nametags.clear();
+        bots.clear();
         for (GamePlayer gp : active()) {
             Player p = gp.player();
             if (p == null) continue;

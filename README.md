@@ -91,6 +91,13 @@ itself (see Arenas). `/pb reload`
 re-reads it. Options a newer version adds are written into your existing file
 on start.
 
+`bots.fill` puts computer players in a match: each side filled up to that many
+in a team match, everybody up to that many in a free for all (0, the default,
+for none). `bots.even-teams: true` adds a bot for every person the other side
+has more. They are mannequins (Minecraft 1.21.9 and newer) in the same paint and
+kit as everybody else; a person who joins takes a bot's place, and they never
+count towards stats. They don't throw grenades or set mines.
+
 `update-check: true` tells the console, and anybody with `paintball.update`, when
 a newer Paintball is on SpigotMC. Set it to `false` to turn that off.
 

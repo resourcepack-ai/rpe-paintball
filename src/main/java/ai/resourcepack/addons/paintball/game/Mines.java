@@ -88,7 +88,7 @@ final class Mines {
             if (game.now == m.armedAt) m.at.getWorld().playSound(m.at, Sound.BLOCK_NOTE_BLOCK_HAT, 0.5f, 2f);
             for (GamePlayer gv : game.active()) {
                 if (!gv.alive || !game.enemies(m.owner, gv)) continue;
-                Player vp = gv.player();
+                org.bukkit.entity.LivingEntity vp = gv.body();
                 if (vp == null || !vp.getWorld().equals(m.at.getWorld())) continue;
                 Location feet = vp.getLocation();
                 double dy = feet.getY() - m.at.getY();
@@ -114,7 +114,7 @@ final class Mines {
         double r = game.settings().mineRadius;
         for (GamePlayer gv : new ArrayList<>(game.players.values())) {
             if (gv.left || !gv.alive || !game.enemies(m.owner, gv)) continue;
-            Player vp = gv.player();
+            org.bukkit.entity.LivingEntity vp = gv.body();
             if (vp == null || !vp.getWorld().equals(w)) continue;
             Location body = vp.getLocation().add(0, 1, 0);
             if (body.distance(center) > r) continue;

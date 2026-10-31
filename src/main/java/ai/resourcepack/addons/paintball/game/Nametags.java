@@ -7,6 +7,7 @@ import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.TextDisplay;
 import org.bukkit.util.Transformation;
@@ -62,7 +63,7 @@ public final class Nametags {
      * Teleports a player, first taking off whatever this class has riding them:
      * Spigot will not move a player who carries a passenger.
      */
-    public static boolean teleport(Player p, Location to) {
+    public static boolean teleport(Entity p, Location to) {
         for (Entity rider : p.getPassengers()) {
             if (rider.getScoreboardTags().contains(MARK)) p.removePassenger(rider);
         }
@@ -80,9 +81,9 @@ public final class Nametags {
         }
         Set<UUID> wearing = new HashSet<>();
         for (GamePlayer gp : game.active()) {
-            Player p = gp.player();
+            LivingEntity p = gp.body();
             // Out (a spectator, whom nobody can see) is no name either.
-            if (p == null || gp.paint == null || !gp.alive || p.getGameMode() == GameMode.SPECTATOR) continue;
+            if (p == null || gp.paint == null || !gp.alive || (p instanceof Player pl && pl.getGameMode() == GameMode.SPECTATOR)) continue;
             wearing.add(gp.id);
             TextDisplay tag = ride(tags, gp, p, s, true);
             ride(blockers, gp, p, s, false);
@@ -109,7 +110,7 @@ public final class Nametags {
     }
 
     /** {@code gp}'s display in {@code from}, made if it is missing and put back on them if it came off. */
-    private TextDisplay ride(Map<UUID, TextDisplay> from, GamePlayer gp, Player p, Settings s, boolean named) {
+    private TextDisplay ride(Map<UUID, TextDisplay> from, GamePlayer gp, LivingEntity p, Settings s, boolean named) {
         TextDisplay display = from.get(gp.id);
         if (display == null || !display.isValid()) {
             display = spawn(p.getLocation(), named ? text(gp, s) : "", named);

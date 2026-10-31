@@ -205,14 +205,11 @@ public final class Loadout {
     public static final String COLOUR = "colour";
 
     /**
-     * In the lobby: the marker to look at, a side to pick (lit while picked;
-     * again for neither) when the next match has teams, the last scoreboard,
-     * and the way out.
-     */
-    /**
-     * The lobby's hotbar. With {@code colours} the marker in it is the colour
-     * picker, in the colour chosen ({@code colour}, null for none yet) and
-     * carrying that colour's marker ({@code skin}); a right-click moves it on.
+     * In the lobby: the marker, a side to pick (lit while picked; again for
+     * neither) when the next match has teams, the last scoreboard, and the way
+     * out. With {@code colours} the marker is the colour picker, in the colour
+     * chosen ({@code colour}, null for none yet) and carrying that colour's
+     * marker ({@code skin}); a right-click moves it on.
      */
     static void lobby(Content content, Messages messages, Player p, Team pick, boolean teams,
                       boolean colours, Paint colour, Skin skin) {

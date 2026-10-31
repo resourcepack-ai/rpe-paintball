@@ -5,6 +5,7 @@ import ai.resourcepack.addons.paintball.team.Team;
 import ai.resourcepack.addons.paintball.stats.StatLine;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -63,6 +64,9 @@ public final class GamePlayer {
     double camAngle;
     long camFrom;
 
+    /** A computer player's figure and mind (bots.fill); null for a person. See {@link Bots}. */
+    Bot bot;
+
     /** This match's counters: kills, deaths, shots, hits. */
     final StatLine stats = new StatLine();
     boolean left;
@@ -92,8 +96,19 @@ public final class GamePlayer {
         return stats;
     }
 
+    /** The person playing, or null: gone, or a bot, which has no player. */
     public Player player() {
-        return left ? null : Bukkit.getPlayer(id);
+        return left || bot != null ? null : Bukkit.getPlayer(id);
+    }
+
+    /** Whether this is a computer player. */
+    public boolean isBot() {
+        return bot != null;
+    }
+
+    /** What stands on the field for them: their player, or a bot's figure; null when neither is there. */
+    public LivingEntity body() {
+        return bot != null ? (left ? null : bot.figure()) : player();
     }
 
     void reset() {

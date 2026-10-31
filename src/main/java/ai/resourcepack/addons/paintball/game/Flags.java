@@ -12,6 +12,7 @@ import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.entity.Display;
 import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlotGroup;
 import org.bukkit.util.RayTraceResult;
@@ -127,7 +128,7 @@ final class Flags {
     void drop(GamePlayer gp) {
         for (Flag f : flags.values()) {
             if (f.carrier != gp) continue;
-            Player p = gp.player();
+            LivingEntity p = gp.body();
             Location where = p != null ? p.getLocation() : f.at;
             unburden(gp);
             f.carrier = null;
@@ -161,7 +162,7 @@ final class Flags {
             spin(f);
             for (GamePlayer gp : game.active()) {
                 if (!gp.alive || gp.team == null) continue;
-                Player p = gp.player();
+                LivingEntity p = gp.body();
                 if (p == null || !near(p.getLocation(), f.at, s.flagReach)) continue;
                 if (gp.team != f.team) {
                     if (!carrying(gp)) take(f, gp, p);
@@ -178,13 +179,31 @@ final class Flags {
         }
     }
 
+    /** Where {@code team}'s flag is now: at home, dropped, or on somebody's back; null with no flags. */
+    Location at(Team team) {
+        Flag f = flags.get(team);
+        return f == null ? null : f.at.clone();
+    }
+
+    /** Where {@code team}'s flag stands at home; null with no flags. */
+    Location homeOf(Team team) {
+        Flag f = flags.get(team);
+        return f == null ? null : f.home.clone();
+    }
+
+    /** Who has {@code team}'s flag, or null. */
+    GamePlayer carrierOf(Team team) {
+        Flag f = flags.get(team);
+        return f == null ? null : f.carrier;
+    }
+
     /** The flag {@code gp} is carrying, or null. */
     private Flag carried(GamePlayer gp) {
         for (Flag f : flags.values()) if (f.carrier == gp) return f;
         return null;
     }
 
-    private void take(Flag f, GamePlayer gp, Player p) {
+    private void take(Flag f, GamePlayer gp, LivingEntity p) {
         f.state = State.TAKEN;
         f.carrier = gp;
         Settings s = game.settings();
@@ -195,7 +214,7 @@ final class Flags {
                     AttributeModifier.Operation.MULTIPLY_SCALAR_1, EquipmentSlotGroup.ANY));
         }
         // No sights while carrying: a flag on your back and a scope at your eye do not go together.
-        game.aim(gp, p, false);
+        if (p instanceof Player player) game.aim(gp, player, false);
         follow(f);
         announce("ctf-taken", "hud-flag-taken", f.team, gp, Sound.BLOCK_NOTE_BLOCK_BELL, 1.4f);
     }
@@ -208,7 +227,7 @@ final class Flags {
         theirs.carrier = null;
         home(theirs);
         gp.stats.captures++;
-        Player p = gp.player();
+        LivingEntity p = gp.body();
         if (p != null) game.fx.firework(p.getLocation().add(0, 1, 0), gp.paint);
         announce("ctf-captured", "hud-flag-captured", theirs.team, gp, Sound.UI_TOAST_CHALLENGE_COMPLETE, 1.0f);
         game.captured(gp.team);
@@ -225,7 +244,7 @@ final class Flags {
 
     /** Takes the carrier's glow and slowness off. */
     private void unburden(GamePlayer gp) {
-        Player p = gp.player();
+        LivingEntity p = gp.body();
         if (p == null) return;
         p.setGlowing(false);
         AttributeInstance speed = p.getAttribute(Attribute.MOVEMENT_SPEED);
@@ -238,7 +257,7 @@ final class Flags {
     /** The carried flag, on the carrier's back and over their head; dropped if they can no longer carry it. */
     private void follow(Flag f) {
         GamePlayer gp = f.carrier;
-        Player p = gp == null ? null : gp.player();
+        LivingEntity p = gp == null ? null : gp.body();
         if (p == null || gp.left || !gp.alive) {
             if (gp != null) drop(gp);
             return;

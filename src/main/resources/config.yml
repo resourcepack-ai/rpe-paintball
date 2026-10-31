@@ -102,6 +102,26 @@ ffa:
 # match to match; anybody who has not chosen is given one as before.
 colour-pick: true
 
+# Computer players, so a match is not one against two, or one person alone.
+# They play like anybody else (a side, a colour, the kill feed, the scoreboard)
+# but never count towards stats.json, and they don't throw grenades or set
+# mines. People always come first: a bot gives its place up to somebody who
+# joins, and a match with only bots left in it ends. Needs Minecraft 1.21.9 or
+# newer for the figures (mannequins).
+bots:
+  # Each side filled up to this many in a team match, and everybody up to this
+  # many in a free for all. 0 for none.
+  fill: 0
+  # In a team match, also a bot for every person the other side has more:
+  # three against one becomes three against three.
+  even-teams: false
+  # How well they shoot: how far a shot may stray, in degrees (a player from the
+  # hip is 0.7), and how long they take to fire at somebody who comes into view.
+  spread-degrees: 4.0
+  reaction-ticks: 12
+  # Their names, used in order; more bots than names are Bot 1, Bot 2...
+  names: [Splotch, Drip, Smudge, Blot, Streak, Dab, Speckle, Spritz, Gloop, Swatch]
+
 # Capture the flag: take the other team's flag from its base and bring it to
 # yours. Spawns are the arena's; the flags stand where /pb arena setflag put
 # them (a generated field has them already).

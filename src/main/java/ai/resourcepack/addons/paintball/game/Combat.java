@@ -138,12 +138,24 @@ final class Combat {
 
     private void fire(GamePlayer gp, Player p) {
         Location eye = p.getEyeLocation();
-        Vector aim = eye.getDirection();
-        Vector origin = eye.toVector();
         // Where the crosshair is, then the direction that lands a ball there:
         // the drop is aimed off, so the crosshair is where the paint goes.
         Vector target = crosshairTarget(gp, eye);
-        Vector dir = scatter(launchTowards(origin, target), Math.toRadians(spreadDegrees(gp, p)));
+        launch(gp, eye, scatter(launchTowards(eye.toVector(), target), Math.toRadians(spreadDegrees(gp, p))), gp.aiming);
+    }
+
+    /** A bot's shot: from {@code eye} at {@code target}, drop allowed for, strayed by up to {@code spreadDegrees}. */
+    void fireFrom(GamePlayer gp, Location eye, Vector target, double spreadDegrees) {
+        Vector origin = eye.toVector();
+        Location looking = eye.clone();
+        looking.setDirection(target.clone().subtract(origin));
+        launch(gp, looking, scatter(launchTowards(origin, target), Math.toRadians(spreadDegrees)), false);
+    }
+
+    /** A ball on its way from {@code eye} along {@code dir}. */
+    private void launch(GamePlayer gp, Location eye, Vector dir, boolean aiming) {
+        Vector aim = eye.getDirection();
+        Vector origin = eye.toVector();
 
         // The simulation starts at the eye, so a ball goes where the crosshair is;
         // the ball you SEE starts at the barrel and slides onto that line.
@@ -152,10 +164,10 @@ final class Combat {
         right.normalize();
         // Down the sights the barrel is under the crosshair rather than off to the right.
         Vector muzzle = eye.toVector().add(aim.clone().multiply(0.6))
-                .add(right.multiply(gp.aiming ? 0.0 : 0.24)).add(new Vector(0, gp.aiming ? -0.12 : -0.2, 0));
+                .add(right.multiply(aiming ? 0.0 : 0.24)).add(new Vector(0, aiming ? -0.12 : -0.2, 0));
 
         Ball b = new Ball(gp, gp.paint, origin.clone(), dir.multiply(s().speed));
-        World w = p.getWorld();
+        World w = eye.getWorld();
         b.display = w.spawn(muzzle.toLocation(w), ItemDisplay.class, e -> {
             e.setPersistent(false);
             e.setItemStack(content.item("ball_" + gp.paint.id()));
@@ -265,10 +277,10 @@ final class Combat {
                     FluidCollisionMode.ALWAYS, true, 0.12, e -> stops(b.owner, e));
             if (hit != null) {
                 Location at = hit.getHitPosition().toLocation(w);
-                if (hit.getHitEntity() instanceof Player victim) {
-                    GamePlayer gv = game.players.get(victim.getUniqueId());
+                GamePlayer gv = hit.getHitEntity() == null ? null : game.of(hit.getHitEntity());
+                if (gv != null) {
                     fx.splat(at, b.paint, false);
-                    if (gv != null) game.hit(b.owner, gv, at, Weapon.MARKER);
+                    game.hit(b.owner, gv, at, Weapon.MARKER);
                 } else if (hit.getHitEntity() instanceof Hanging h) {
                     fx.splat(at, b.paint, false);
                     game.paint.splatOn(b.paint, h, at, 0.9 + ThreadLocalRandom.current().nextDouble() * 0.6);
@@ -306,10 +318,9 @@ final class Combat {
         return mayHit(shooter, e) || PaintLayer.hangsPaint(e);
     }
 
-    /** Whether a ball from {@code shooter} hits {@code e}: only players on another side still in the match. */
+    /** Whether a ball from {@code shooter} hits {@code e}: only players (and bots) on another side still in the match. */
     private boolean mayHit(GamePlayer shooter, Entity e) {
-        if (!(e instanceof Player p)) return false;
-        GamePlayer gp = game.players.get(p.getUniqueId());
+        GamePlayer gp = game.of(e);
         return gp != null && !gp.left && gp.alive && game.enemies(shooter, gp);
     }
 
@@ -385,7 +396,7 @@ final class Combat {
         double r = s().grenadeRadius;
         for (GamePlayer gv : new ArrayList<>(game.players.values())) {
             if (gv.left || !gv.alive || !game.enemies(g.owner, gv)) continue;
-            Player vp = gv.player();
+            org.bukkit.entity.LivingEntity vp = gv.body();
             if (vp == null) continue;
             Location body = vp.getLocation().add(0, 1, 0);
             if (!body.getWorld().equals(w) || body.distance(at) > r) continue;

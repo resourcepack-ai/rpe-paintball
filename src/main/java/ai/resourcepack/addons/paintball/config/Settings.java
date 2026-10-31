@@ -72,6 +72,13 @@ public final class Settings {
     public final List<Paint> ffaColours;
     /** Whether players choose their colour out of {@link #ffaColours}. */
     public final boolean colourPick;
+
+    /** Computer players: each side (or a free for all) filled up to this many, and the sides evened. */
+    public final int botsFill;
+    public final boolean botsEvenTeams;
+    public final double botSpread;
+    public final int botReactionTicks;
+    public final List<String> botNames;
     public final Map<Paint, Skin> ffaMarkers;
 
     /** Capture the flag. See config.yml's {@code ctf:}. */
@@ -146,6 +153,14 @@ public final class Settings {
         }
         ffaColours = colours.isEmpty() ? List.of(Paint.values()) : List.copyOf(colours);
         colourPick = c.getBoolean("colour-pick", true);
+
+        botsFill = Math.max(0, Math.min(16, c.getInt("bots.fill", 0)));
+        botsEvenTeams = c.getBoolean("bots.even-teams", false);
+        botSpread = Math.max(0, c.getDouble("bots.spread-degrees", 4.0));
+        botReactionTicks = Math.max(0, c.getInt("bots.reaction-ticks", 12));
+        List<String> names = new ArrayList<>();
+        for (String n : c.getStringList("bots.names")) if (n != null && !n.isBlank()) names.add(n.trim());
+        botNames = List.copyOf(names);
         Map<Paint, Skin> markers = new EnumMap<>(Paint.class);
         for (Paint p : Paint.values()) {
             String skin = c.getString("ffa.markers." + p.id());

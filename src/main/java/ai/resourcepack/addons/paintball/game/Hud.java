@@ -161,7 +161,14 @@ final class Hud {
         for (GamePlayer gp : game.active()) {
             org.bukkit.scoreboard.Team st = gp.team != null ? board.getTeam((gp.team == Team.RED ? "a_" : "b_") + gp.team.id())
                     : gp.paint != null ? board.getTeam("c_ffa") : null;
-            if (st != null) st.addEntry(gp.name);
+            if (st == null) continue;
+            if (!gp.isBot()) {
+                st.addEntry(gp.name);
+            } else {
+                // A figure is in a team by its UUID, so its name has the team's colour and visibility.
+                org.bukkit.entity.LivingEntity figure = gp.body();
+                if (figure != null) st.addEntry(figure.getUniqueId().toString());
+            }
         }
         refreshScores();
     }
