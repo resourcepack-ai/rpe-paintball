@@ -102,15 +102,17 @@ public final class PaintballCommand implements TabExecutor {
                 else plugin.scoreboard().open(p, g);
             }
             case "start" -> {
-                // /pb start [arena] [mode]: either may be left out, and a mode alone is the sender's arena.
+                // /pb start [arena] [mode]: either may be left out. A mode alone
+                // still means the sender's arena, but only an arena is offered first.
                 if (!sender.hasPermission(Perms.START)) return deny(sender, Perms.START);
                 String arenaId = args.length > 1 ? args[1] : null;
                 Mode mode = args.length > 2 ? Mode.parse(args[2]) : null;
-                if (arenaId != null && plugin.arenas().get(arenaId) == null && Mode.parse(arenaId) != null) {
+                boolean modeFirst = arenaId != null && plugin.arenas().get(arenaId) == null && Mode.parse(arenaId) != null;
+                if (modeFirst && args.length == 2) {
                     mode = Mode.parse(arenaId);
                     arenaId = null;
                 }
-                if (args.length > 2 && mode == null) {
+                if ((args.length > 2 && (mode == null || modeFirst)) || args.length > 3) {
                     Text.send(sender, Text.error("/pb start [arena] [teams|ffa|ctf]"));
                     return true;
                 }
@@ -484,7 +486,6 @@ public final class PaintballCommand implements TabExecutor {
                     // A closed arena can be stopped but not joined or started, so only stop offers it.
                     if (sender.hasPermission(need)) {
                         for (Arena a : plugin.arenas().all()) if (a.enabled() || sub.equals("stop")) out.add(a.id());
-                        if (sub.equals("start")) for (Mode m : Mode.values()) out.add(m.id());
                     }
                 }
                 case "team", "pick" -> {
@@ -503,7 +504,8 @@ public final class PaintballCommand implements TabExecutor {
                 default -> {
                 }
             }
-        } else if (args.length == 3 && args[0].equalsIgnoreCase("start") && sender.hasPermission(Perms.START)) {
+        } else if (args.length == 3 && args[0].equalsIgnoreCase("start") && sender.hasPermission(Perms.START)
+                && plugin.arenas().get(args[1]) != null) {
             for (Mode m : Mode.values()) out.add(m.id());
         } else if (args.length == 3 && args[0].equalsIgnoreCase("arena") && sender.hasPermission(arenaPermission(args[1]))
                 && !List.of("list", "wand", "create", "generate").contains(args[1].toLowerCase(Locale.ROOT))) {
