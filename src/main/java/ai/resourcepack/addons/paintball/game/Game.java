@@ -556,7 +556,12 @@ public final class Game {
         gp.lastInside = at;
         PlayerSnapshot.reset(p);
         Loadout.equip(content, s, p, gp, skinOf(gp));
-        // The grenade keeps recharging through a death: dying is not a way to get it back sooner.
+        if (!first && s.grenadeResetOnRespawn && gp.grenadeReadyAt > now) {
+            // grenade.reset-on-respawn: back with it ready.
+            gp.grenadeReadyAt = 0;
+            p.setCooldown(Loadout.grenade(content, gp.paint, s.grenadeCooldownTicks), 0);
+        }
+        // Otherwise it keeps recharging through a death: dying is not a way to get it back sooner.
         if (gp.grenadeReadyAt > now) p.setCooldown(Loadout.grenade(content, gp.paint, s.grenadeCooldownTicks), (int) (gp.grenadeReadyAt - now));
         if (!first) fx.respawned(p);
     }

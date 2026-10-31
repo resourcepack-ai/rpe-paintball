@@ -49,8 +49,11 @@ marker:
 
 grenade:
   # The grenade stays in your hotbar and is greyed out for this long after a
-  # throw. Dying does not bring it back sooner. 0 for no wait at all.
+  # throw. 0 for no wait at all.
   cooldown-seconds: 15
+  # Whether being splatted brings it back: true and everybody comes back with a
+  # grenade ready; false and it keeps recharging while you're out.
+  reset-on-respawn: false
   fuse-ticks: 30
   throw-speed: 1.1
   radius: 3.5

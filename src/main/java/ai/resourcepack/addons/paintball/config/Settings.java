@@ -37,6 +37,8 @@ public final class Settings {
     public final boolean killerCamera;
     public final int protectionTicks;
     public final int grenadeCooldownTicks;
+    /** Whether a respawn brings the grenade straight back. */
+    public final boolean grenadeResetOnRespawn;
     public final int endSeconds;
 
     public final int fireIntervalTicks;
@@ -106,6 +108,7 @@ public final class Settings {
         killerCamera = c.getBoolean("killer-camera", true);
         protectionTicks = (int) Math.round(Math.max(0, c.getDouble("spawn-protection-seconds", 1.5)) * 20);
         grenadeCooldownTicks = (int) Math.round(Math.max(0, c.getDouble("grenade.cooldown-seconds", 15)) * 20);
+        grenadeResetOnRespawn = c.getBoolean("grenade.reset-on-respawn", false);
         endSeconds = Math.max(3, c.getInt("end-seconds", 12));
 
         fireIntervalTicks = Math.max(1, c.getInt("marker.fire-interval-ticks", 3));
