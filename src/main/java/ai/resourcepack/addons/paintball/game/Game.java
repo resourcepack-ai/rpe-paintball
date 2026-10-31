@@ -307,7 +307,7 @@ public final class Game {
     /** The lobby's hotbar, with the team items in a team mode and the colour picker where colours are chosen. */
     private void lobbyHotbar(Player p, GamePlayer gp) {
         Settings s = settings();
-        Paint colour = s.ffaColours.contains(gp.colourPick) ? gp.colourPick : null;
+        Paint colour = gp.colourPick != null && s.ffaColours.contains(gp.colourPick) ? gp.colourPick : null;
         Loadout.lobby(content, messages(), p, gp.pick, lobbyMode().teams(), s.colourPick && p.hasPermission(Perms.COLOUR),
                 colour, colour == null ? Skin.EMBER : s.ffaMarkers.get(colour));
     }
