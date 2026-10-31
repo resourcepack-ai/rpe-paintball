@@ -285,13 +285,14 @@ public final class PaintballCommand implements TabExecutor {
                     }
                     case "setwaiting", "waiting", "setlobby" -> setup.setWaiting(p, arena);
                     case "addspawn", "spawn" -> {
+                        // No colour: a spawn for anybody (a free for all, or a team with none of its own).
                         Team t = Team.parse(a.length > 2 ? a[2] : null);
-                        if (t == null) Text.send(p, Text.error("/pb arena addspawn " + id + " <red|blue>"));
+                        if (a.length > 2 && t == null) Text.send(p, Text.error("/pb arena addspawn " + id + " [red|blue]"));
                         else setup.addSpawn(p, arena, t);
                     }
                     case "clearspawns" -> {
                         Team t = Team.parse(a.length > 2 ? a[2] : null);
-                        if (t == null) Text.send(p, Text.error("/pb arena clearspawns " + id + " <red|blue>"));
+                        if (a.length > 2 && t == null) Text.send(p, Text.error("/pb arena clearspawns " + id + " [red|blue]"));
                         else setup.clearSpawns(p, arena, t);
                     }
                     case "setbounds", "bounds" -> setup.setBounds(p, arena);

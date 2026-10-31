@@ -27,6 +27,8 @@ public final class Arena {
     private String world;
     private Point waiting;
     private final Map<Team, List<Point>> spawns = new EnumMap<>(Team.class);
+    /** Spawns for anybody: a free for all's, and a team's while it has none of its own. */
+    private final List<Point> open = new ArrayList<>();
     /** Where each team's flag stands in capture the flag. */
     private final Map<Team, Point> flags = new EnumMap<>(Team.class);
     private BoundingBox bounds;
@@ -70,26 +72,43 @@ public final class Arena {
         this.waiting = Point.of(at);
     }
 
+    /** {@code team}'s spawns, or the spawns for anybody while it has none of its own; null for the spawns for anybody alone. */
     public List<Location> spawns(Team team) {
         World w = world();
         List<Location> out = new ArrayList<>();
-        for (Point p : spawns.get(team)) out.add(p.at(w));
+        List<Point> list = team == null || spawns.get(team).isEmpty() ? open : spawns.get(team);
+        for (Point p : list) out.add(p.at(w));
         return out;
     }
 
-    public int spawnCount(Team team) {
-        return spawns.get(team).size();
+    /** Every spawn on the field, for a free for all: the spawns for anybody and both teams'. */
+    public List<Location> allSpawns() {
+        World w = world();
+        List<Location> out = new ArrayList<>();
+        for (Point p : open) out.add(p.at(w));
+        for (Team t : Team.values()) for (Point p : spawns.get(t)) out.add(p.at(w));
+        return out;
     }
 
-    /** Adds a spawn; past five the oldest goes. */
+    /** How many spawns {@code team} has of its own; null for the spawns for anybody. */
+    public int spawnCount(Team team) {
+        return team == null ? open.size() : spawns.get(team).size();
+    }
+
+    /** How many a team, or the spawns for anybody, may have. */
+    public static int maxSpawns(Team team) {
+        return team == null ? MAX_SPAWNS * 2 : MAX_SPAWNS;
+    }
+
+    /** Adds a spawn, for {@code team} or with null for anybody; past the most the oldest goes. */
     public void addSpawn(Team team, Location at) {
-        List<Point> list = spawns.get(team);
-        if (list.size() >= MAX_SPAWNS) list.remove(0);
+        List<Point> list = team == null ? open : spawns.get(team);
+        if (list.size() >= maxSpawns(team)) list.remove(0);
         list.add(Point.of(at));
     }
 
     public void clearSpawns(Team team) {
-        spawns.get(team).clear();
+        (team == null ? open : spawns.get(team)).clear();
     }
 
     /** Where {@code team}'s flag stands, or null when it has not been put anywhere. */
@@ -141,7 +160,8 @@ public final class Arena {
         List<String> out = new ArrayList<>();
         if (world() == null) out.add("its world (" + world + ") is not loaded");
         if (waiting == null) out.add("a waiting spot");
-        for (Team t : Team.values()) if (spawns.get(t).isEmpty()) out.add("a " + t.display().toLowerCase() + " spawn");
+        // A team with no spawns of its own uses the spawns for anybody.
+        if (open.isEmpty()) for (Team t : Team.values()) if (spawns.get(t).isEmpty()) out.add("a " + t.display().toLowerCase() + " spawn");
         if (bounds == null) out.add("bounds");
         return out;
     }
@@ -165,6 +185,9 @@ public final class Arena {
             Point flag = flags.get(t);
             s.set("flags." + t.id(), flag == null ? null : flag.toList());
         }
+        List<List<Double>> anybody = new ArrayList<>();
+        for (Point p : open) anybody.add(p.toList());
+        s.set("spawns.any", anybody.isEmpty() ? null : anybody);
         if (bounds != null) {
             s.set("bounds.min", List.of(bounds.getMinX(), bounds.getMinY(), bounds.getMinZ()));
             s.set("bounds.max", List.of(bounds.getMaxX(), bounds.getMaxY(), bounds.getMaxZ()));
@@ -189,6 +212,13 @@ public final class Arena {
             for (Object o : raw) {
                 Point p = Point.fromList(o instanceof List<?> l ? l : null);
                 if (p != null) a.spawns.get(t).add(p);
+            }
+        }
+        List<?> anybody = s.getList("spawns.any");
+        if (anybody != null) {
+            for (Object o : anybody) {
+                Point p = Point.fromList(o instanceof List<?> l ? l : null);
+                if (p != null) a.open.add(p);
             }
         }
         for (Team t : Team.values()) {

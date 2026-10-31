@@ -60,6 +60,8 @@ anything else that can only run console commands.
 `/pb arena generate <id> confirm [name]` builds a speedball field where you stand and
 sets it up. From the console: `/pb arena generate <id> at <world> <x> <y> <z> [name]`.
 By hand: `create`, `setwaiting`, `addspawn <red|blue>`, `wand` + `setbounds`, `enable`.
+`addspawn` with no colour is a spawn for anybody: a free for all uses it, and so
+does a team with no spawns of its own.
 `/pb arena list` shows every arena and what it still needs; `/pb help` lists the
 rest (`disable`, `clearspawns`, `tp`, `name`, `set`, `delete`).
 

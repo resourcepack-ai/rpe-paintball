@@ -70,7 +70,7 @@ public final class ArenaSetup implements Listener {
     }
 
     private boolean sameWorld(Player p, Arena a) {
-        if (a.waiting() == null && a.spawnCount(Team.RED) == 0 && a.spawnCount(Team.BLUE) == 0 && a.bounds() == null) return true;
+        if (a.waiting() == null && a.spawnCount(Team.RED) == 0 && a.spawnCount(Team.BLUE) == 0 && a.spawnCount(null) == 0 && a.bounds() == null) return true;
         if (p.getWorld().getName().equals(a.worldName())) return true;
         Text.send(p, Text.error(a.name() + " is in " + a.worldName() + "; go there first."));
         return false;
@@ -97,20 +97,21 @@ public final class ArenaSetup implements Listener {
         at.setX(Math.floor(at.getX()) + 0.5);
         at.setZ(Math.floor(at.getZ()) + 0.5);
         at.setPitch(0);
-        if (a.spawnCount(Team.RED) + a.spawnCount(Team.BLUE) == 0 && a.waiting() == null) {
+        if (a.spawnCount(Team.RED) + a.spawnCount(Team.BLUE) + a.spawnCount(null) == 0 && a.waiting() == null) {
             a.waiting(at);
         }
         a.addSpawn(t, at);
         store.save();
-        Text.send(p, Text.msg("Added a <" + t.color().asHexString() + ">" + t.display().toLowerCase() + "</"
-                + t.color().asHexString() + "> spawn <#9AA0A6>(" + a.spawnCount(t) + "/" + Arena.MAX_SPAWNS + ")"));
+        String what = t == null ? "spawn for anybody" : "<" + t.color().asHexString() + ">" + t.display().toLowerCase() + "</"
+                + t.color().asHexString() + "> spawn";
+        Text.send(p, Text.msg("Added a " + what + " <#9AA0A6>(" + a.spawnCount(t) + "/" + Arena.maxSpawns(t) + ")"));
     }
 
     public void clearSpawns(Player p, Arena a, Team t) {
         if (!idle(p, a)) return;
         a.clearSpawns(t);
         store.save();
-        Text.send(p, Text.msg("Cleared the " + t.display().toLowerCase() + " spawns."));
+        Text.send(p, Text.msg(t == null ? "Cleared the spawns for anybody." : "Cleared the " + t.display().toLowerCase() + " spawns."));
     }
 
     /** Capture the flag: {@code t}'s flag stands where {@code p} stands. */

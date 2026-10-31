@@ -705,9 +705,7 @@ public final class Game {
     /** A team's spawns, or in a free for all every spawn on the field. */
     private List<Location> spawnsFor(GamePlayer gp) {
         if (gp.team != null) return arena.spawns(gp.team);
-        List<Location> all = new ArrayList<>();
-        for (Team t : Team.values()) all.addAll(arena.spawns(t));
-        return all;
+        return arena.allSpawns();
     }
 
     // ---- hits ----------------------------------------------------------------------
