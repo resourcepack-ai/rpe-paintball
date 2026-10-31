@@ -106,9 +106,9 @@ public final class PlayerSnapshot {
         World w = Bukkit.getWorld(y.getString("world", ""));
         List<Double> pos = y.getDoubleList("pos");
         if (w != null && pos.size() >= 5) {
-            p.teleport(new Location(w, pos.get(0), pos.get(1), pos.get(2), pos.get(3).floatValue(), pos.get(4).floatValue()));
+            Nametags.teleport(p, new Location(w, pos.get(0), pos.get(1), pos.get(2), pos.get(3).floatValue(), pos.get(4).floatValue()));
         } else {
-            p.teleport(Bukkit.getWorlds().get(0).getSpawnLocation());
+            Nametags.teleport(p, Bukkit.getWorlds().get(0).getSpawnLocation());
         }
         f.delete();
         return true;

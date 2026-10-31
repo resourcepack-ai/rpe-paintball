@@ -138,13 +138,16 @@ hud:
 
 nametags:
   # The names over players' heads. The game's own show through walls; with this
-  # on they are text that blocks in front of it hide, like anything else.
+  # on they are text that blocks in front of it hide, like anything else, and
+  # the game's own are hidden for the match even when a tab or name tag plugin
+  # draws them.
   hide-behind-blocks: false
   # Whether you see the other team's names too, not only your own team's. With
   # hide-behind-blocks off, that means through walls as well.
   enemies: false
   # How a name reads, in MiniMessage, with hide-behind-blocks on. {player} is
-  # the name and {team_colour} its team's colour (#FF4655 or #2E9BFF).
+  # the name and {team_colour} its paint colour (#FF4655 or #2E9BFF in a team
+  # match), which colours what follows it whether or not it is in <>.
   format: "<{team_colour}>{player}"
 
 # Tells you in the console, and ops in chat, when a newer Paintball is on SpigotMC.

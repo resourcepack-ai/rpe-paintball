@@ -8,6 +8,7 @@ import ai.resourcepack.addons.paintball.arena.FieldBuilder;
 import ai.resourcepack.addons.paintball.config.Settings;
 import ai.resourcepack.addons.paintball.game.Game;
 import ai.resourcepack.addons.paintball.game.Mode;
+import ai.resourcepack.addons.paintball.game.Nametags;
 import ai.resourcepack.addons.paintball.team.Team;
 import ai.resourcepack.addons.paintball.text.Text;
 import org.bukkit.Bukkit;
@@ -249,7 +250,7 @@ public final class PaintballCommand implements TabExecutor {
                 // A field rebuilt in another world is a new arena, but the same one to play.
                 if (old != null && old != target) old.settings().forEach(target::setting);
                 new FieldBuilder(p.getLocation()).build(target, setup);
-                p.teleport(target.waiting());
+                Nametags.teleport(p, target.waiting());
                 Text.send(p, Text.msg("Built <#FFD23F>" + target.name() + "</#FFD23F>. <white>/pb start</white> when you're ready."));
             }
             default -> {
@@ -284,7 +285,7 @@ public final class PaintballCommand implements TabExecutor {
                     case "enable", "open" -> setup.enable(p, arena, true);
                     case "disable", "close" -> setup.enable(p, arena, false);
                     case "tp", "goto" -> {
-                        if (arena.waiting() != null) p.teleport(arena.waiting());
+                        if (arena.waiting() != null) Nametags.teleport(p, arena.waiting());
                         else Text.send(p, Text.error(arena.name() + " has no waiting spot yet."));
                     }
                     case "name", "rename" -> {

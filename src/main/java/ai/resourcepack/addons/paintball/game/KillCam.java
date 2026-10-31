@@ -55,7 +55,7 @@ final class KillCam {
             e.addScoreboardTag("paintball");
         });
         // Over there already, so the client has the camera before it is asked to look through it.
-        vp.teleport(at);
+        Nametags.teleport(vp, at);
     }
 
     /** Once a tick while they are out: round a little further, and still looking through it. */

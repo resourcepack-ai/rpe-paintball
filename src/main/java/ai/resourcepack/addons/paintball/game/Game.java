@@ -290,7 +290,7 @@ public final class Game {
         unfreeze(p);
         if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
         p.setGameMode(GameMode.ADVENTURE);
-        p.teleport(arena.waiting());
+        Nametags.teleport(p, arena.waiting());
         PlayerSnapshot.reset(p);
         Loadout.lobby(content, messages(), p, gp.pick, lobbyMode().teams());
     }
@@ -443,7 +443,7 @@ public final class Game {
             if (now % 10 == 0 && p.isOnGround()) gp.lastInside = at;
             return;
         }
-        p.teleport(gp.lastInside != null ? gp.lastInside : spawnFor(gp));
+        Nametags.teleport(p, gp.lastInside != null ? gp.lastInside : spawnFor(gp));
     }
 
     // ---- starting ----------------------------------------------------------------
@@ -552,7 +552,7 @@ public final class Game {
         killCam.stop(gp, p);
         if (p.getGameMode() == GameMode.SPECTATOR) p.setSpectatorTarget(null);
         p.setGameMode(GameMode.ADVENTURE);
-        p.teleport(at);
+        Nametags.teleport(p, at);
         gp.lastInside = at;
         PlayerSnapshot.reset(p);
         Loadout.equip(content, s, p, gp, skinOf(gp));
