@@ -32,7 +32,9 @@ import java.util.UUID;
  *   is a run whose value this class writes, and redraws the moment one
  *   changes, which is also what animates it (a value per two ticks).</li>
  *   <li><b>The player list</b> (Tab) is the live scoreboard: the score and the
- *   clock in the header, both teams in order, each player's kills and deaths.</li>
+ *   clock in the header, and under them a tile for every player with their
+ *   kills and deaths ({@link TabList}), or with {@code tab.scoreboard} off,
+ *   both teams in the list itself.</li>
  * </ul>
  *
  * <p>A run is one colour, and that colour is its address in the shader, so
@@ -72,6 +74,8 @@ final class Hud {
 
     private final Game game;
     private final Scoreboard board;
+    /** The player list's tiles, under the header's words. */
+    private final TabList tab;
     /** What was last drawn for each player, so an unchanged HUD is not sent again. */
     private final Map<UUID, String> drawn = new HashMap<>();
     /** Which HUD each player has on screen: kept apart from {@link #drawn}, which is cleared to force a redraw. */
@@ -79,6 +83,7 @@ final class Hud {
 
     Hud(Game game) {
         this.game = game;
+        this.tab = new TabList(game, this);
         this.board = Bukkit.getScoreboardManager().getNewScoreboard();
         // Sorted by name, so red is listed above blue, as a scoreboard should be.
         for (Team t : Team.values()) {
@@ -159,6 +164,7 @@ final class Hud {
         p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
         p.setPlayerListName(null);
         p.setPlayerListHeaderFooter("", "");
+        tab.release(p);
         Text.actionBar(p, Component.empty());
     }
 
@@ -230,9 +236,19 @@ final class Hud {
             }
         }
         if (game.now % 10 == 0) {
+            Settings s = game.settings();
+            boolean grid = s.tabScoreboard && tab.ready();
             String header = Text.legacy(header());
+            // The first row of tiles rises into the line above it, so the
+            // header's words end with one blank line, however many it had.
+            if (grid) header = header.replaceAll("\n+$", "") + "\n\n";
             String footer = Text.legacy(messages().component("tab-footer"));
-            for (Player p : game.online()) p.setPlayerListHeaderFooter(header, footer);
+            tab.refresh();
+            for (GamePlayer gp : game.active()) {
+                Player p = gp.player();
+                if (p != null) p.setPlayerListHeaderFooter(grid ? header + tab.grid(gp) : header, footer);
+            }
+            tab.hidePlayers(grid && s.tabHidePlayers);
         }
     }
 
@@ -658,7 +674,7 @@ final class Hud {
      * {@code ! - '}) is left out, which is what a server's own wording for
      * these, in config.yml, is drawn with.
      */
-    private String lettering(String sheet, int scale, String text) {
+    String lettering(String sheet, int scale, String text) {
         StringBuilder out = new StringBuilder();
         for (char c : text.toUpperCase().toCharArray()) {
             if (c == ' ') {
@@ -701,12 +717,14 @@ final class Hud {
 
     // ---- the player list (Tab) -------------------------------------------------------
 
+    /** The header's words, over the tiles: {@code {logo}} is the name in the HUD's lettering. */
     private Component header() {
         Messages m = messages();
         if (game.mode() == Mode.FFA) {
             List<GamePlayer> top = game.standings();
             GamePlayer leader = top.isEmpty() ? null : top.get(0);
             return m.component("tab-header-ffa",
+                    "logo", tab.logo(),
                     "map", game.arena().name().toUpperCase(),
                     "mode", m.plain("mode-ffa"),
                     "leader", leader == null ? "-" : leader.name,
@@ -714,6 +732,7 @@ final class Hud {
                     "time", game.clockText());
         }
         return m.component("tab-header",
+                "logo", tab.logo(),
                 "map", game.arena().name().toUpperCase(),
                 "mode", m.plain("mode-" + game.mode().id()),
                 "red", String.valueOf(game.score(Team.RED)),

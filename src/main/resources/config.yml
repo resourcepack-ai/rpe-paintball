@@ -182,6 +182,16 @@ hud:
   # shown in the middle of the screen: in words, or from 10 down, the number.
   time-warnings: [60, 30, 10, 5, 4, 3, 2, 1]
 
+tab:
+  # The player list (Tab) as the match's scoreboard: under the score, a tile
+  # for every player in their colour with their name, kills and deaths, a column
+  # a team (a free for all best first). false leaves the game's own list, each
+  # name with its kills and deaths after it.
+  scoreboard: true
+  # On Paper, the match's players are taken off the list under the tiles,
+  # which already show them. Spigot has no way to, so there they stay.
+  hide-players: true
+
 nametags:
   # The names over players' heads. The game's own show through walls; with this
   # on they are text that blocks in front of it hide, like anything else, and
@@ -353,10 +363,26 @@ messages:
   # Its button.
   scoreboard-close: "Close"
 
-  # The player list (Tab).
-  tab-header-ffa: "\n<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold>\n<#5F6368>{mode} · {map}</#5F6368>\n\n<#FFD23F><bold>{leader}  {leader_kills}</bold></#FFD23F>     <white>{time}</white>\n"
-  tab-header: "\n<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold>\n<#5F6368>{mode} · {map}</#5F6368>\n\n<#FF4655><bold>RED  {red}</bold></#FF4655>     <white>{time}</white>     <#2E9BFF><bold>{blue}  BLUE</bold></#2E9BFF>\n"
+  # The player list (Tab). {logo} is the name in the HUD's lettering, as tall
+  # as three lines, so it wants a blank line above it and two below.
+  tab-header-ffa: "\n\n<white>{logo}</white>\n\n\n<#5F6368>{mode} · {map}</#5F6368>\n\n<#FFD23F><bold>{leader}  {leader_kills}</bold></#FFD23F>     <white>{time}</white>\n"
+  tab-header: "\n\n<white>{logo}</white>\n\n\n<#5F6368>{mode} · {map}</#5F6368>\n\n<#FF4655><bold>RED  {red}</bold></#FF4655>     <white>{time}</white>     <#2E9BFF><bold>{blue}  BLUE</bold></#2E9BFF>\n"
   tab-footer: "\n<#9AA0A6>Press <white><key:key.swapOffhand></white> for the full scoreboard</#9AA0A6>\n"
+  # {logo}'s words: the first in red, the second in blue. A-Z, 0-9, ! - ' and spaces.
+  tab-logo-1: "PAINT"
+  tab-logo-2: "BALL"
+  # The tiles under the header (tab.scoreboard). A name ({player}) as it is
+  # written on a tile, on your own, and on the tile of somebody who is out; the
+  # kills and deaths at a tile's right ({kills}, {deaths}, and in capture the
+  # flag {captures}); a free for all's place at its left; and, past sixteen
+  # tiles, how many more there are.
+  tab-name: "<white><bold>{player}"
+  tab-name-you: "<#FFD23F><bold>{player}"
+  tab-name-out: "<#7A8088><bold>{player}"
+  tab-score: "<#5BE37D>{kills}</#5BE37D><#9AA0A6>K</#9AA0A6> <#FF8A3D>{deaths}</#FF8A3D><#9AA0A6>D</#9AA0A6>"
+  tab-score-ctf: "<#FFD23F>{captures}</#FFD23F><#9AA0A6>C</#9AA0A6> <#5BE37D>{kills}</#5BE37D><#9AA0A6>K</#9AA0A6> <#FF8A3D>{deaths}</#FF8A3D><#9AA0A6>D</#9AA0A6>"
+  tab-place: "<#9AA0A6>{place}"
+  tab-more: "<#9AA0A6>+{count} more"
 
   # PlaceholderAPI's %paintball_arena_status_<arena>%.
   status-maintenance: "Maintenance"

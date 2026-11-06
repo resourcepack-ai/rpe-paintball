@@ -106,6 +106,9 @@ public final class Settings {
     public final String nametagFormat;
     /** Seconds left on the clock that sound a warning and show it. */
     public final java.util.Set<Integer> timeWarnings;
+    /** The player list as the scoreboard, a tile a player; and on Paper the players taken off the list under it. */
+    public final boolean tabScoreboard;
+    public final boolean tabHidePlayers;
 
     public final String hudId;
     public final String ffaHudId;
@@ -194,6 +197,8 @@ public final class Settings {
         nametagsEnemies = c.getBoolean("nametags.enemies", false);
         nametagFormat = c.getString("nametags.format", "<{team_colour}>{player}");
         timeWarnings = java.util.Set.copyOf(c.getIntegerList("hud.time-warnings"));
+        tabScoreboard = c.getBoolean("tab.scoreboard", true);
+        tabHidePlayers = c.getBoolean("tab.hide-players", true);
 
         hudId = c.getString("ui.hud", "paintball:hud").trim();
         ffaHudId = c.getString("ui.hud-ffa", "paintball:hud_ffa").trim();

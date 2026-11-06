@@ -1,6 +1,6 @@
 """
 The HUD's art, drawn here: everything the plugin writes into the HUD's runs
-that is a picture rather than words. make_assets.py calls build() and puts the
+that is a picture rather than words, and the player list's tiles. make_assets.py calls build() and puts the
 icon definitions it returns into fonts/icons.yml.
 
 A run is one colour, and that colour is its address in the HUD's shader, so a
@@ -362,6 +362,47 @@ def splat_frames(src):
 
 
 # ---------------------------------------------------------------------------
+# The player list's tiles: the tab list as a scoreboard, one tile a player in
+# their paint (grey for nobody's yet), and a brighter one for whoever is looking.
+# ---------------------------------------------------------------------------
+#
+# A tab list's header is lines of text 9 apart, and the plugin writes each row
+# of tiles as one of them with a blank line after it. A tile hangs from 5 above
+# its line (ascent 12), so the name written on that line sits in its middle,
+# and is 17 tall, which leaves a pixel to the next row's. The numbers are the
+# contract with TabList.java.
+
+TILE_W, TILE_H = 150, 17
+TILE_ASCENT = 12
+TILE_DARK = (14, 16, 20)
+TILE_NONE = (116, 122, 130)
+
+
+def _mix(a, b, t):
+    return tuple(int(round(x + (y - x) * t)) for x, y in zip(a, b))
+
+
+def tab_tile(colour, me):
+    """A rounded tile: dark in `colour`, striped on the diagonal, edged in it
+    (in near-white for the viewer's own)."""
+    img = Image.new("RGBA", (TILE_W, TILE_H), (0, 0, 0, 0))
+    px = img.load()
+    edge = _mix(colour, WHITE, 0.6 if me else 0.12)
+    fill = _mix(colour, TILE_DARK, 0.68 if me else 0.78)
+    stripe = _mix(colour, TILE_DARK, 0.58 if me else 0.70)
+    for y in range(TILE_H):
+        for x in range(TILE_W):
+            corner = x in (0, TILE_W - 1) and y in (0, TILE_H - 1)
+            if corner:
+                continue
+            if x in (0, TILE_W - 1) or y in (0, TILE_H - 1):
+                px[x, y] = edge + (255,)
+            else:
+                px[x, y] = (stripe if (x + y) % 8 < 3 else fill) + (232,)
+    return img
+
+
+# ---------------------------------------------------------------------------
 # Everything, written and declared.
 # ---------------------------------------------------------------------------
 
@@ -379,8 +420,9 @@ def pack(cells):
     return sheet, rows, cols
 
 
-def build(font_dir):
-    """Writes the textures into `font_dir` and returns the icons.yml lines for them."""
+def build(font_dir, paints):
+    """Writes the textures into `font_dir` and returns the icons.yml lines for
+    them. `paints` is every paint a player can be in, by name, as RGB."""
     os.makedirs(font_dir, exist_ok=True)
 
     def save(img, name):
@@ -467,4 +509,17 @@ def build(font_dir):
         save(img, f"hud_splat_{n}")
         for k in range(len(SPLAT_FADE)):
             icon(f"hud_splat_{n}_{k}", f"hud_splat_{n}", SPLAT_SIZE, centred_ascent(SPLAT_SIZE), (rows, cols, k + 1))
+
+    out += ["# The player list's tiles: tab_<paint>, tab_none for nobody's yet, and _me",
+            "# for the viewer's own. Hung from 5 above a line of text.", ""]
+    names = list(paints) + ["none"]
+    cells = []
+    for name in names:
+        colour = paints.get(name, TILE_NONE)
+        cells += [tab_tile(colour, False), tab_tile(colour, True)]
+    img, rows, cols = pack(cells)
+    save(img, "tab_tiles")
+    for i, name in enumerate(names):
+        icon(f"tab_{name}", "tab_tiles", TILE_H, TILE_ASCENT, (rows, cols, 2 * i + 1))
+        icon(f"tab_{name}_me", "tab_tiles", TILE_H, TILE_ASCENT, (rows, cols, 2 * i + 2))
     return out

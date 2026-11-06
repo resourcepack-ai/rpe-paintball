@@ -10,7 +10,7 @@ Builds every asset in the paintball content folder from scratch:
   the screen's size for the paint on a splatted player's screen;
 - the HUD glyphs (kill feed, crosshair, digits) and the mask's camera overlay;
 - the HUD's art (lettering, rings, the weapon cluster, the result band, the
-  screen splat's fade): tools/hud_art.py;
+  screen splat's fade) and the player list's tiles: tools/hud_art.py;
 - the sounds: generated in Studio (tools/src/sounds), trimmed and levelled.
 
 Deterministic: every random draw is seeded, so a re-run writes the same files.
@@ -977,7 +977,7 @@ def definitions():
     for n, gap in CROSSHAIRS.items():
         R = crosshair_radius(gap)
         icons += [f"xhair_{n}:", f"  file: xhair_{n}", f"  height: {2 * R + 1}", f"  ascent: {R + 4}", ""]
-    icons += hud_art.build(path("textures", "font", "x")[:-2])
+    icons += hud_art.build(path("textures", "font", "x")[:-2], TEAMS)
     write_text("\n".join(icons), "fonts", "icons.yml")
 
     snd = ["# Generated in ResourcePack AI Studio; trimmed and levelled by tools/make_assets.py.", ""]

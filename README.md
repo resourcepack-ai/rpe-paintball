@@ -46,7 +46,7 @@ worlds is found.
 | `/pb stop` | Staff: ends the match (scoreboard, then back to the lobby); in the lobby, sends everybody home |
 | `/pb leave` | Out, with your inventory and position back |
 | **F** or `/pb scoreboard` | The match scoreboard |
-| **Tab** | The live player list: score and clock on top, each player's kills / deaths |
+| **Tab** | The live scoreboard: score and clock on top, and a tile for every player with their kills and deaths, a column a team (a free for all best first). On Paper the players are taken off the plain list under it. `tab.scoreboard: false` keeps the plain list |
 
 In a match: hold right-click to fire, left-click to aim down the sights (zoomed,
 slower, no spread), Q reloads (it also reloads itself when empty), right-click the
@@ -183,6 +183,11 @@ screen is drawn by this plugin:
   `! - '` and spaces.
 - **The scoreboard** is `dialogs/scoreboard.json`, a Studio dialog: both teams'
   tables with faces, kills, deaths and accuracy.
+- **The player list's scoreboard** is header lines of glyphs: a tile per player
+  (`tools/hud_art.py`'s `tab_*`, one per paint), the name and the numbers
+  written over it, and every line padded with RP Engine's spaces to the same
+  width so the game, which centres each line on its own, stacks them into a
+  grid. The name over it is the HUD's lettering.
 - **The marker** is a Studio model in five colourways (Ember for red, Tide for
   blue), each with an aimed twin (`marker_<skin>_aim`) whose holder sees
   `models/marker_sights.json` down the sights instead (RP Engine's `first-person:`).

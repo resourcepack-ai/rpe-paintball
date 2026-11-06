@@ -6344,3 +6344,114 @@ hud_splat_3_4:
   grid: { rows: 2, columns: 3, cell: 5 }
   height: 256
   ascent: 131
+
+# The player list's tiles: tab_<paint>, tab_none for nobody's yet, and _me
+# for the viewer's own. Hung from 5 above a line of text.
+
+tab_red:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 1 }
+  height: 17
+  ascent: 12
+
+tab_red_me:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 2 }
+  height: 17
+  ascent: 12
+
+tab_blue:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 3 }
+  height: 17
+  ascent: 12
+
+tab_blue_me:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 4 }
+  height: 17
+  ascent: 12
+
+tab_green:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 5 }
+  height: 17
+  ascent: 12
+
+tab_green_me:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 6 }
+  height: 17
+  ascent: 12
+
+tab_orange:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 7 }
+  height: 17
+  ascent: 12
+
+tab_orange_me:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 8 }
+  height: 17
+  ascent: 12
+
+tab_yellow:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 9 }
+  height: 17
+  ascent: 12
+
+tab_yellow_me:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 10 }
+  height: 17
+  ascent: 12
+
+tab_purple:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 11 }
+  height: 17
+  ascent: 12
+
+tab_purple_me:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 12 }
+  height: 17
+  ascent: 12
+
+tab_pink:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 13 }
+  height: 17
+  ascent: 12
+
+tab_pink_me:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 14 }
+  height: 17
+  ascent: 12
+
+tab_cyan:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 15 }
+  height: 17
+  ascent: 12
+
+tab_cyan_me:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 16 }
+  height: 17
+  ascent: 12
+
+tab_none:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 17 }
+  height: 17
+  ascent: 12
+
+tab_none_me:
+  file: tab_tiles
+  grid: { rows: 4, columns: 5, cell: 18 }
+  height: 17
+  ascent: 12
