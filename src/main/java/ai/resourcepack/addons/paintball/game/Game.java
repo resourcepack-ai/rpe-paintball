@@ -262,7 +262,7 @@ public final class Game {
                 hud.refreshTeams();
                 spawn(gp, p, true);
                 broadcast(messages().component("joined-team", "player", p.getName(),
-                        "colour", gp.team.color().asHexString(), "team", gp.team.display()));
+                        "colour", gp.team.color().asHexString(), "team", messages().name(gp.team)));
                 bots.fill();
             } else {
                 Paint chosen = chosenColour(gp);
@@ -355,7 +355,7 @@ public final class Game {
                 Text.send(p, messages().component("colour-random"));
             } else {
                 Text.send(p, messages().component(live() ? "colour-picked-next" : "colour-picked",
-                        "colour", colour.color().asHexString(), "name", colour.display()));
+                        "colour", colour.color().asHexString(), "name", messages().name(colour)));
             }
         }
         if (!live() && p.getGameMode() != GameMode.SPECTATOR) {
@@ -395,7 +395,7 @@ public final class Game {
             Text.send(p, messages().component("picked-random"));
         } else {
             Text.send(p, messages().component(live() ? "picked-next" : "picked",
-                    "colour", gp.pick.color().asHexString(), "team", gp.pick.display()));
+                    "colour", gp.pick.color().asHexString(), "team", messages().name(gp.pick)));
         }
         if (!live() && p.getGameMode() != GameMode.SPECTATOR) {
             int held = p.getInventory().getHeldItemSlot();
@@ -580,9 +580,9 @@ public final class Game {
         for (GamePlayer gp : moved) {
             Player p = gp.player();
             if (p != null) {
-                Text.send(p, messages().component("pick-moved", "from", gp.team.other().display(),
+                Text.send(p, messages().component("pick-moved", "from", messages().name(gp.team.other()),
                         "from_colour", gp.team.other().color().asHexString(),
-                        "team", gp.team.display(), "colour", gp.team.color().asHexString()));
+                        "team", messages().name(gp.team), "colour", gp.team.color().asHexString()));
             }
         }
         for (Team t : Team.values()) {

@@ -286,6 +286,29 @@ messages:
   mode-ffa: "FREE FOR ALL"
   mode-ctf: "CAPTURE THE FLAG"
 
+  # The teams', the paint colours' and the markers' names, wherever one is
+  # written out: chat, the lobby, the marker's name on the HUD, the flags' news
+  # and the placeholders. The HUD's big lettering has its own (hud-team-red).
+  team-red: "Red"
+  team-blue: "Blue"
+  colour-any: "Any"
+  colour-red: "Red"
+  colour-blue: "Blue"
+  colour-green: "Green"
+  colour-orange: "Orange"
+  colour-yellow: "Yellow"
+  colour-purple: "Purple"
+  colour-pink: "Pink"
+  colour-cyan: "Cyan"
+  marker-ember: "Ember"
+  marker-tide: "Tide"
+  marker-toxic: "Toxic"
+  marker-sunset: "Sunset"
+  marker-gold: "Gold"
+  marker-violet: "Violet"
+  marker-bubblegum: "Bubblegum"
+  marker-frost: "Frost"
+
   # Capture the flag, in chat. {player} in {colour}; {flag} is the flag's team in {flag_colour}.
   ctf-taken: "{prefix}<{colour}>{player}</{colour}> took the <{flag_colour}>{flag}</{flag_colour}> flag!"
   ctf-dropped: "{prefix}<{colour}>{player}</{colour}> dropped the <{flag_colour}>{flag}</{flag_colour}> flag."
@@ -308,6 +331,8 @@ messages:
   scoreboard-captures: "CAP"
   scoreboard-players: "PLAYERS"
   scoreboard-place: "#"
+  # Its button.
+  scoreboard-close: "Close"
 
   # The player list (Tab).
   tab-header-ffa: "\n<bold><gradient:#FF4655:#FFD23F:#2E9BFF>PAINTBALL</gradient></bold>\n<#5F6368>{mode} · {map}</#5F6368>\n\n<#FFD23F><bold>{leader}  {leader_kills}</bold></#FFD23F>     <white>{time}</white>\n"

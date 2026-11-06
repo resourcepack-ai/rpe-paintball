@@ -100,7 +100,7 @@ public final class PaintballExpansion extends PlaceholderExpansion {
         }
         int red = game.score(Team.RED);
         int blue = game.score(Team.BLUE);
-        return red == blue ? "" : (red > blue ? Team.RED : Team.BLUE).display();
+        return red == blue ? "" : plugin.messages().name(red > blue ? Team.RED : Team.BLUE);
     }
 
     /** Maintenance, Not Configured, Ready, Starting, In Game or Ending, in the server's words. */
@@ -126,7 +126,8 @@ public final class PaintballExpansion extends PlaceholderExpansion {
             if (what.equals("arena")) return game.arena().name();
             GamePlayer gp = game.get(online.getUniqueId());
             if (gp == null) return "";
-            return gp.team() != null ? gp.team().display() : gp.paint() != null ? gp.paint().display() : "";
+            return gp.team() != null ? plugin.messages().name(gp.team())
+                    : gp.paint() != null ? plugin.messages().name(gp.paint()) : "";
         }
         StatsStore.Stat stat = StatsStore.Stat.parse(what);
         if (stat == null) return null;

@@ -326,7 +326,7 @@ final class Flags {
         game.broadcast(m.component(chatKey,
                 "player", who == null ? "" : who.name,
                 "colour", who == null || who.paint == null ? "#ffffff" : who.paint.color().asHexString(),
-                "flag", flag.display(), "flag_colour", flagColour));
+                "flag", m.name(flag), "flag_colour", flagColour));
         for (GamePlayer gp : game.active()) {
             Player p = gp.player();
             if (p == null) continue;

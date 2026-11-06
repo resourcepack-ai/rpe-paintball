@@ -32,7 +32,8 @@ import java.util.Map;
  * Row k reads {@code {red_k}} (the name, and the face beside it),
  * {@code {red_k_k}}, {@code {red_k_d}}, {@code {red_k_acc}},
  * {@code {red_k_cap}} and {@code {all_k_place}}, and a row with no name is
- * hidden. The column headings are values too ({@code pb_h_*}), from config.yml.
+ * hidden. The column headings are values too ({@code pb_h_*}), from config.yml,
+ * and so is the button's label ({@code pb_close}).
  */
 public final class Scoreboard {
     private final PaintballPlugin plugin;
@@ -67,6 +68,7 @@ public final class Scoreboard {
         for (String h : List.of("red", "blue", "kills", "deaths", "accuracy", "captures", "players", "place")) {
             values.put("pb_h_" + h, m.plain("scoreboard-" + h));
         }
+        values.put("pb_close", m.plain("scoreboard-close"));
         if (mode == Mode.FFA) {
             List<GamePlayer> all = game.standings();
             values.put("pb_you", String.valueOf(me == null ? 0 : me.stats().kills));

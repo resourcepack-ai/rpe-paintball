@@ -10,7 +10,7 @@
       "buttons": [
         {
           "id": "close",
-          "label": "Close",
+          "label": "{pb_close}",
           "width": 150,
           "action": "close"
         }
@@ -332,7 +332,7 @@
       "buttons": [
         {
           "id": "close",
-          "label": "Close",
+          "label": "{pb_close}",
           "width": 150,
           "action": "close"
         }
@@ -654,7 +654,7 @@
       "buttons": [
         {
           "id": "close",
-          "label": "Close",
+          "label": "{pb_close}",
           "width": 150,
           "action": "close"
         }

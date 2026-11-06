@@ -1,10 +1,15 @@
 package ai.resourcepack.addons.paintball.config;
 
+import ai.resourcepack.addons.paintball.team.Paint;
+import ai.resourcepack.addons.paintball.team.Skin;
+import ai.resourcepack.addons.paintball.team.Team;
 import ai.resourcepack.addons.paintball.text.Text;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
+
+import java.util.Locale;
 
 /**
  * Every word a player reads, from the {@code messages:} section of config.yml.
@@ -45,6 +50,31 @@ public final class Messages {
      */
     public String plain(String key, String... pairs) {
         return PlainTextComponentSerializer.plainText().serialize(Text.mm(fill(key, true, pairs)));
+    }
+
+    /** A team's name in the server's words ({@code team-red}). */
+    public String name(Team team) {
+        return named("team-" + team.id(), team.display());
+    }
+
+    /** A paint colour's name ({@code colour-purple}). */
+    public String name(Paint paint) {
+        return named("colour-" + paint.id(), paint.display());
+    }
+
+    /** A marker's name ({@code marker-ember}). */
+    public String name(Skin skin) {
+        return named("marker-" + skin.name().toLowerCase(Locale.ROOT), skin.display());
+    }
+
+    /**
+     * A name as plain words, to go into other messages as a value: the
+     * server's, or with neither file having one, the game's own.
+     */
+    private String named(String key, String fallback) {
+        String s = own == null ? null : own.getString(key);
+        if (s == null && defaults != null) s = defaults.getString(key);
+        return s == null ? fallback : PlainTextComponentSerializer.plainText().serialize(Text.mm(s));
     }
 
     private String fill(String key, boolean escape, String... pairs) {

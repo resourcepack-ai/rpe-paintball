@@ -220,7 +220,7 @@ public final class Loadout {
             ItemMeta meta = picker.getItemMeta();
             if (meta != null) {
                 String hex = colour == null ? "#E8EAED" : colour.color().asHexString();
-                String name = colour == null ? "Any" : colour.display();
+                String name = colour == null ? messages.plain("colour-any") : messages.name(colour);
                 // The marker's own name would win over the item name.
                 meta.setDisplayName(null);
                 meta.setItemName(Text.legacy(messages.component("item-colour", "colour", hex, "name", name)));

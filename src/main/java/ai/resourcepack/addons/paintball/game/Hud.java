@@ -237,7 +237,7 @@ final class Hud {
         Messages m = messages();
         return m.component("lobby-teams", "mode", m.plain("mode-" + mode.id()), "count", String.valueOf(game.size()),
                 "red", String.valueOf(red), "blue", String.valueOf(blue),
-                "pick", gp.pick == null ? m.plain("pick-none") : gp.pick.display().toUpperCase(),
+                "pick", gp.pick == null ? m.plain("pick-none") : m.name(gp.pick).toUpperCase(),
                 "pick_colour", gp.pick == null ? "#9AA0A6" : gp.pick.color().asHexString());
     }
 
@@ -307,7 +307,7 @@ final class Hud {
         // The marker, bottom right, and what it is called above it.
         boolean reloading = armed && gp.reloading > 0;
         v.put("pb_weapon", armed ? weapon(gp, s, reloading) : "");
-        v.put("pb_gun", armed && !reloading ? m.plain("hud-marker", "skin", gp.paint == null ? "" : game.skinOf(gp).display().toUpperCase()) : "");
+        v.put("pb_gun", armed && !reloading ? m.plain("hud-marker", "skin", gp.paint == null ? "" : m.name(game.skinOf(gp)).toUpperCase()) : "");
         v.put("pb_gun_hot", reloading ? m.plain("hud-reloading") : "");
 
         // The crosshair is the HUD's own, a plus drawn over the game's: from the
@@ -419,7 +419,7 @@ final class Hud {
                     boolean ours = gp.team == e.flag();
                     String sheet = e.key().equals("hud-flag-captured") || e.key().equals("hud-flag-taken")
                             ? (ours ? "grey" : "gold") : (ours ? "gold" : "grey");
-                    center2 = lettering(sheet, 1, m.plain(e.key(), "team", e.flag().display().toUpperCase()));
+                    center2 = lettering(sheet, 1, m.plain(e.key(), "team", m.name(e.flag()).toUpperCase()));
                 }
                 // The clock's warnings, wherever nothing else is: the last ten
                 // seconds as the number alone, popping in, and longer in words.
