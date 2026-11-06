@@ -74,8 +74,8 @@ final class Hud {
     private final Scoreboard board;
     /** What was last drawn for each player, so an unchanged HUD is not sent again. */
     private final Map<UUID, String> drawn = new HashMap<>();
-    /** Who has the HUD on screen: kept apart from {@link #drawn}, which is cleared to force a redraw. */
-    private final Set<UUID> shown = new HashSet<>();
+    /** Which HUD each player has on screen: kept apart from {@link #drawn}, which is cleared to force a redraw. */
+    private final Map<UUID, String> shown = new HashMap<>();
 
     Hud(Game game) {
         this.game = game;
@@ -130,6 +130,19 @@ final class Hud {
         return game.settings().hud(game.mode);
     }
 
+    /**
+     * The HUD {@code gp} is shown: their match's, or practising, the
+     * free-for-all one, whose runs have every paint's colours.
+     */
+    private String hudId(GamePlayer gp) {
+        return practising(gp) ? game.settings().hud(Mode.FFA) : hudId();
+    }
+
+    /** Whether {@code gp} is down on the field practising while the lobby waits. */
+    private boolean practising(GamePlayer gp) {
+        return game.phase == Game.Phase.WAITING && gp.practising;
+    }
+
     void join(Player p) {
         p.setScoreboard(board);
         drawn.remove(p.getUniqueId());
@@ -137,10 +150,11 @@ final class Hud {
     }
 
     void leave(Player p) {
+        String on = shown.remove(p.getUniqueId());
+        if (on != null) overlays().hide(p, on);
         overlays().hide(p, hudId());
         for (String key : names()) overlays().set(p, key, null);
         drawn.remove(p.getUniqueId());
-        shown.remove(p.getUniqueId());
         for (org.bukkit.scoreboard.Team st : board.getTeams()) st.removeEntry(p.getName());
         p.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
         p.setPlayerListName(null);
@@ -202,12 +216,13 @@ final class Hud {
             for (GamePlayer gp : game.active()) {
                 Player p = gp.player();
                 if (p == null) continue;
-                if (game.phase == Game.Phase.WAITING) {
+                if (game.phase == Game.Phase.WAITING && !gp.practising) {
                     // Off, every time: the engine redraws a shown HUD on its own
                     // every second and a half, so one left on would flash up
                     // between the lobby's action bars.
                     drawn.remove(p.getUniqueId());
-                    if (shown.remove(p.getUniqueId())) overlays().hide(p, hudId());
+                    String on = shown.remove(p.getUniqueId());
+                    if (on != null) overlays().hide(p, on);
                     Text.actionBar(p, lobbyBar(gp));
                 } else {
                     drawHud(gp, p);
@@ -244,15 +259,22 @@ final class Hud {
     // ---- the HUD ---------------------------------------------------------------------
 
     private void drawHud(GamePlayer gp, Player p) {
+        String id = hudId(gp);
+        String on = shown.get(p.getUniqueId());
+        if (on != null && !on.equals(id)) {
+            // Practice over and a match on the other HUD: the one they had comes off first.
+            overlays().hide(p, on);
+            drawn.remove(p.getUniqueId());
+        }
         Map<String, String> values = values(gp, p);
         String signature = String.join("|", values.values());
         if (signature.equals(drawn.get(p.getUniqueId()))) return;
         drawn.put(p.getUniqueId(), signature);
-        shown.add(p.getUniqueId());
+        shown.put(p.getUniqueId(), id);
         Overlays overlays = overlays();
         for (Map.Entry<String, String> e : values.entrySet()) overlays.set(p, e.getKey(), e.getValue());
         // show() draws at once; the engine alone would get to it within a second and a half.
-        overlays.show(p, hudId());
+        overlays.show(p, id);
     }
 
     /** Every value either HUD prints, so leaving clears all of them. */
@@ -273,8 +295,16 @@ final class Hud {
         Settings s = game.settings();
         Messages m = messages();
         Map<String, String> v = new LinkedHashMap<>();
-        boolean ffa = game.mode == Mode.FFA;
-        if (ffa) {
+        // Practising is a free for all of its own, drawn on that HUD, scored by practice splats.
+        boolean practice = practising(gp);
+        boolean ffa = practice || game.mode == Mode.FFA;
+        if (practice) {
+            GamePlayer leader = practiceLeader();
+            v.put("pb_you", digits(String.valueOf(gp.practiceKills)));
+            v.put("pb_leader", digits(String.valueOf(leader == null ? 0 : leader.practiceKills)));
+            v.put("pb_you_tag", m.plain("hud-ffa-you"));
+            v.put("pb_lead_tag", leader == null ? "" : leader == gp ? m.plain("hud-ffa-leading") : leader.name);
+        } else if (ffa) {
             List<GamePlayer> standings = game.standings();
             GamePlayer leader = standings.isEmpty() ? null : standings.get(0);
             v.put("pb_you", digits(String.valueOf(gp.stats.kills)));
@@ -287,13 +317,14 @@ final class Hud {
         }
         v.put("pb_time", digits(game.clockText()));
 
-        boolean live = game.phase == Game.Phase.LIVE;
+        boolean live = practice || game.phase == Game.Phase.LIVE;
         boolean armed = live && gp.alive;
 
         // The line under the score.
         String status = "";
         if (game.phase == Game.Phase.FREEZE) status = m.plain("hud-get-ready");
         else if (armed && game.isProtected(gp)) status = m.plain("hud-protected");
+        else if (practice) status = m.plain("hud-practice");
         else if (armed && game.mode == Mode.CTF) {
             status = game.flags.carrying(gp) ? m.plain("hud-ctf-carrying")
                     : m.plain("hud-ctf-first-to", "captures", String.valueOf(s.captures));
@@ -328,6 +359,15 @@ final class Hud {
         return v;
     }
 
+    /** Whoever has splatted the most while practising, or null with nobody practising. */
+    private GamePlayer practiceLeader() {
+        GamePlayer best = null;
+        for (GamePlayer o : game.active()) {
+            if (o.practising && (best == null || o.practiceKills > best.practiceKills)) best = o;
+        }
+        return best;
+    }
+
     /** A team's number in the strip; in capture the flag, its flag's state beside its captures. */
     private String score(Team t) {
         String n = digits(String.valueOf(game.score(t)));
@@ -357,6 +397,8 @@ final class Hud {
      *   <li>splatted: the paint in your splatter's colour, fading, the respawn
      *   ring round the seconds left, and who it was;</li>
      *   <li>a splat of your own: SPLATTED and who, under the crosshair;</li>
+     *   <li>practising in the lobby: both of those, though whoever was hit is
+     *   back at a spawn already;</li>
      *   <li>capture the flag: what just happened to a flag;</li>
      *   <li>the clock's warnings: the time left in words, or from ten seconds
      *   down the number alone;</li>
@@ -374,6 +416,26 @@ final class Hud {
         Paint splatPaint = null;
 
         switch (game.phase) {
+            case WAITING -> {
+                if (!gp.practising) break;
+                // Practising, a hit is the moment a splat is in a match, though
+                // whoever it hit is already back at a spawn.
+                long out = game.now - gp.splattedAt;
+                if (gp.splattedBy != null && out < s.killBannerTicks) {
+                    int fade = out < SPLAT_HOLD ? 0 : (int) (1 + (out - SPLAT_HOLD) / SPLAT_STEP);
+                    if (fade < SPLAT_FADE_FRAMES && gp.splattedByPaint != null) {
+                        splat = icon("hud_splat_" + gp.splat + "_" + fade);
+                        splatPaint = gp.splattedByPaint;
+                    }
+                    center2 = lettering("grey", 1, m.plain("hud-splatted-by"));
+                    name = gp.splattedBy;
+                    namePaint = gp.splattedByPaint;
+                } else if (gp.lastKill != null && game.now - gp.lastKillAt < s.killBannerTicks) {
+                    center2 = lettering("gold", 1, m.plain("hud-splatted"));
+                    name = gp.lastKill;
+                    namePaint = gp.lastKillPaint;
+                }
+            }
             case FREEZE -> {
                 int into = (s.freezeSeconds * 20 - game.timer) % 20;
                 int seconds = Math.max(1, (game.timer + 19) / 20);

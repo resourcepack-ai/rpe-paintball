@@ -163,6 +163,10 @@ public final class GameListener implements Listener {
                 case Loadout.COLOUR -> {
                     if (p.hasPermission(Perms.COLOUR)) g.colour(p, null, true);
                 }
+                case Loadout.PRACTICE -> {
+                    if (p.hasPermission(Perms.PRACTICE)) g.practice(p, true);
+                }
+                case Loadout.PRACTICE_LEAVE -> g.practice(p, false);
                 default -> {
                 }
             }

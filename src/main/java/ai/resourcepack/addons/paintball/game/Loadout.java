@@ -203,16 +203,19 @@ public final class Loadout {
     public static final String PICK_RED = "pick_red";
     public static final String PICK_BLUE = "pick_blue";
     public static final String COLOUR = "colour";
+    public static final String PRACTICE = "practice";
+    public static final String PRACTICE_LEAVE = "practice_leave";
 
     /**
-     * In the lobby: the marker, a side to pick (lit while picked; again for
-     * neither) when the next match has teams, the last scoreboard, and the way
-     * out. With {@code colours} the marker is the colour picker, in the colour
-     * chosen ({@code colour}, null for none yet) and carrying that colour's
-     * marker ({@code skin}); a right-click moves it on.
+     * In the lobby: the marker, the way down to practise when {@code practice},
+     * a side to pick (lit while picked; again for neither) when the next match
+     * has teams, the last scoreboard, and the way out. With {@code colours}
+     * the marker is the colour picker, in the colour chosen ({@code colour},
+     * null for none yet) and carrying that colour's marker ({@code skin}); a
+     * right-click moves it on.
      */
     static void lobby(Content content, Messages messages, Player p, Team pick, boolean teams,
-                      boolean colours, Paint colour, Skin skin) {
+                      boolean colours, Paint colour, Skin skin, boolean practice) {
         PlayerInventory inv = p.getInventory();
         inv.clear();
         if (colours) {
@@ -232,6 +235,7 @@ public final class Loadout {
         } else {
             inv.setItem(0, marker(content, Skin.EMBER, false, false));
         }
+        if (practice) inv.setItem(1, lobbyItem(new ItemStack(Material.TARGET), PRACTICE, messages, "item-practice"));
         if (teams) {
             inv.setItem(3, picked(lobbyItem(new ItemStack(Material.RED_CONCRETE), PICK_RED, messages, "item-team-red"), pick == Team.RED));
             inv.setItem(5, picked(lobbyItem(new ItemStack(Material.BLUE_CONCRETE), PICK_BLUE, messages, "item-team-blue"), pick == Team.BLUE));
@@ -239,6 +243,11 @@ public final class Loadout {
         inv.setItem(7, lobbyItem(new ItemStack(Material.GOLD_INGOT), SCOREBOARD, messages, "item-scoreboard"));
         inv.setItem(8, lobbyItem(new ItemStack(Material.BARRIER), LEAVE, messages, "item-leave"));
         inv.setHeldItemSlot(0);
+    }
+
+    /** While practising, in the last slot: back up to the lobby. */
+    static ItemStack practiceExit(Messages messages) {
+        return lobbyItem(new ItemStack(Material.FEATHER), PRACTICE_LEAVE, messages, "item-practice-leave");
     }
 
     private static ItemStack lobbyItem(ItemStack item, String action, Messages messages, String key) {

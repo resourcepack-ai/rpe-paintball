@@ -12,7 +12,7 @@ softdepend: [Multiverse-Core, PlaceholderAPI]
 commands:
   paintball:
     description: Paintball - join, leave, the scoreboard; staff start and stop matches and build arenas.
-    usage: /<command> [join|team|leave|scoreboard|start|stop|arena|reload|as]
+    usage: /<command> [join|team|colour|practice|leave|scoreboard|start|stop|arena|reload|as]
     aliases: [pb]
     # No command-level permission: every subcommand checks its own node below,
     # and /pb leave needs none, so nobody can be stuck in a match.
@@ -21,13 +21,14 @@ commands:
 # parents: they grant everything under them, and nothing checks them directly.
 permissions:
   paintball.play:
-    description: Everything a player does - join, pick a team and a colour, the scoreboard. A parent; nothing checks it.
+    description: Everything a player does - join, pick a team and a colour, the scoreboard, practise in the lobby. A parent; nothing checks it.
     default: true
     children:
       paintball.join: true
       paintball.team: true
       paintball.colour: true
       paintball.scoreboard: true
+      paintball.practice: true
   paintball.join:
     description: /pb join - into an arena's lobby.
     default: true
@@ -39,6 +40,9 @@ permissions:
     default: true
   paintball.scoreboard:
     description: /pb scoreboard, F while in a match or its lobby, and the lobby's scoreboard item.
+    default: true
+  paintball.practice:
+    description: /pb practice, and the target in the lobby's hotbar - down onto the field to practise while waiting for a match.
     default: true
   paintball.admin:
     description: Every staff node - start, stop, reload, /pb as, arenas, the command bypass. A parent; nothing checks it.

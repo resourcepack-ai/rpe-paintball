@@ -44,6 +44,11 @@ import java.util.UUID;
  *
  * <pre>WAITING -> FREEZE -> LIVE -> ENDED -> WAITING</pre>
  *
+ * <p>While it waits, anybody in the lobby can go down onto the field to
+ * practise ({@link #practice}): the marker and the grenade, paint on the walls,
+ * and a hit sends whoever it hit back to a spawn. Everybody there is against
+ * everybody else, and none of it counts.
+ *
  * Everything runs on the main thread, ticked by {@link GameManager}.
  */
 public final class Game {
@@ -137,14 +142,27 @@ public final class Game {
         return mode.teams() && a.team != null && a.team == b.team;
     }
 
-    /** Whether {@code shooter} can splat {@code victim}: both playing, and not on the same side. */
+    /**
+     * Whether {@code shooter} can splat {@code victim}: both playing, and not on
+     * the same side. In the lobby, both practising: there it is everybody for
+     * themselves, whoever they played for last.
+     */
     boolean enemies(GamePlayer shooter, GamePlayer victim) {
+        if (phase == Phase.WAITING) return shooter != victim && shooter.practising && victim.practising;
         return shooter.paint != null && victim.paint != null && !allies(shooter, victim);
     }
 
-    /** The marker a player carries: their team's, or the colour they chose's, or in a free for all their colour's. */
+    /**
+     * The marker a player carries: their team's, or the colour they chose's, or
+     * in a free for all their colour's. Practising, the one they would carry
+     * on the side they picked.
+     */
     Skin skinOf(GamePlayer gp) {
         Settings s = settings();
+        if (phase == Phase.WAITING && gp.practising) {
+            if (chosenColour(gp) == null && gp.pick != null) return gp.pick == Team.BLUE ? s.blueSkin : s.redSkin;
+            return s.ffaMarkers.get(gp.paint);
+        }
         if (mode == Mode.FFA && gp.paint != null) return s.ffaMarkers.get(gp.paint);
         if (gp.markerColour != null) return s.ffaMarkers.get(gp.markerColour);
         return gp.team == Team.BLUE ? s.blueSkin : s.redSkin;
@@ -277,6 +295,7 @@ public final class Game {
             toLobby(p, gp);
             broadcast(messages().component("joined-lobby", "player", p.getName(), "count", String.valueOf(size())));
             Text.send(p, messages().component(p.hasPermission(Perms.START) ? "start-hint-op" : "start-hint"));
+            if (settings().practice && p.hasPermission(Perms.PRACTICE)) Text.send(p, messages().component("practice-hint"));
         }
     }
 
@@ -320,12 +339,15 @@ public final class Game {
         lobbyHotbar(p, gp);
     }
 
-    /** The lobby's hotbar, with the team items in a team mode and the colour picker where colours are chosen. */
+    /**
+     * The lobby's hotbar, with the team items in a team mode, the colour picker
+     * where colours are chosen, and the way down to practise where that is on.
+     */
     private void lobbyHotbar(Player p, GamePlayer gp) {
         Settings s = settings();
         Paint colour = gp.colourPick != null && s.ffaColours.contains(gp.colourPick) ? gp.colourPick : null;
         Loadout.lobby(content, messages(), p, gp.pick, lobbyMode().teams(), s.colourPick && p.hasPermission(Perms.COLOUR),
-                colour, colour == null ? Skin.EMBER : s.ffaMarkers.get(colour));
+                colour, colour == null ? Skin.EMBER : s.ffaMarkers.get(colour), s.practice && p.hasPermission(Perms.PRACTICE));
     }
 
     /**
@@ -358,7 +380,8 @@ public final class Game {
                         "colour", colour.color().asHexString(), "name", messages().name(colour)));
             }
         }
-        if (!live() && p.getGameMode() != GameMode.SPECTATOR) {
+        // Down on the field the marker in hand is the practice one; the choice is for next time.
+        if (!live() && !gp.practising && p.getGameMode() != GameMode.SPECTATOR) {
             int held = p.getInventory().getHeldItemSlot();
             lobbyHotbar(p, gp);
             p.getInventory().setHeldItemSlot(held);
@@ -367,12 +390,17 @@ public final class Game {
 
     /** The colour the fewest players have, in config.yml's order: for whoever joins a free for all. */
     Paint freestPaint() {
+        return freestPaint(o -> true);
+    }
+
+    /** The colour the fewest of {@code among} have, in config.yml's order. */
+    private Paint freestPaint(java.util.function.Predicate<GamePlayer> among) {
         List<Paint> colours = settings().ffaColours;
         Paint best = colours.get(0);
         int fewest = Integer.MAX_VALUE;
         for (Paint c : colours) {
             int n = 0;
-            for (GamePlayer o : active()) if (o.paint == c) n++;
+            for (GamePlayer o : active()) if (o.paint == c && among.test(o)) n++;
             if (n < fewest) {
                 fewest = n;
                 best = c;
@@ -397,7 +425,7 @@ public final class Game {
             Text.send(p, messages().component(live() ? "picked-next" : "picked",
                     "colour", gp.pick.color().asHexString(), "team", messages().name(gp.pick)));
         }
-        if (!live() && p.getGameMode() != GameMode.SPECTATOR) {
+        if (!live() && !gp.practising && p.getGameMode() != GameMode.SPECTATOR) {
             int held = p.getInventory().getHeldItemSlot();
             lobbyHotbar(p, gp);
             p.getInventory().setHeldItemSlot(held);
@@ -442,8 +470,7 @@ public final class Game {
     void tick() {
         now++;
         switch (phase) {
-            case WAITING -> {
-            }
+            case WAITING -> tickPractice();
             case FREEZE -> {
                 timer--;
                 // The count itself is the HUD's; this is its sound.
@@ -522,6 +549,144 @@ public final class Game {
         Nametags.teleport(p, gp.lastInside != null ? gp.lastInside : spawnFor(gp));
     }
 
+    // ---- practice ----------------------------------------------------------------
+
+    /** Whether {@code p} is down on the field practising. */
+    public boolean practising(Player p) {
+        GamePlayer gp = players.get(p.getUniqueId());
+        return gp != null && gp.practising;
+    }
+
+    /**
+     * Down from the lobby onto the field to practise, or with {@code on}
+     * false, back up. Practising, a player has the marker and the grenade in a
+     * paint of their own (the colour they chose, or their side's), everybody
+     * else down there is an enemy, a hit sends whoever it hit back to a spawn,
+     * and nothing counts. Only while the lobby waits and only where
+     * {@code practice} is on; the match starting ends it for everybody.
+     */
+    public void practice(Player p, boolean on) {
+        GamePlayer gp = players.get(p.getUniqueId());
+        if (gp == null || gp.practising == on) return;
+        if (!on) {
+            stopPractising(gp, p);
+            Text.send(p, messages().component("practice-back"));
+            hud.refreshScores();
+            return;
+        }
+        if (!settings().practice) {
+            Text.send(p, messages().component("practice-off"));
+            return;
+        }
+        if (phase != Phase.WAITING) {
+            Text.send(p, messages().component("practice-not-now"));
+            return;
+        }
+        gp.lobbyPaint = gp.paint;
+        gp.practising = true;
+        gp.paint = practicePaint(gp);
+        gp.practiceKills = 0;
+        gp.minesLeft = 0;
+        gp.splattedBy = null;
+        gp.lastKill = null;
+        practiceSpawn(gp, p, true);
+        Text.send(p, messages().component("practice-on"));
+        hud.refreshScores();
+    }
+
+    /** Off the field and back in the lobby, in the paint they came with. */
+    private void stopPractising(GamePlayer gp, Player p) {
+        aim(gp, p, false);
+        gp.practising = false;
+        gp.alive = false;
+        gp.paint = gp.lobbyPaint;
+        gp.lobbyPaint = null;
+        toLobby(p, gp);
+    }
+
+    /** What a player practises in: the colour they chose, their side's, or the one fewest others practise in. */
+    private Paint practicePaint(GamePlayer gp) {
+        Paint chosen = chosenColour(gp);
+        if (chosen != null) return chosen;
+        if (gp.pick != null) return gp.pick.paint();
+        return freestPaint(o -> o.practising && o != gp);
+    }
+
+    /** A practising player at the spawn furthest from everybody else down there, loaded up. */
+    private void practiceSpawn(GamePlayer gp, Player p, boolean first) {
+        Settings s = settings();
+        gp.alive = true;
+        gp.respawnAt = 0;
+        gp.ammo = s.hopper;
+        gp.reloading = 0;
+        gp.protectedUntil = first ? 0 : now + s.protectionTicks;
+        gp.safeZone = null;
+        aim(gp, p, false);
+        Location at = furthestSpawn(gp, arena.allSpawns()).clone();
+        Nametags.teleport(p, at);
+        gp.lastInside = at;
+        PlayerSnapshot.reset(p);
+        Loadout.equip(content, s, p, gp, skinOf(gp));
+        p.getInventory().setItem(8, Loadout.practiceExit(messages()));
+        if (gp.grenadeReadyAt > now) p.setCooldown(Loadout.grenade(content, gp.paint, s.grenadeCooldownTicks), (int) (gp.grenadeReadyAt - now));
+        if (!first) fx.respawned(p);
+    }
+
+    /**
+     * The lobby's tick: whoever is practising fires, reloads and is kept
+     * inside the arena, and what they fired flies. Practice switched off
+     * meanwhile ({@code /pb reload}, {@code /pb arena set}) brings them back up.
+     */
+    private void tickPractice() {
+        boolean allowed = settings().practice;
+        for (GamePlayer gp : active()) {
+            if (!gp.practising) continue;
+            Player p = gp.player();
+            if (p == null) continue;
+            if (!allowed) {
+                stopPractising(gp, p);
+                Text.send(p, messages().component("practice-off"));
+                continue;
+            }
+            combat.trigger(gp, p, now);
+            keepInside(gp, p);
+        }
+        combat.tick();
+    }
+
+    /**
+     * A hit while practising: whoever it hit is back at a spawn at once, and
+     * the kill feed and the HUD say so, as in a match. Nothing is counted
+     * anywhere but the practice HUD.
+     */
+    private void practiceHit(GamePlayer shooter, GamePlayer victim, Location at, Weapon weapon) {
+        if (!victim.alive || victim.left || !enemies(shooter, victim)) return;
+        if (isProtected(victim)) {
+            fx.protectedHit(at);
+            return;
+        }
+        shooter.practiceKills++;
+        shooter.hitUntil = now + settings().hitMarkerTicks;
+        shooter.lastKill = victim.name;
+        shooter.lastKillPaint = victim.paint;
+        shooter.lastKillAt = now;
+        victim.splattedBy = shooter.name;
+        victim.splattedByPaint = shooter.paint;
+        victim.splattedAt = now;
+        victim.splat = 1 + java.util.concurrent.ThreadLocalRandom.current().nextInt(3);
+        feed.addFirst(new Kill(shooter.name, shooter.paint, victim.name, victim.paint, weapon, now));
+        while (feed.size() > 3) feed.removeLast();
+        Player vp = victim.player();
+        fx.splatted(vp);
+        fx.hitConfirm(shooter.player());
+        if (vp != null) practiceSpawn(victim, vp, false);
+    }
+
+    /** Whether a player can use their marker and grenade now: in a live match, or practising. */
+    private boolean armed(GamePlayer gp) {
+        return gp.alive && (phase == Phase.LIVE || (phase == Phase.WAITING && gp.practising));
+    }
+
     // ---- starting ----------------------------------------------------------------
 
     /**
@@ -550,6 +715,12 @@ public final class Game {
         if (whyNot(m) != null) return false;
         mode = m;
         nextMode = null;
+        // Practice is over: everybody down there is dealt and put at a spawn like anybody else.
+        for (GamePlayer gp : players.values()) {
+            gp.practising = false;
+            gp.lobbyPaint = null;
+            gp.practiceKills = 0;
+        }
         players.values().removeIf(gp -> gp.left);
         bots.clear();
         List<GamePlayer> list = new ArrayList<>(active());
@@ -686,12 +857,18 @@ public final class Game {
     Location spawnFor(GamePlayer gp) {
         List<Location> spawns = spawnsFor(gp);
         if (gp.team != null) return spawns.get((int) (Math.random() * spawns.size()));
+        return furthestSpawn(gp, spawns);
+    }
+
+    /** Of {@code spawns}, the one furthest from everybody else on the field: in the lobby, everybody else practising. */
+    private Location furthestSpawn(GamePlayer gp, List<Location> spawns) {
         Location best = spawns.get(0);
         double furthest = -1;
         for (Location at : spawns) {
             double nearest = Double.MAX_VALUE;
             for (GamePlayer o : active()) {
-                org.bukkit.entity.LivingEntity op = o == gp || !o.alive ? null : o.body();
+                boolean onField = o != gp && o.alive && (phase != Phase.WAITING || o.practising);
+                org.bukkit.entity.LivingEntity op = onField ? o.body() : null;
                 if (op != null && op.getWorld().equals(at.getWorld())) nearest = Math.min(nearest, op.getLocation().distanceSquared(at));
             }
             if (nearest > furthest) {
@@ -756,6 +933,10 @@ public final class Game {
 
     /** {@code shooter} hit {@code victim}: one hit and they are splatted. */
     void hit(GamePlayer shooter, GamePlayer victim, Location at, Weapon weapon) {
+        if (phase == Phase.WAITING) {
+            practiceHit(shooter, victim, at, weapon);
+            return;
+        }
         if (phase != Phase.LIVE || !victim.alive || victim.left || !enemies(shooter, victim)) return;
         if (isProtected(victim)) {
             fx.protectedHit(at);
@@ -997,7 +1178,7 @@ public final class Game {
     /** Throws a grenade for a player, if they have one. */
     public void throwGrenade(Player p) {
         GamePlayer gp = players.get(p.getUniqueId());
-        if (gp == null || phase != Phase.LIVE || !gp.alive || now < gp.grenadeReadyAt) return;
+        if (gp == null || !armed(gp) || now < gp.grenadeReadyAt) return;
         if (flags.carrying(gp) && !settings().carrierThrows) return;
         // The grenade stays in the hotbar and recharges, greyed out by the game's own cooldown sweep.
         int cooldown = settings().grenadeCooldownTicks;
@@ -1032,7 +1213,7 @@ public final class Game {
     /** A left click with the marker: up to the sights, or back down. */
     public void toggleAim(Player p) {
         GamePlayer gp = players.get(p.getUniqueId());
-        if (gp == null || phase != Phase.LIVE || !gp.alive || now - gp.aimChangedAt < 4) return;
+        if (gp == null || !armed(gp) || now - gp.aimChangedAt < 4) return;
         if (!gp.aiming && (gp.reloading > 0 || flags.carrying(gp))) return;
         aim(gp, p, !gp.aiming);
     }
@@ -1077,7 +1258,7 @@ public final class Game {
 
     public void reload(Player p) {
         GamePlayer gp = players.get(p.getUniqueId());
-        if (gp == null || phase != Phase.LIVE || !gp.alive) return;
+        if (gp == null || !armed(gp)) return;
         combat.reload(gp, p);
     }
 

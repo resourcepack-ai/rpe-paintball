@@ -38,6 +38,11 @@ spawn-protection-radius: 0
 spawn-protection-shape: circle
 # How long the final scoreboard stays up before everybody is back in the lobby.
 end-seconds: 12
+# While they wait for a match, players can go down onto the field to practise
+# (the target in the lobby's hotbar, or /pb practice): the marker and the
+# grenade, everybody down there against everybody, a hit sends you back to a
+# spawn, and nothing counts. The match starting puts everybody at their spawn.
+practice: true
 
 marker:
   # Ticks between shots while the trigger is held (3 = about seven a second).
@@ -241,6 +246,13 @@ messages:
   pick-moved: "{prefix}Too many picked <{from_colour}>{from}</{from_colour}>, so you're on <{colour}>{team}</{colour}> this match."
   pick-none: "RANDOM"
 
+  # Practising on the field while the lobby waits (practice: true above).
+  practice-hint: "{prefix}While you wait, the <#5BE37D>target</#5BE37D> in your hotbar takes you down onto the field to practise."
+  practice-on: "{prefix}You're on the field. Nothing counts down here; the <#FFD23F>feather</#FFD23F> or <white>/pb practice</white> takes you back up."
+  practice-back: "{prefix}Back in the lobby."
+  practice-off: "{prefix}<#FF5C5C>There's no practising here."
+  practice-not-now: "{prefix}<#FF5C5C>Only while you wait for a match."
+
   # Shown at the bottom of the screen while you're in the lobby.
   lobby-ffa: "<#9AA0A6>Lobby  <#5F6368>·</#5F6368>  <#FFD23F>{mode}</#FFD23F>  <#5F6368>·</#5F6368>  {count} in  <#5F6368>·</#5F6368>  /pb leave to go"
   lobby-teams: "<#9AA0A6>Lobby  <#5F6368>·</#5F6368>  <#FFD23F>{mode}</#FFD23F>  <#5F6368>·</#5F6368>  <#FF4655>RED {red}</#FF4655>  <#2E9BFF>BLUE {blue}</#2E9BFF>  <#5F6368>·</#5F6368>  you: <{pick_colour}>{pick}</{pick_colour}>  <#5F6368>·</#5F6368>  /pb leave to go"
@@ -252,6 +264,7 @@ messages:
   hud-first-to: "FIRST TO {kills}"
   hud-reloading: "RELOADING"
   hud-marker: "{skin} MARKER"
+  hud-practice: "PRACTICE  ·  NOTHING COUNTS"
   # The words in the middle of the screen, in the HUD's own big lettering. It
   # has A-Z, 0-9, ! - ' and spaces; anything else is left out. The result is
   # drawn over a band of fixed width, so a much longer word runs past its ends.
@@ -362,6 +375,10 @@ messages:
   item-team-blue-lore: "<#9AA0A6>From the next match. Sides are kept even"
   item-colour: "<bold><{colour}>Colour: {name}"
   item-colour-lore: "<#9AA0A6>Your paint in a free for all, your marker in a team match"
+  item-practice: "<bold><#5BE37D>Practise"
+  item-practice-lore: "<#9AA0A6>Down onto the field until the match starts. Nothing counts"
+  item-practice-leave: "<bold><#FFD23F>Back to the lobby"
+  item-practice-leave-lore: "<#9AA0A6>Up into the waiting box"
   item-leave: "<bold><#FFD23F>Leave"
   item-leave-lore: "<#9AA0A6>Back to where you were"
   item-use: "<#5F6368>Right-click"

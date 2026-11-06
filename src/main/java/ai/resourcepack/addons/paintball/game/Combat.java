@@ -108,7 +108,8 @@ final class Combat {
         }
         fire(gp, p);
         gp.ammo--;
-        gp.stats.shots++;
+        // Practice shots are nobody's accuracy.
+        if (!gp.practising) gp.stats.shots++;
         gp.nextShot = now + s().fireIntervalTicks;
         if (gp.ammo == 0) reload(gp, p);
     }

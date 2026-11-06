@@ -71,6 +71,13 @@ public final class GamePlayer {
     /** A computer player's figure and mind (bots.fill); null for a person. See {@link Bots}. */
     Bot bot;
 
+    /** Down on the field practising while the lobby waits for a match: nothing they do there counts. */
+    boolean practising;
+    /** Their paint from the last match, put away while they practise in a paint of their own. */
+    Paint lobbyPaint;
+    /** Who they have splatted practising, for the practice HUD; never kept. */
+    int practiceKills;
+
     /** This match's counters: kills, deaths, shots, hits. */
     final StatLine stats = new StatLine();
     boolean left;

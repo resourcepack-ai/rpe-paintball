@@ -31,8 +31,8 @@ import java.util.Map;
  * {@code /paintball}, alias {@code /pb}.
  *
  * <pre>
- * /pb join | team | leave | scoreboard    everybody (paintball.play)
- * /pb start | stop | reload | as | arena  ops (paintball.admin)
+ * /pb join | team | colour | practice | leave | scoreboard  everybody (paintball.play)
+ * /pb start | stop | reload | as | arena                    ops (paintball.admin)
  * </pre>
  *
  * <p>Each subcommand checks its own node ({@link Perms}); the two parents
@@ -92,6 +92,15 @@ public final class PaintballCommand implements TabExecutor {
                 } else {
                     g.colour(p, c, false);
                 }
+            }
+            case "practice", "practise", "warmup" -> {
+                // Down onto the field while the lobby waits, or back up.
+                if (!sender.hasPermission(Perms.PRACTICE)) return deny(sender, Perms.PRACTICE);
+                Player p = player(sender);
+                if (p == null) return true;
+                Game g = plugin.games().of(p);
+                if (g == null) Text.send(p, Text.error("Join first: <white>/pb join"));
+                else g.practice(p, !g.practising(p));
             }
             case "scoreboard", "sb", "score", "top" -> {
                 if (!sender.hasPermission(Perms.SCOREBOARD)) return deny(sender, Perms.SCOREBOARD);
@@ -437,6 +446,7 @@ public final class PaintballCommand implements TabExecutor {
         if (s.hasPermission(Perms.JOIN)) play.add("<white>/pb join</white>");
         if (s.hasPermission(Perms.TEAM)) play.add("<white>/pb team <red|blue|auto></white>");
         if (s.hasPermission(Perms.COLOUR)) play.add("<white>/pb colour <colour|auto></white>");
+        if (s.hasPermission(Perms.PRACTICE)) play.add("<white>/pb practice</white>");
         play.add("<white>/pb leave</white>");
         if (s.hasPermission(Perms.SCOREBOARD)) play.add("<white>/pb scoreboard</white> <#9AA0A6>(or F in a match or its lobby)");
         Text.send(s, Text.msg(String.join(DOT, play)));
@@ -473,6 +483,7 @@ public final class PaintballCommand implements TabExecutor {
             if (sender.hasPermission(Perms.JOIN)) out.add("join");
             if (sender.hasPermission(Perms.TEAM)) out.add("team");
             if (sender.hasPermission(Perms.COLOUR)) out.add("colour");
+            if (sender.hasPermission(Perms.PRACTICE)) out.add("practice");
             out.add("leave");
             if (sender.hasPermission(Perms.SCOREBOARD)) out.add("scoreboard");
             if (sender.hasPermission(Perms.START)) out.add("start");

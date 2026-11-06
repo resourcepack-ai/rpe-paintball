@@ -45,6 +45,8 @@ public final class Settings {
     /** Whether a respawn brings the grenade straight back. */
     public final boolean grenadeResetOnRespawn;
     public final int endSeconds;
+    /** Whether players waiting in the lobby can go down onto the field to practise. */
+    public final boolean practice;
 
     public final int fireIntervalTicks;
     public final int hopper;
@@ -127,6 +129,7 @@ public final class Settings {
         grenadeCooldownTicks = (int) Math.round(Math.max(0, c.getDouble("grenade.cooldown-seconds", 15)) * 20);
         grenadeResetOnRespawn = c.getBoolean("grenade.reset-on-respawn", false);
         endSeconds = Math.max(3, c.getInt("end-seconds", 12));
+        practice = c.getBoolean("practice", true);
 
         fireIntervalTicks = Math.max(1, c.getInt("marker.fire-interval-ticks", 3));
         hopper = Math.max(1, c.getInt("marker.hopper", 40));
