@@ -20,7 +20,7 @@ import java.util.Locale;
  *
  * <ul>
  *   <li>{@code arena_status_<arena>}, {@code arena_players_<arena>},
- *   {@code arena_plays_<arena>}, {@code arena_name_<arena>},
+ *   {@code arena_max_<arena>}, {@code arena_plays_<arena>}, {@code arena_name_<arena>},
  *   {@code arena_red_<arena>}, {@code arena_blue_<arena>},
  *   {@code arena_time_<arena>}, {@code arena_mode_<arena>},
  *   {@code arena_leader_<arena>}</li>
@@ -80,6 +80,7 @@ public final class PaintballExpansion extends PlaceholderExpansion {
         return switch (what) {
             case "status" -> status(arena, game);
             case "players" -> String.valueOf(game == null ? 0 : game.size());
+            case "max" -> String.valueOf(plugin.settings(arena).maxPlayers);
             case "plays" -> String.valueOf(plugin.stats().plays(arena.id()));
             case "name" -> arena.name();
             case "red" -> String.valueOf(game == null || !game.played() ? 0 : game.score(Team.RED));

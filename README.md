@@ -93,6 +93,10 @@ itself (see Arenas). `/pb reload`
 re-reads it. Options a newer version adds are written into your existing file
 on start.
 
+`max-players` caps how many people one arena takes, its lobby and its match
+together (bots are not counted); anybody past it is told the arena is full. 0,
+the default, is no limit.
+
 `bots.fill` puts computer players in a match: each side filled up to that many
 in a team match, everybody up to that many in a free for all (0, the default,
 for none). `bots.even-teams: true` adds a bot for every person the other side
@@ -113,6 +117,7 @@ is added to every player's totals in `plugins/RPEPaintball/stats.json`.
 |---|---|
 | `%paintball_arena_status_<arena>%` | Maintenance (closed), Not Configured, Ready, Starting, In Game or Ending |
 | `%paintball_arena_players_<arena>%` | How many are in its lobby or match |
+| `%paintball_arena_max_<arena>%` | How many it takes (`max-players`), 0 for no limit |
 | `%paintball_arena_plays_<arena>%` | How many matches it has had |
 | `%paintball_arena_name_<arena>%` | Its display name |
 | `%paintball_arena_red_<arena>%`, `%paintball_arena_blue_<arena>%` | Each team's kills in its current or last match |

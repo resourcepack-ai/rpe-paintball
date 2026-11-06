@@ -67,10 +67,23 @@ public final class GameManager {
             Text.send(p, plugin.messages().component("arena-not-ready", "arena", arena.name(), "missing", String.join(", ", arena.missing())));
             return false;
         }
+        if (full(arena)) {
+            Text.send(p, plugin.messages().component("arena-full", "arena", arena.name(),
+                    "max", String.valueOf(existing(arena.id()).settings().maxPlayers)));
+            return false;
+        }
         Game g = game(arena);
         byPlayer.put(p.getUniqueId(), g);
         g.join(p);
         return true;
+    }
+
+    /** Whether an arena has as many people in it as {@code max-players} lets in (bots are not counted). */
+    public boolean full(Arena arena) {
+        Game g = existing(arena.id());
+        if (g == null) return false;
+        int most = g.settings().maxPlayers;
+        return most > 0 && g.size() >= most;
     }
 
     public void leave(Player p) {

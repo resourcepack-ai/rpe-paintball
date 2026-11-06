@@ -28,6 +28,8 @@ public final class Settings {
 
     /** What an arena plays when nothing says otherwise. */
     public final Mode mode;
+    /** The most people an arena takes, its lobby and its match together; 0 for no limit. */
+    public final int maxPlayers;
 
     public final int matchSeconds;
     public final int killLimit;
@@ -112,6 +114,7 @@ public final class Settings {
     public Settings(FileConfiguration c) {
         Mode m = Mode.parse(c.getString("mode", "teams"));
         mode = m == null ? Mode.TEAMS : m;
+        maxPlayers = Math.max(0, c.getInt("max-players", 0));
 
         matchSeconds = Math.max(20, c.getInt("match-seconds", 180));
         killLimit = Math.max(0, c.getInt("kill-limit", 0));

@@ -181,7 +181,8 @@ public final class PaintballCommand implements TabExecutor {
             Text.send(sender, plugin.messages().component("arena-closed", "arena", arena.name()));
             return null;
         }
-        if (joinSelf && self != null && !plugin.games().playing(self)) {
+        // A full arena (max-players) is started without them rather than not at all.
+        if (joinSelf && self != null && !plugin.games().playing(self) && !plugin.games().full(arena)) {
             if (!plugin.games().join(self, arena)) return null;
         }
         Game g = plugin.games().existing(arena.id());

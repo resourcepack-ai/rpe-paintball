@@ -15,6 +15,10 @@
 # /pb start <arena> <mode> plays another mode for one match.
 mode: teams
 
+# The most people one arena takes, its lobby and its match together; anybody
+# after that is told it is full. Bots are not counted. 0 for no limit.
+max-players: 0
+
 match-seconds: 180
 # End early when a team reaches this many kills. 0 plays the whole clock.
 kill-limit: 0
@@ -218,6 +222,8 @@ messages:
   arena-not-ready: "{prefix}<#FF5C5C>{arena} isn't set up: it needs {missing}."
   # A disabled arena (/pb arena disable): nobody can join it or start a match on it.
   arena-closed: "{prefix}<#FF5C5C>{arena} is closed."
+  # An arena with max-players people in it already.
+  arena-full: "{prefix}<#FF5C5C>{arena} is full <#9AA0A6>({max} players)."
   not-during-match: "{prefix}<#FF5C5C>Not during a match. <white>/pb leave</white> to go."
   restored: "{prefix}Your last match was cut short, so you've got your things back."
   match-stopped: "{prefix}The match was stopped."
