@@ -780,7 +780,8 @@ public final class Game {
 
         Player vp = victim.player();
         Player sp = shooter.player();
-        org.bukkit.entity.LivingEntity killer = shooter.body();
+        org.bukkit.entity.LivingEntity fell = victim.body();
+        victim.fellAt = fell != null ? fell.getLocation() : at.clone();
         fx.splatted(vp);
         fx.hitConfirm(sp);
         flags.drop(victim);
@@ -791,7 +792,7 @@ public final class Game {
             fx.knockedOut(vp);
             vp.getInventory().clear();
             vp.setGameMode(GameMode.SPECTATOR);
-            if (settings().killerCamera && killer != null && killer.getWorld().equals(vp.getWorld())) killCam.start(victim, vp, killer);
+            if (settings().killerCamera) killCam.start(victim, vp, shooter);
         }
         hud.refreshScores();
         int limit = settings().killLimit;

@@ -1,10 +1,10 @@
 package ai.resourcepack.addons.paintball.game;
 
-import org.bukkit.Bukkit;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.ItemDisplay;
+import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
@@ -20,6 +20,11 @@ import org.bukkit.util.Vector;
  * it is the only way the server has of putting somebody's eyes somewhere. A
  * spectator who presses shift stops spectating, so the camera is put back
  * every tick: while you are out, you watch.
+ *
+ * <p>A killer who is out too is watched where they fell, not where their body
+ * is. A spectator's body goes wherever the camera they look through goes, so
+ * two players who splatted each other, each circling the other's body, would
+ * each be lifting the other's camera: both climbed out of the world.
  */
 final class KillCam {
     /** How far from the killer the camera stands, and how far above their chest. */
@@ -41,12 +46,13 @@ final class KillCam {
     }
 
     /** {@code victim} was splatted by {@code killer}: the camera goes up beside the killer, on the victim's side. */
-    void start(GamePlayer victim, Player vp, Entity killer) {
+    void start(GamePlayer victim, Player vp, GamePlayer killer) {
         stop(victim, vp);
         Location focus = focus(killer);
+        if (focus == null || !focus.getWorld().equals(vp.getWorld())) return;
         Location from = vp.getLocation();
         victim.camAngle = Math.atan2(from.getX() - focus.getX(), from.getZ() - focus.getZ());
-        victim.camOn = killer.getUniqueId();
+        victim.camOn = killer;
         victim.camFrom = game.now;
         Location at = place(focus, victim.camAngle);
         victim.camera = at.getWorld().spawn(at, ItemDisplay.class, e -> {
@@ -61,14 +67,14 @@ final class KillCam {
     /** Once a tick while they are out: round a little further, and still looking through it. */
     void tick(GamePlayer gp, Player p) {
         if (gp.camera == null) return;
-        Entity killer = gp.camOn == null ? null : Bukkit.getEntity(gp.camOn);
-        if (killer == null || !gp.camera.isValid() || !killer.getWorld().equals(gp.camera.getWorld())) {
+        Location focus = gp.camOn == null || gp.camOn.left ? null : focus(gp.camOn);
+        if (focus == null || !gp.camera.isValid() || !focus.getWorld().equals(gp.camera.getWorld())) {
             // Gone: the rest of the wait is the free spectator it used to be.
             stop(gp, p);
             return;
         }
         long t = game.now - gp.camFrom;
-        gp.camera.teleport(place(focus(killer), gp.camAngle + t * TURN));
+        gp.camera.teleport(place(focus, gp.camAngle + t * TURN));
         Entity watching = p.getSpectatorTarget();
         if (t >= SETTLE && (watching == null || !watching.equals(gp.camera))) p.setSpectatorTarget(gp.camera);
     }
@@ -83,9 +89,14 @@ final class KillCam {
         gp.camOn = null;
     }
 
-    /** What the camera looks at: the killer's chest. */
-    private static Location focus(Entity killer) {
-        return killer.getLocation().add(0, 1.2, 0);
+    /**
+     * What the camera looks at: the killer's chest, or while they are out
+     * themselves, the place they fell. Null when there is nothing to look at.
+     */
+    private static Location focus(GamePlayer killer) {
+        if (!killer.alive) return killer.fellAt == null ? null : killer.fellAt.clone().add(0, 1.2, 0);
+        LivingEntity body = killer.body();
+        return body == null ? null : body.getLocation().add(0, 1.2, 0);
     }
 
     /** Where the camera stands at {@code angle} round {@code focus}, looking at it, pulled in short of any wall between. */
